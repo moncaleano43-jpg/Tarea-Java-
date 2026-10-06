@@ -16,6 +16,6 @@ Si la IA no está conectada o falla, LevaBot sigue funcionando como siempre.
    - `LEVABOT_MODEL` — opcional; por defecto `claude-opus-5-5`. `claude-sonnet-5-5` es más barato y rápido.
    - `LEVABOT_EFFORT` — opcional; `low`, `medium` (defecto) o `high`.
 3. En la plataforma: **Ajustes → LevaBot con IA** → activar, pegar la dirección
-   `https://SU-SITIO.netlify.app/.netlify/functions/levabot`, la clave de acceso (`LEVABOT_TOKEN`) y pulsar **Probar conexión**.
+   `/api/levabot` (ya viene puesta cuando la plataforma está en el mismo sitio de Netlify), la clave de acceso (`LEVABOT_TOKEN`) y pulsar **Probar conexión**.
 
 La clave de Anthropic vive solo en Netlify; nunca viaja en el HTML.
