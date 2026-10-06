@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Inventario de Levadura · v33</title>
+<title>Inventario de Levadura · v34</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>
@@ -6171,7 +6171,7 @@ App.Bot=(function(){
     else if(cambio&&t) decir(`Ahora hablamos de <b>${esc(t)}</b>. ¿Qué necesitas?`);
     avisosProactivos();if(!proactiveTimer)proactiveTimer=setInterval(()=>{if(el&&!el.hidden)avisosProactivos();},300000);
     setTimeout(()=>el.querySelector("#botI").focus(),50); }
-  function opcionesInicio(){ const n=App.Traza.nombres().find(x=>App.Calc.parseLev(x)); const o=[{label:"Qué revisar primero",q:"que levadura retiro primero"},{label:"Inventario disponible",q:"que levadura hay disponible en colectores"}]; if(n) o.unshift({label:`Consultar ${n}`,q:`dame informacion completa de ${n}`}); return o; }
+  function opcionesInicio(){ return [{label:"Qué hago primero",q:"que hago primero"},{label:"Resumen de la planta",q:"resumen de la planta"},{label:"Generaciones que tengo",q:"que generaciones tengo en este momento"},{label:"Qué puedes contestar",q:"que puedes contestar"}]; }
   function cerrar(){ if(el){ el.hidden=true; document.body.classList.remove("bot-open"); } }
   function pintar(){ const m=el.querySelector("#botM"); m.innerHTML=msgs.map(x=>`<div class="bm ${x.r}">${x.h}</div>`).join("")+(ocupado?`<div class="bm b typing" aria-label="LevaBot está escribiendo"><span class="bot-typing"><i></i><i></i><i></i></span></div>`:""); m.scrollTop=m.scrollHeight; }
   function decir(h,opts){ const stamp=new Date().toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit"});
@@ -7254,7 +7254,7 @@ App.Hist = App.Hist || (function(){
     $("#nav").innerHTML=NAV.map(gr=>(gr.g?`<div class="nav-g">${gr.g}</div>`:"")+gr.items.map(([k,l,ic])=>{ const b=badge[k]; return `<a href="#/${k}" ${cur===k?'aria-current="page"':""}>${C.icon(ic)}<span>${l}</span>${b?`<span class="cnt ${b[1]}" aria-label="${b[0]} requieren atención">${b[0]}</span>`:""}</a>`; }).join("")).join("");
     const upd=App.S.config.meta&&App.S.config.meta.actualizado;
     $("#topStatus").innerHTML=`<span class="dot-live" aria-hidden="true"></span>${App.Store.mode==="db"?"Datos compartidos":"Datos en este navegador"}${upd?" · act. "+fmtS(upd):""}${App.Store.canWrite?"":' · <b>solo lectura</b>'}`;
-    $("#sideFoot").textContent="v33 · "+(App.Store.mode==="db"?"base compartida":"modo local"); }
+    $("#sideFoot").textContent="v34 · "+(App.Store.mode==="db"?"base compartida":"modo local"); }
   function render(force){ const a=document.activeElement, v=$("#view");
     if(!force&&(document.querySelector("dialog[open]")||(a&&v.contains(a)&&["INPUT","SELECT","TEXTAREA"].includes(a.tagName)))) return;
     let {name,arg}=route(); const cur=ALIAS[name]||name;
@@ -7735,7 +7735,7 @@ body.bot-open .content{padding-right:28px!important}
           ${ops.length?`<div class="acard aops">${C.timeline(ops.map(x=>({ic:x.ic,cls:x.cls,t1:x.t1,t2:x.t2,time:fmtS(x.t),go:x.id?"historial/"+x.id:null})))}</div>`:`<div class="acard aempty"><div><b>Aún no hay operaciones.</b><span>Las cosechas, siembras y descartes aparecerán aquí.</span></div></div>`}
         </section>
 
-        <footer class="afoot"><span>${App.Store.mode==="db"?"Datos compartidos":"Datos guardados en este navegador"}${upd?" · actualizado "+fmtS(upd):""}${App.Store.canWrite?"":" · solo lectura"}</span><span>v33</span></footer>
+        <footer class="afoot"><span>${App.Store.mode==="db"?"Datos compartidos":"Datos guardados en este navegador"}${upd?" · actualizado "+fmtS(upd):""}${App.Store.canWrite?"":" · solo lectura"}</span><span>v34</span></footer>
       </div>`;
     },
     mount(){
@@ -8855,6 +8855,522 @@ body.v31-tvmode:fullscreen .topbar,:fullscreen body.v31-tvmode .topbar{display:n
 
   App.BotDirecto=function(texto,env){ try{ if(App.BotIA&&App.BotIA.activo()&&App.BotIA.abierta(texto)) return null; const r=responder(texto,env); if(r){ r.directo=true; return r; } }catch(e){ console.error("saber",e); } return prev(texto,env); };
   App.Saber={datos,familia:(f_,m)=>familia(datos(),f_,m),generaciones:()=>generacionesAhora(datos())};
+})();
+</script>
+<style id="v34-styles">
+/* v34 — respuestas de LevaBot en tarjetas + páginas de detalle */
+.bm .ans{display:flex;flex-direction:column;gap:9px;font-size:.95em;line-height:1.45}
+.bm .ans-h{font-size:1.06em;font-weight:600;letter-spacing:-.01em;line-height:1.35}
+.bm .ans-s{color:var(--muted);font-size:.9em;margin-top:-4px}
+.bm .ans-k{display:grid;grid-template-columns:repeat(auto-fit,minmax(78px,1fr));gap:8px}
+.bm .ans-k div{background:var(--surface);border-radius:12px;padding:9px 11px;box-shadow:0 0 0 1px var(--line)}
+.bm .ans-k b{display:block;font-size:1.3em;font-weight:600;letter-spacing:-.03em;line-height:1.15}
+.bm .ans-k span{font-size:.76em;color:var(--muted)}
+.bm .ans-k .crit b{color:var(--a-red)}.bm .ans-k .warn b{color:var(--a-orange)}.bm .ans-k .ok b{color:var(--a-green)}.bm .ans-k .on{box-shadow:0 0 0 2px var(--accent)}
+.bm .ans-r{display:grid;grid-template-columns:92px 1fr;gap:6px 10px;align-items:baseline}
+.bm .ans-r.wide{grid-template-columns:1fr}
+.bm .ans-r>em{font-style:normal;color:var(--muted);font-size:.82em;font-weight:600}
+.bm .ans-r small,.bm .ans-s small{color:var(--muted)}
+.bm .cps{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
+.bm .fvc{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:980px;background:var(--v30-fill);color:var(--ink)!important;font-size:.84em;font-weight:600;text-decoration:none;border:0;cursor:pointer;font-family:inherit;line-height:1.35}
+.bm .fvc::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--faint);flex:none}
+.bm .fvc.crit::before{background:var(--a-red)}.bm .fvc.warn::before{background:#ff9500}.bm .fvc.ok::before{background:#34c759}
+.bm .fvc.ask::before{display:none}.bm .fvc.ask{background:var(--surface);box-shadow:0 0 0 1px var(--line);font-weight:500}
+.bm .fvc small{font-weight:400;color:var(--muted);font-size:.9em}
+.bm .fvc:hover{background:var(--v30-fill-h)}
+.bm .pl{display:inline-block;padding:1px 9px;border-radius:980px;font-size:.78em;font-weight:600;background:var(--v30-fill);color:var(--ink-2)}
+.bm .pl.crit{background:color-mix(in srgb,#ff3b30 14%,transparent);color:var(--a-red)}.bm .pl.warn{background:color-mix(in srgb,#ff9500 16%,transparent);color:var(--a-orange)}.bm .pl.ok{background:color-mix(in srgb,#34c759 16%,transparent);color:var(--a-green)}
+.bm .more{color:var(--muted);font-size:.84em;align-self:center;margin-left:4px}.bm .mut{color:var(--muted)}
+.bm .ans-n{background:var(--surface);border-radius:10px;padding:8px 11px;font-size:.88em;color:var(--ink-2)}.bm .ans-n.warn{background:color-mix(in srgb,#ff9500 14%,transparent);color:var(--a-orange)}
+.bm .ans-ver{display:inline-flex;align-self:flex-start;color:var(--accent)!important;font-weight:600;font-size:.92em;text-decoration:none}
+.bm .ans-ver:hover{text-decoration:underline}
+.bm .ans-b{display:flex;flex-wrap:wrap;gap:6px}
+.bm .ans-btn{border:0;background:var(--accent);color:#fff;border-radius:980px;padding:6px 14px;font-size:.88em;font-weight:500;cursor:pointer;font-family:inherit}
+.bm .ans-btn:hover{filter:brightness(1.08)}
+.bm .ans-sec{display:flex;flex-direction:column;gap:7px;padding:10px 0;border-top:1px solid var(--line)}.bm .ans-sec:first-child{border-top:0;padding-top:0}
+.bm .ans-st{font-weight:600;font-size:1.02em}
+.bm .ans-g{display:grid;grid-template-columns:54px 1fr;gap:4px 10px;padding:8px 0;border-top:1px solid var(--line);align-items:start}.bm .ans-g:first-of-type{border-top:0}
+.bm .ans-g .gn{font-size:.95em;font-weight:600}.bm .ans-g small{color:var(--muted);margin-left:4px}
+.bm .ans-cmp{display:grid;gap:5px 8px;align-items:center;font-size:.88em}.bm .ans-cmp em{font-style:normal;color:var(--muted);font-weight:600;font-size:.86em}.bm .ans-cmp>b{text-align:left}
+.bm .ans-line{display:flex;flex-direction:column;gap:0}.bm .ans-line>div{display:flex;gap:10px;position:relative;padding:0 0 10px}
+.bm .ans-line i,.v34-pg .ans-line i{width:9px;height:9px;border-radius:50%;background:var(--accent);margin-top:6px;flex:none;position:relative;z-index:1}
+.bm .ans-line>div::before,.v34-pg .ans-line>div::before{content:"";position:absolute;left:4px;top:14px;bottom:-4px;width:1.5px;background:var(--line)}.bm .ans-line>div:last-child::before{display:none}
+.bm .ans-step{display:flex;gap:10px;align-items:flex-start}.bm .ans-step i{font-style:normal;flex:none;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:.78em;font-weight:600;display:grid;place-items:center;margin-top:2px}
+.bm .ans-sep{height:1px;background:var(--line);margin:12px 0}
+.bm a{color:var(--accent)}
+/* páginas de detalle */
+.v34-pg .v34-back{display:inline-block;margin:0 0 6px;color:var(--accent)!important;font-size:15px;text-decoration:none}
+.v34-seg{margin-bottom:22px}.v34-seg a{padding:7px 16px;border-radius:980px;font-size:14px;font-weight:500;color:var(--ink-2)!important;text-decoration:none}.v34-seg a.on{background:var(--surface);color:var(--ink)!important;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.v34-sub{font-size:13px;font-weight:600;color:var(--muted);margin:14px 0 8px}
+.v34-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.v34-mini{display:flex;flex-direction:column;gap:4px;background:var(--surface-2);border-radius:14px;padding:14px 16px;color:var(--ink)!important;text-decoration:none;transition:transform .15s}
+.v34-mini:hover{transform:scale(1.02)}.v34-mini b{font-size:20px;font-weight:600;letter-spacing:-.02em}.v34-mini span{font-size:13.5px;color:var(--ink-2)}.v34-mini small{color:var(--muted);font-size:12.5px}
+.v32-ev .pl{flex:none;align-self:center}.v34-pg .pl{display:inline-block;align-self:flex-start;padding:2px 10px;border-radius:980px;font-size:12px;font-weight:600;background:var(--v30-fill);color:var(--ink-2)}
+.v34-pg .pl.crit{background:color-mix(in srgb,#ff3b30 14%,transparent);color:var(--a-red)}.v34-pg .pl.warn{background:color-mix(in srgb,#ff9500 16%,transparent);color:var(--a-orange)}.v34-pg .pl.ok{background:color-mix(in srgb,#34c759 16%,transparent);color:var(--a-green)}
+.v34-gen{display:grid;grid-template-columns:70px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--line)}.v34-gen:first-of-type{border-top:0}.v34-gen .gn{font-size:17px;font-weight:600}
+.v34-reg{padding:6px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.v34-reg a{color:var(--ink)!important;text-decoration:none}.v34-reg small{color:var(--muted)}
+.v34-pg .cps{display:flex;flex-wrap:wrap;gap:6px}.v34-pg .fvc{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:980px;background:var(--v30-fill);color:var(--ink)!important;font-size:13px;font-weight:600;text-decoration:none}
+.v34-pg .fvc::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--faint)}.v34-pg .fvc.crit::before{background:var(--a-red)}.v34-pg .fvc.warn::before{background:#ff9500}.v34-pg .fvc.ok::before{background:#34c759}.v34-pg .fvc small{font-weight:400;color:var(--muted)}
+.v34-gens{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.v34-gcard{background:var(--surface-2);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:4px}.v34-gcard .gn{font-size:14px;color:var(--muted)}.v34-gcard .big{font-size:36px;font-weight:600;letter-spacing:-.04em;line-height:1}.v34-gcard small{color:var(--muted)}
+.v34-bar{display:grid;grid-template-columns:62px 1fr 44px;gap:12px;align-items:center;padding:6px 0}.v34-bar b{font-size:14px}.v34-bar>div{height:12px;border-radius:6px;background:var(--v30-fill);overflow:hidden}.v34-bar i{display:block;height:100%;background:color-mix(in srgb,var(--accent) 35%,transparent);border-radius:6px;position:relative}.v34-bar u{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:6px;text-decoration:none}.v34-bar span{text-align:right;color:var(--muted);font-size:13px}
+.v34-pg .ans-line>div{display:flex;gap:10px;position:relative;padding:0 0 14px}.v34-pg .ans-line a{color:var(--ink)!important;text-decoration:none}
+.v34-pg .ans-ver{color:var(--accent)!important;text-decoration:none;font-weight:600;display:inline-block;margin-top:10px}
+</style>
+
+@media (min-width:701px){ .bot{width:440px!important} }
+<script id="v34-modules">
+/* ============================================================
+   v34 — LevaBot "cerebro": responde con tarjetas fáciles de leer,
+   cubre casi cualquier pregunta sobre tanques, colectores, levadura,
+   historial y análisis, y envía lo largo a páginas de detalle.
+   ============================================================ */
+(function(){
+  if(!window.App||!App.V31||!App.BotDirecto||!App.Alta||!App.BDM) return;
+  const {esc,fmtS,f,parseDT,HOUR}=App.U, C=App.C, V=App.V31, AL=App.Alta, BDM=App.BDM, LS=V.LS;
+  const prevDirecto=App.BotDirecto;
+  const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+  const rel=(t,n)=>C.rel(t,n||Date.now());
+  const tit=V.tit, hl=V.hl, pct=V.pct;
+  const plural=(n,s,p)=>n===1?s:p;
+  const lst=a=>a.length<=1?a.join(""):a.slice(0,-1).join(", ")+" y "+a[a.length-1];
+  const parse=n=>{ try{ return BDM.parseNombre(n)||{}; }catch(e){ return {}; } };
+  const MARCA_PAL={estandar:"ESTANDAR",light:"LIGHT",azteca:"AZTECA",aguila:"AGUILA",pilsen:"PILSEN","club colombia":"CLUB COLOMBIA",club:"CLUB COLOMBIA"};
+  const RE_MARCA=/\b(estandar|light|azteca|aguila|pilsen|club colombia|club)\b/g;
+  const TONE={rojo:"crit",naranja:"warn",verde:"ok",amarillo:"warn",gris:"idle",sin:"idle"};
+  const ST_TXT={rojo:"Retiro vencido",naranja:"Retiro próximo",verde:"Lista para retirar",amarillo:"T0 se aproxima",gris:"En proceso",sin:"Sin T0 todavía"};
+  const ST_FILTRO={rojo:"pendiente",naranja:"proximo",verde:"lista",amarillo:"t0",gris:"proceso",sin:"proceso"};
+
+  /* ---------- 1. Lenguaje: tolerancia a errores ---------- */
+  const KEEP="cuanto cuanta cuantas descarto siembro registro agrego libero retiro cambio exporto importo historica historico historicas historicos siembras sembrada sembrado descartar sembrar liberar registrar agregar utilizo utilizar utilizaron utilizaste retirar cosechar cosecho cosechas".split(" ");
+  const VOC=("vencidos vencidas vencido atrasados retiro retiros retirar cosecha cosechas tanque tanques fermentador fermentadores levadura levaduras familia familias generacion generaciones colector colectores extracto atenuacion viabilidad consistencia volumen historial resumen proyeccion disponible disponibles descartada descartadas descartado utilizada utilizadas muestra muestras sembrar siembra siembras posicion posiciones prioridad cuantos cuantas cuales promedio comparar cantidad ultimo ultima ultimos proximo proxima ritmo velocidad estado marca lote alta manana ayer semana mayor menor mejor peor lento rapido ocupados libres vacios tiempo limite espacio capacidad").split(" ");
+  function dist(a,b){ const m=a.length,n=b.length; if(Math.abs(m-n)>2) return 9; let p=Array.from({length:n+1},(_,j)=>j); for(let i=1;i<=m;i++){ const c=[i]; for(let j=1;j<=n;j++) c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1)); p=c; } return p[n]; }
+  function canon(q){ return q.split(" ").map(t=>{ if(t.length<7||/\d/.test(t)||VOC.includes(t)||KEEP.includes(t)) return t; let best=t,bd=9; for(const v of VOC){ if(v[0]!==t[0]||v.slice(0,2)!==t.slice(0,2)) continue; const d=dist(t,v); if(d<bd){ bd=d; best=v; } } return bd<=(t.length>=10?2:1)?best:t; }).join(" "); }
+  const fix=t=>String(t||"").replace(/\bfam[a-z]{1,3}lia\b|\bfamlia\b|\bfamila\b/gi,"familia").replace(/\b(?:g|j)ener[a-z]{2,5}n(es)?\b/gi,m=>/es$/i.test(m)?"generaciones":"generacion").replace(/\bhl\b/gi,"hl");
+  const Q=t=>canon(V.norm(fix(t)));
+  const has=(q,re)=>re.test(q);
+  const nums=s=>(s.match(/\d{1,2}/g)||[]).map(Number);
+
+  /* ---------- 2. Entidades ---------- */
+  function ents(q,env,mem){ const e={fvs:[],cols:[],pos:[],levs:[],fam:null,gens:[],marcas:[],lotes:[]}; let m;
+    const reFv=/\b(?:fv|tanques?|tq|fermentador(?:es)?)\s*((?:0?\d{1,2}\s*(?:,|y|e|con|vs|contra|o)?\s*)+)/g;
+    while((m=reFv.exec(q))) nums(m[1]).forEach(n=>{ if(n>=1&&n<=32&&!e.fvs.includes(n)) e.fvs.push(n); });
+    const compact=q.match(/\bfv(\d{1,2})\b/g); if(compact) compact.forEach(x=>{ const n=+x.slice(2); if(n>=1&&n<=32&&!e.fvs.includes(n)) e.fvs.push(n); });
+    if(!e.fvs.length){ const b=q.match(/\b(?:el|del|al|los|las|ese|este)\s+(\d{1,2})(?:\s*(?:,|y|con|vs|contra)\s*(\d{1,2}))?\b(?!\s*(?:h\b|hl|%|d\b|dias|horas|gen|p\b))/); if(b) [b[1],b[2]].filter(Boolean).forEach(n=>{ if(+n>=1&&+n<=32) e.fvs.push(+n); }); }
+    const reLote=/\bf(\d{3})\b/g; while((m=reLote.exec(q))) e.lotes.push("F"+m[1]);
+    const reCol=/\bcolector(?:es)?\s*((?:[1-6]\s*(?:,|y|e|vs|contra)?\s*)+)/g; while((m=reCol.exec(q))) nums(m[1]).forEach(n=>{ if(n>=1&&n<=6&&!e.cols.includes(n)) e.cols.push(n); });
+    const rePos=/\bc\s?([1-6])\s*-?\s*p\s?([12])\b/g; while((m=rePos.exec(q))){ e.pos.push([+m[1],+m[2]]); if(!e.cols.includes(+m[1])) e.cols.push(+m[1]); }
+    const reC=/\bc\s?([1-6])\b/g; while((m=reC.exec(q))) if(!e.cols.includes(+m[1])) e.cols.push(+m[1]);
+    const reL=/\b([a-z]{1,2}\d{1,2}f\d{1,3})\b/g; while((m=reL.exec(q))) e.levs.push(m[1].toUpperCase());
+    const mf=q.match(/\b(?:familias?|linea)\s+(?:de\s+)?(?:la\s+)?([a-z])\b(?!\w)/); if(mf) e.fam=mf[1].toUpperCase();
+    const reG=/\b(?:gen|generacion(?:es)?)\s*((?:\d{1,2}\s*(?:,|y|e|a)?\s*)+)/g; while((m=reG.exec(q))) nums(m[1]).forEach(n=>{ if(!e.gens.includes(n)) e.gens.push(n); });
+    RE_MARCA.lastIndex=0; while((m=RE_MARCA.exec(q))){ const k=MARCA_PAL[m[1]]; if(k&&!e.marcas.includes(k)) e.marcas.push(k); }
+    return e; }
+
+  /* ---------- 3. Datos ---------- */
+  function datos(){ const now=Date.now(), P=App.D.pend(now).map(x=>{ const L=x.t.levadura||{}, pn=parse(L.nombre);
+      return Object.assign({},x,{tq:+x.t.tq,lote:x.t.lote,marca:x.t.marca,lev:L.nombre,gen:L.generacion!=null?+L.generacion:null,fam:pn.fam,mk:pn.marca||x.t.marca,pr:AL.proy(x),nx:C.siguiente(x.r,x.st,now),L}); });
+    const POS=[]; [1,2,3,4,5,6].forEach(n=>[1,2].forEach(s=>{ const c=App.S.colectores[`c${n}-${s}`]; const id=`C${n}-P${s}`; if(!c){ POS.push({n,s,id,libre:true,tone:"idle"}); return; } const tc=App.T.tiempoColector(c,now)||{}, pn=parse(c.nombre);
+      POS.push({n,s,id,c,nombre:c.nombre,gen:c.generacion!=null?+c.generacion:null,fam:pn.fam,mk:pn.marca||c.marca,vol:c.vol,viab:c.viab,cons:c.cons,ph:c.ph,tc,mr:tc.mr?+tc.mr:null,k:tc.k,tone:{rojo:"crit",naranja:"warn",verde:"ok"}[tc.k]||"idle"}); }));
+    const REG=(BDM.registros()||[]).filter(r=>r.nombre&&r.estadoRegistro!=="anulado");
+    return {now,P,POS,OC:POS.filter(p=>!p.libre),REG,lotes:new Set(P.map(x=>x.lote))}; }
+  const byTq=(D,n)=>D.P.find(x=>x.tq===+n);
+  const estadoTxt=st=>({utilizada:"ya utilizada",inventario:"disponible en colector",vaciada:"vaciada sin resiembra",descartada:"descartada",incompleto:"registro incompleto",sincol:"sin colector"}[st]||st);
+  const padre=(D,r)=>D.REG.find(p=>p.id!==r.id&&(p.siembras||[]).some(s=>s.lote===r.lote));
+
+  /* ---------- 4. Piezas visuales ---------- */
+  const fvc=(o,extra)=>`<a class="fvc ${TONE[o.st.k]||"idle"}" href="#/tanque/${esc(o.lote)}">FV ${o.tq}${extra?` <small>${extra}</small>`:""}</a>`;
+  const fvPlain=n=>`<span class="fvc idle">FV ${n}</span>`;
+  const posc=p=>`<a class="fvc ${p.tone}" href="#/colectores/${p.n}">${p.id}${p.nombre?` <small>${esc(p.nombre)}</small>`:""}</a>`;
+  const pill=(t,tone)=>`<span class="pl ${tone||""}">${esc(t)}</span>`;
+  const row=(l,h)=>`<div class="ans-r"><em>${esc(l)}</em><span>${h}</span></div>`;
+  const kp=(arr)=>`<div class="ans-k">${arr.map(([v,l,t])=>`<div class="${t||""}"><b>${v}</b><span>${esc(l)}</span></div>`).join("")}</div>`;
+  function ans(o){ return `<div class="ans">${o.h?`<div class="ans-h">${o.h}</div>`:""}${o.s?`<div class="ans-s">${o.s}</div>`:""}${o.k?kp(o.k):""}${(o.rows||[]).filter(Boolean).join("")}${o.note?`<div class="ans-n">${o.note}</div>`:""}${o.ver?`<a class="ans-ver" href="${o.ver[0]}"${o.ver[2]?` data-an="${o.ver[2]}"`:""}>${esc(o.ver[1])} ›</a>`:""}${o.btn?`<div class="ans-b">${o.btn.map(([l,a])=>`<button type="button" class="ans-btn" data-v34="${esc(a)}">${esc(l)}</button>`).join("")}</div>`:""}</div>`; }
+  const out=(o,opts,mem)=>({h:ans(o),opts:(opts||[]).map(q=>typeof q==="string"?{label:q,q}:q),mem,directo:true});
+  const chips=a=>a.length?`<span class="cps">${a.join("")}</span>`:"";
+  const conMas=(a,max,link)=>a.slice(0,max).join("")+(a.length>max?`<span class="more">y ${a.length-max} más${link?` · <a href="${link}">ver todos</a>`:""}</span>`:"");
+
+  /* ---------- 5. Respuestas sobre UN tanque (FV) ---------- */
+  function fvFicha(D,o){ const {r}=o, L=o.L, now=D.now, p=o.pr;
+    return out({h:`FV ${o.tq} · ${esc(tit(o.marca))}`,s:`Lote ${esc(o.lote)} · ${pill(ST_TXT[o.st.k]||o.st.txt,TONE[o.st.k])}`,
+      k:[[r.ext!=null?f(r.ext,2):"—","Extracto °P"],[r.atenuacion!=null?Math.round(r.atenuacion*100)+"%":"—","Atenuación"],[p.estado==="alcanzada"?"En alta":p.estado==="proyectada"?fmtS(p.t).slice(0,5):"—","Alta"]],
+      rows:[ r.t0?row("T0",`${fmtS(r.t0)} <small>${rel(r.t0,now)}</small>`):row("T0","todavía sin calcular"), r.venc&&["rojo","naranja","verde"].includes(o.st.k)?row("Máximo",`${fmtS(r.venc)} <small>${rel(r.venc,now)}</small>`):null,
+        L.nombre?row("Levadura",`${esc(L.nombre)} · Gen ${esc(L.generacion)}${r.nombreCosecha?` → saldrá <b>${esc(r.nombreCosecha)}</b>`:""}`):null, row("Qué hacer",consejo(o,now)) ],
+      ver:["#/tanque/"+encodeURIComponent(o.lote),"Abrir el tanque"]},["Cuándo llega a alta el FV "+o.tq,"De dónde viene su levadura"],{fv:o.tq}); }
+  function consejo(o,now){ const k=o.st.k; if(k==="rojo") return "Retírala cuanto antes y deja el motivo de la demora."; if(k==="naranja") return `Retírala antes del máximo (${fmtS(o.r.venc)}).`; if(k==="verde") return "Ya puedes retirarla; lo ideal es hacia T0 + 12 h."; if(k==="amarillo") return "Prepárate: el T0 está cerca."; return o.r.ext==null?"Toma una muestra de extracto para afinar el T0.":"Sigue tomando muestras; el T0 se afina con cada una."; }
+  function tema(q){ const T=[["alta",/\balta\b|dar de alta|extracto de alta/],["porque",/por que|porque|razon|motivo|a que se debe/],["puedo",/\b(puedo|se puede|podemos|toca|debo|hay que|ya)\b.*\b(retir|cosech|sacar)/],["vence",/venc|limite|plazo|maximo|hasta cuando|ultimo momento/],["t0",/\bt0\b|t cero|cuando.*(retir|cosech|sacar)|hora de retiro|ventana|a que hora|mejor momento|momento ideal/],
+      ["atenuacion",/atenu/],["extracto",/extracto|grados|plato|densidad|\bp\b/],["ritmo",/ritmo|velocidad|rapido|lento|\bcae\b|caida|baja por dia|ha bajado|cuanto baja|va bajando/],["muestras",/muestras?/],["linaje",/viene|origen|linaje|ancestro|padre|genealog/],
+      ["levadura",/levadura|\bleva\b|cepa|sembr|que tiene|con que/],["marca",/marca|cerveza|que se fermenta|\blote\b|consecutivo/],["familia",/familia|linea/],["gen",/generacion|\bgen\b/],["llenado",/llen(o|ado)|fin de llenado|hace cuanto/],["porque",/por que|porque|razon|motivo|a que se debe/],["hacer",/que (hago|debo|hay que|toca|sigue)|recomiend|consejo|que pasa si/],["estado",/estado|como (va|esta|anda|vamos)|situacion/]];
+    for(const [k,re] of T) if(re.test(q)) return k; return null; }
+  function fvTema(D,o,q,t){ const {r}=o, now=D.now, nom=`FV ${o.tq}`, p=o.pr;
+    switch(t){
+      case "alta":{ if(p.estado==="sin-meta") return out({h:`${nom} es ${esc(tit(o.marca))} y no tiene extracto de alta definido.`,btn:[["Definirlo en Ajustes","open:#/config"]]},[],{fv:o.tq});
+        if(p.estado==="alcanzada") return out({h:`${nom} <b>ya llegó a la alta</b>`,s:`Objetivo ${f(p.A,1)} °P · alcanzada ${rel(p.t,now)} (${fmtS(p.t)})`,k:[[f(p.last.e,2),"Extracto actual °P"],[f(p.A,1),"Alta °P","ok"]],ver:["#/analisis","Ver la curva proyectada",""]},["Cuáles ya llegaron a alta"],{fv:o.tq});
+        if(p.estado==="proyectada") return out({h:`${nom} llegará a la alta el <b>${fmtS(p.t)}</b>`,s:`${rel(p.t,now)} · objetivo ${f(p.A,1)} °P`,k:[[f(p.last.e,2),"Extracto hoy °P"],[f(p.falta,2),"Faltan °P"],[f(p.dias,1),"Ritmo °P/día"]],rows:[row("Rango",`${fmtS(p.lo)} – ${fmtS(p.hi)}`),row("Confianza",{alta:"alta",media:"media",baja:"baja"}[p.conf]+(p.metodo==="marca"?" · por días de referencia":"")),p.vencida?`<div class="ans-n warn">La última muestra es vieja (${f(p.hSin,0)} h): toma una nueva para confirmar.</div>`:null],ver:["#/analisis","Ver la curva y el simulador",""]},[],{fv:o.tq});
+        return out({h:`Todavía no puedo proyectar la alta de ${nom}`,s:p.estado==="sin-datos"?"Faltan muestras de extracto.":"El extracto no muestra caída."},[],{fv:o.tq}); }
+      case "puedo":{ const ok=["rojo","naranja","verde"].includes(o.st.k); return out({h:ok?`<b>Sí</b>, ${nom} se puede retirar`:`<b>Todavía no</b> para ${nom}`,s:ok?(o.st.k==="rojo"?"Ya pasó el máximo: hazlo cuanto antes.":`Ventana abierta hasta ${fmtS(r.venc)} (${rel(r.venc,now)}).`):(r.t0?`Su T0 es ${fmtS(r.t0)} (${rel(r.t0,now)}).`:"Aún no tiene T0 calculado."),btn:ok&&App.Store.canWrite?[["Retirar levadura","retiro:"+o.lote]]:null},[],{fv:o.tq}); }
+      case "vence":{ if(!r.venc) return out({h:`${nom} todavía no tiene T0`,s:"Faltan muestras de extracto o el extracto límite."},[],{fv:o.tq}); const v=+parseDT(r.venc);
+        return out({h:`El retiro de ${nom} ${v>now?"vence":"venció"} el <b>${fmtS(v)}</b>`,s:rel(v,now),rows:[row("T0",fmtS(r.t0)),row("Ideal",fmtS(+parseDT(r.t0)+12*HOUR))]},[],{fv:o.tq}); }
+      case "t0":{ if(!r.t0) return out({h:`${nom} todavía no tiene T0`,s:"Faltan muestras de extracto o el extracto límite."},[],{fv:o.tq}); const t0=+parseDT(r.t0);
+        return out({h:`El T0 de ${nom} ${t0>now?"será":"fue"} el <b>${fmtS(t0)}</b>`,s:rel(t0,now)+(r.proy?" · proyectado":""),rows:[row("Ideal (+12 h)",fmtS(t0+12*HOUR)),row("Máximo (+24 h)",fmtS(t0+24*HOUR)),row("Estado",pill(ST_TXT[o.st.k],TONE[o.st.k]))]},[],{fv:o.tq}); }
+      case "atenuacion": case "extracto":{ if(r.ext==null) return out({h:`${nom} aún no tiene muestras de extracto`,btn:App.Store.canWrite?[["Agregar muestra","muestra:"+o.lote]]:null},[],{fv:o.tq});
+        return out({h:`${nom}: extracto <b>${f(r.ext,2)} °P</b> · atenuación <b>${Math.round((r.atenuacion||0)*100)} %</b>`,s:`Última muestra ${rel(r.extFecha,now)}`,k:[[f(r.ext,2),"Extracto °P"],[Math.round((r.atenuacion||0)*100)+"%","Atenuación"],[r.falta75>0?f(r.falta75,2):"0","Faltan al 75 % °P"]],rows:[o.pr.A!=null?row("Alta",`${f(o.pr.A,1)} °P · ${o.pr.estado==="alcanzada"?"ya alcanzada":o.pr.estado==="proyectada"?"llegará "+fmtS(o.pr.t):"sin proyección"}`):null],ver:["#/tanque/"+encodeURIComponent(o.lote),"Ver la curva completa"]},[],{fv:o.tq}); }
+      case "ritmo":{ const p2=o.pr; if(has(q,/(bajado|cuanto baj|ha caido)/)&&o.t.eo!=null&&r.ext!=null) return out({h:`${nom} ha bajado <b>${f(o.t.eo-r.ext,2)} °P</b> desde el llenado`,s:`De ${f(o.t.eo,2)} a ${f(r.ext,2)} °P · atenuación ${Math.round((r.atenuacion||0)*100)} %`,rows:[p2.dias?row("Ritmo actual",`${f(p2.dias,2)} °P por día`):null]},[],{fv:o.tq}); return out({h:p2.dias?`${nom} baja <b>${f(p2.dias,2)} °P por día</b>`:`No hay ritmo calculado para ${nom}`,s:p2.dias?`Calculado con ${p2.n} ${plural(p2.n,"punto","puntos")} de la curva`:"Faltan muestras.",rows:[r.velDia?row("Velocidad (T0)",`${f(r.velDia,2)} °P/día`):null]},[],{fv:o.tq}); }
+      case "muestras":{ const m=(o.t.muestras||[]); return out({h:`${nom} tiene <b>${m.length}</b> ${plural(m.length,"muestra","muestras")} de extracto`,rows:m.slice(-5).reverse().map(x=>row(fmtS(parseDT(x.t)),`${f(x.ext,2)} °P`)),btn:App.Store.canWrite?[["Agregar muestra","muestra:"+o.lote]]:null,ver:["#/tanque/"+encodeURIComponent(o.lote),"Ver todas las muestras"]},[],{fv:o.tq}); }
+      case "levadura": case "gen": case "linaje":{ if(!o.lev) return out({h:`${nom} no tiene levadura registrada`},[],{fv:o.tq}); const reg=D.REG.find(x=>x.id===o.L.levId), pa=reg&&padre(D,reg);
+        return out({h:`${nom} tiene <b>${esc(o.lev)}</b>`,s:`Generación ${o.gen}${reg?` · familia ${esc(o.fam||"")}`:""}`,rows:[r.nombreCosecha?row("Al cosecharla",`saldrá <b>${esc(r.nombreCosecha)}</b> (Gen ${o.gen+1})`):null,reg?row("Cosechada del",`FV ${esc(reg.tq)}${reg.t0?" · "+fmtS(parseDT(reg.t0)):""}`):null,pa?row("Viene de",`<b>${esc(pa.nombre)}</b> (Gen ${pa.generacion})`):null,o.L.viab!=null?row("Calidad",`viabilidad ${pct(o.L.viab)} · consistencia ${pct(o.L.cons)}`):null],ver:reg?["#/detalle/levadura/"+encodeURIComponent(o.lev),"Ver su historia completa"]:null},[],{fv:o.tq,lev:o.lev}); }
+      case "familia":{ if(!o.lev) return out({h:`${nom} no tiene levadura registrada`},[],{fv:o.tq}); return out({h:`La levadura de ${nom} es de la <b>familia ${esc(o.fam||"?")}</b>`,s:`${esc(o.lev)} · ${esc(tit(o.mk))} · Gen ${o.gen}`,ver:o.fam?["#/detalle/familia/"+o.fam+"/"+encodeURIComponent(o.mk),"Ver la familia completa"]:null},[o.fam?{label:`Qué pasó con la familia ${o.fam}`,q:`familia ${o.fam} ${String(o.mk).toLowerCase()}`}:null].filter(Boolean),{fv:o.tq,lev:o.lev}); }
+      case "marca":{ return out({h:`${nom} es <b>${esc(tit(o.marca))}</b>`,s:`Lote ${esc(o.lote)}${o.lev?" · levadura "+esc(o.lev):""}`},[],{fv:o.tq}); }
+      case "llenado":{ const fin=o.t.fin?+parseDT(o.t.fin):null; return out({h:fin?`${nom} terminó de llenarse el <b>${fmtS(fin)}</b>`:`${nom} no tiene fin de llenado`,s:fin?`Hace ${rel(fin,now).replace(/^hace /,"")} · extracto original ${o.t.eo!=null?f(o.t.eo,2)+" °P":"—"}`:null},[],{fv:o.tq}); }
+      case "porque":{ const ex=[]; if(o.st.k==="rojo") ex.push(`pasó el máximo de retiro (T0 + 24 h = ${fmtS(r.venc)}) y todavía no se registra el retiro`); else if(o.st.k==="naranja") ex.push(`está dentro de la ventana de retiro, que cierra ${fmtS(r.venc)}`); else if(o.st.k==="verde") ex.push("ya llegó a T0 y está lista para retirar"); else ex.push(r.t0?`su T0 será ${fmtS(r.t0)}`:"todavía no tiene T0 calculado");
+        return out({h:`${nom} está en <b>${ST_TXT[o.st.k].toLowerCase()}</b> porque ${ex[0]}`,rows:[o.gen!=null&&o.gen>=8?row("Generación",`la cosecha pasaría a Gen ${o.gen+1}: uso excepcional`):null,r.proy?row("Dato",`el T0 está proyectado (${o.r.T&&o.r.T.metodo==="marca"?"por días de referencia de la marca":"sin todas las muestras"})`):null]},[],{fv:o.tq}); }
+      case "hacer":{ if(has(q,/que pasa si/)) return out({h:"Si no se retira a tiempo",s:"Pasado el máximo (T0 + 24 h) el retiro queda registrado como <b>demorado</b> y la levadura puede perder calidad (viabilidad).",rows:[row(nom,`${pill(ST_TXT[o.st.k],TONE[o.st.k])} · máximo ${fmtS(r.venc)}`)]},[],{fv:o.tq}); return out({h:consejo(o,now),s:`${nom} · ${pill(ST_TXT[o.st.k],TONE[o.st.k])}`,btn:["rojo","naranja","verde"].includes(o.st.k)&&App.Store.canWrite?[["Retirar levadura","retiro:"+o.lote],["Agregar muestra","muestra:"+o.lote]]:(App.Store.canWrite?[["Agregar muestra","muestra:"+o.lote]]:null)},[],{fv:o.tq}); }
+      default: return fvFicha(D,o); } }
+  function fvComparar(D,list){ const cab=list.map(o=>`FV ${o.tq}`); const filas=[["Estado",o=>pill(ST_TXT[o.st.k],TONE[o.st.k])],["Marca",o=>esc(tit(o.marca))],["Levadura",o=>o.lev?`${esc(o.lev)} (Gen ${o.gen})`:"—"],["Extracto",o=>o.r.ext!=null?f(o.r.ext,2)+" °P":"—"],["Atenuación",o=>o.r.atenuacion!=null?Math.round(o.r.atenuacion*100)+" %":"—"],["Ritmo",o=>o.pr.dias?f(o.pr.dias,1)+" °P/día":"—"],["T0",o=>o.r.t0?fmtS(o.r.t0):"—"],["Alta",o=>o.pr.estado==="alcanzada"?"ya llegó":o.pr.estado==="proyectada"?fmtS(o.pr.t):"—"]];
+    return out({h:`Comparación de ${lst(cab)}`,rows:[`<div class="ans-cmp" style="grid-template-columns:78px repeat(${list.length},1fr)"><span></span>${list.map(o=>`<b>${fvc(o)}</b>`).join("")}${filas.map(([l,fn])=>`<em>${l}</em>${list.map(o=>`<span>${fn(o)}</span>`).join("")}`).join("")}</div>`]},[],{fv:list[0].tq}); }
+
+  /* ---------- 6. Listas y rankings de tanques ---------- */
+  function filtroFV(q,e,D){ let arr=D.P.slice(), et=[], filtro=null;
+    if(has(q,/(vencid|atrasad|retiro pendiente|retiros pendientes|pasaron|fuera de ventana)/)){ arr=arr.filter(o=>o.st.k==="rojo"); et.push("con retiro vencido"); filtro="rojo"; }
+    else if(has(q,/(por vencer|cerca de vencer|vence pronto|retiro proximo|retiros proximos|en ventana)/)){ arr=arr.filter(o=>o.st.k==="naranja"); et.push("por vencer"); filtro="naranja"; }
+    else if(has(q,/(listos? para retirar|ya se pueden retirar|se pueden retirar|listas? para retirar)/)){ arr=arr.filter(o=>o.st.k==="verde"); et.push("listos para retirar"); filtro="verde"; }
+    else if(has(q,/(en proceso|fermentando|en fermentacion|sin t0|aun no llegan|todavia no)/)){ arr=arr.filter(o=>["gris","sin","amarillo"].includes(o.st.k)); et.push("en proceso"); filtro="gris"; }
+    else if(has(q,/(por retirar|para retirar|a retirar|retiros)/)){ arr=arr.filter(o=>["rojo","naranja","verde"].includes(o.st.k)); et.push("por retirar"); }
+    if(e.marcas.length){ arr=arr.filter(o=>e.marcas.includes(String(o.marca).toUpperCase())); et.push("de "+e.marcas.map(tit).join(" y ")); }
+    if(e.levs.length){ arr=arr.filter(o=>e.levs.includes(o.lev)); et.push("con "+e.levs.join(", ")); }
+    if(e.gens.length){ arr=arr.filter(o=>e.gens.includes(o.gen)); et.push("de Gen "+e.gens.join(", ")); }
+    if(e.fam){ arr=arr.filter(o=>o.fam===e.fam); et.push("de la familia "+e.fam); }
+    const rgl=has(q,/(llen[oa]|llenaron|llenado|llenamos)/)?rango(q,D.now):null; if(rgl){ arr=arr.filter(o=>o.t.fin&&+parseDT(o.t.fin)>=rgl.a&&+parseDT(o.t.fin)<rgl.b); et.push("llenados "+rgl.t); }
+    if(has(q,/(sin muestras|sin extracto|no tienen (muestras|extracto)|aun no tienen (muestras|extracto)|sin medicion)/)){ arr=arr.filter(o=>o.r.ext==null); et.push("sin muestras de extracto"); }
+    const hm=q.match(/hace mas de (\d+)\s*(dias?|horas?)/); if(hm&&filtro==="rojo"){ const ms=+hm[1]*(/dia/.test(hm[2])?864e5:HOUR); arr=arr.filter(o=>o.r.venc&&D.now-+parseDT(o.r.venc)>ms); et.push(`hace más de ${hm[1]} ${hm[2]}`); }
+    const um=q.match(/(mas de|menos de|mayor a|menor a|al menos|minimo|sobre|bajo|por debajo de|por encima de|mayor que|menor que)\s+(\d+(?:[.,]\d+)?)/); if(um){ const v=parseFloat(um[2].replace(",",".")), gt=/(mas de|mayor|al menos|minimo|sobre|encima)/.test(um[1]), at=has(q,/muestras?/)?{g:o=>(o.t.muestras||[]).length,n:"muestras"}:has(q,/atenu/)?{g:o=>o.r.atenuacion!=null?o.r.atenuacion*100:null,n:"% de atenuación"}:has(q,/extracto|grados|plato|\bp\b/)?{g:o=>o.r.ext,n:"°P de extracto"}:has(q,/ritmo|velocidad/)?{g:o=>o.pr.dias,n:"°P/día de ritmo"}:has(q,/\bgen\b|generacion/)?{g:o=>o.gen,n:"de generación"}:null;
+      if(at){ arr=arr.filter(o=>{ const x=at.g(o); return x!=null&&(gt?x>v:x<v); }); et.push(`con ${gt?"más":"menos"} de ${um[2]} ${at.n}`); } }
+    if(has(q,/\ben alta\b|llegaron a alta|ya llegaron/)){ arr=arr.filter(o=>o.pr.estado==="alcanzada"); et.push("que ya llegaron a la alta"); }
+    return {arr,et:et.join(" "),filtro}; }
+  const ATTR={extracto:{re:/extracto|grados|plato/,get:o=>o.r.ext,fmt:v=>f(v,2)+" °P"},atenuacion:{re:/atenu/,get:o=>o.r.atenuacion!=null?o.r.atenuacion*100:null,fmt:v=>Math.round(v)+" %"},ritmo:{re:/ritmo|velocidad|rapido|lento|caida/,get:o=>o.pr.dias,fmt:v=>f(v,1)+" °P/día"},
+    gen:{re:/generacion|\bgen\b/,get:o=>o.gen,fmt:v=>"Gen "+v},muestras:{re:/muestras/,get:o=>(o.t.muestras||[]).length,fmt:v=>v+" muestras"},
+    t0:{re:/\bt0\b|primero|proximo|urgente|vence|antes|pronto/,get:o=>o.r.t0?+parseDT(o.r.t0):null,fmt:v=>fmtS(v),time:true},alta:{re:/\balta\b/,get:o=>o.pr.t||null,fmt:v=>fmtS(v),time:true},llenado:{re:/llen|antiguo|viejo|mas tiempo|lleva mas/,get:o=>o.t.fin?+parseDT(o.t.fin):null,fmt:v=>fmtS(v),time:true}};
+  function fvLista(D,q,e){ const {arr,et,filtro}=filtroFV(q,e,D);
+    // ranking
+    const dir=has(q,/(menor|mas bajo|mas baja|minimo|menos|mas lento|mas lenta|primero|proximo|antes|mas viejo|mas antiguo|mas pronto|mas tiempo|lleva mas)/)?"asc":has(q,/(mayor|mas alto|maximo|mas|mejor|top|mas rapido|ultimo|despues|mas reciente)/)?"desc":null;
+    const conUmbral=/(mas de|menos de|mayor a|menor a|al menos|minimo|sobre|por debajo de|por encima de|mayor que|menor que)\s+\d/.test(q);
+    const rk=!conUmbral&&has(q,/(cual|cuales|que).*(tiene|va|esta|es|hay)|\bel\b.*\b(mayor|menor|mas|menos)/)&&dir; let atr=null; for(const k of ["atenuacion","extracto","ritmo","muestras","gen","alta","llenado","t0"]) if(ATTR[k].re.test(q)){ atr=k; break; }
+    if(rk&&atr){ const A=ATTR[atr], base=arr.filter(o=>A.get(o)!=null); if(!base.length) return out({h:"Ningún tanque tiene ese dato todavía."});
+      const ord=base.slice().sort((a,b)=>dir==="asc"?A.get(a)-A.get(b):A.get(b)-A.get(a)); const top=ord.slice(0,3); const fut=A.time&&dir==="asc";
+      const asc=dir==="asc", H={extracto:`tiene el ${asc?"menor":"mayor"} extracto`,atenuacion:`tiene la ${asc?"menor":"mayor"} atenuación`,ritmo:asc?"es el más lento (menor ritmo de caída)":"es el más rápido (mayor ritmo de caída)",gen:`tiene la generación ${asc?"más baja":"más alta"}`,muestras:`tiene ${asc?"menos":"más"} muestras`,t0:asc?"tiene el T0 más temprano":"tiene el T0 más lejano",alta:asc?"tiene la alta más temprana":"tiene la alta más lejana",llenado:asc?"es el que más tiempo lleva llenado":"es el llenado más reciente"}[atr];
+      return out({h:`${fvc(top[0])} ${H}: <b>${A.fmt(A.get(top[0]))}</b>`,rows:top.slice(1).map((o,i)=>row(`${i+2}.º`,`${fvc(o)} · ${A.fmt(A.get(o))}`)),note:ord.length>3?`Comparados ${ord.length} tanques${et?" "+et:""}.`:null},[],{fv:top[0].tq}); }
+    // conteo / lista
+    const n=arr.length; const tit0=n===0?`<b>Ningún</b> tanque ${et.replace(/^llenados/,"con llenado")||"con esos datos"}`:`<b>${n}</b> ${plural(n,"tanque","tanques")} ${et||"con levadura"}`;
+    const ordenados=arr.slice().sort((a,b)=>({rojo:0,naranja:1,verde:2,amarillo:3,gris:4,sin:5}[a.st.k]-{rojo:0,naranja:1,verde:2,amarillo:3,gris:4,sin:5}[b.st.k])||(+parseDT(a.r.t0||0))-(+parseDT(b.r.t0||0)));
+    const link=filtro?"#/tanques/"+ST_FILTRO[filtro]:"#/tanques";
+    return out({h:tit0,rows:[n?`<div class="ans-r wide">${chips(ordenados.slice(0,10).map(o=>fvc(o)))}${n>10?`<span class="more">y ${n-10} más</span>`:""}</div>`:null,n&&arr[0]&&ordenados[0].st.k==="rojo"?row("El más atrasado",`${fvc(ordenados[0])} <small>${rel(ordenados[0].r.venc,D.now)}</small>`):null],ver:n>3?[link,"Ver todos en Tanques"]:null},n?[`Qué hago primero`]:[],{}); }
+
+  /* ---------- 7. Colectores ---------- */
+  function colEstadoTxt(p){ return p.libre?"libre":{rojo:"fuera de tiempo",naranja:"cerca del límite",verde:"dentro del tiempo"}[p.k]||"—"; }
+  function colUno(D,n,q,s){ const ps=D.POS.filter(p=>p.n===n&&(!s||p.s===s)), oc=ps.filter(p=>!p.libre);
+    if(has(q,/(libre|vacio|espacio|cabe|disponible)/)&&!has(q,/levadura hay/)) return out({h:oc.length===ps.length?`<b>C${n}</b> está llena`:`<b>C${n}</b> tiene <b>${ps.length-oc.length}</b> ${plural(ps.length-oc.length,"posición libre","posiciones libres")}`,s:ps.map(p=>`${p.id}: ${p.libre?"libre":esc(p.nombre)}`).join(" · ")},[],{col:n});
+    if(has(q,/(limite|vence|sembrar|hora|cuanto tiempo|hasta cuando|tiempo)/)){ if(!oc.length) return out({h:`C${n} está vacía`},[],{col:n}); return out({h:`Límite de siembra en C${n}`,rows:oc.map(p=>row(p.id,`<b>${esc(p.nombre)}</b> · ${p.mr?fmtS(p.mr)+` <small>${rel(p.mr,D.now)}</small>`:"—"} ${pill(colEstadoTxt(p),p.tone)}`))},[],{col:n}); }
+    if(has(q,/(viab|consist|\bph\b|calidad)/)&&oc.length) return out({h:`Calidad en C${n}`,rows:oc.map(p=>row(p.id,`<b>${esc(p.nombre)}</b> · viabilidad ${pct(p.viab)} · consistencia ${pct(p.cons)} · pH ${p.ph!=null?f(p.ph,2):"—"}`))},[],{col:n});
+    if(!oc.length) return out({h:`<b>C${n}</b> está vacía`,s:"Lista para recibir cosecha."},[],{col:n});
+    return out({h:`<b>C${n}</b> · ${oc.length} de ${ps.length} ${plural(ps.length,"posición","posiciones")} con levadura`,rows:ps.map(p=>p.libre?row(p.id,"libre"):row(p.id,`<b>${esc(p.nombre)}</b> · Gen ${p.gen} · ${hl(p.vol)} ${pill(colEstadoTxt(p),p.tone)}`)),ver:["#/colectores/"+n,"Abrir el colector"]},["Cuándo vence el límite de C"+n],{col:n}); }
+  function colGlobal(D,q,e){ const oc=D.OC, libres=D.POS.filter(p=>p.libre);
+    if(has(q,/(mas lleno|mas llena|mas volumen|mas levadura|mayor volumen|menos lleno|mas vacio|menos levadura)/)){ const por=[1,2,3,4,5,6].map(n=>({n,v:D.POS.filter(p=>p.n===n&&!p.libre).reduce((a,p)=>a+(+p.vol||0),0),k:D.POS.filter(p=>p.n===n&&!p.libre).length})), asc=has(q,/(menos|vacio)/), o=por.slice().sort((a,b)=>asc?a.v-b.v:b.v-a.v); return out({h:`<b>C${o[0].n}</b> es el ${asc?"menos lleno":"más lleno"}: ${f(o[0].v,0)} Hl`,rows:o.slice(1,4).map((x,i)=>row(`${i+2}.º`,`C${x.n} · ${f(x.v,0)} Hl · ${x.k} de 2 posiciones`))}); }
+    if(has(q,/(ocupad|llenas?\b|con levadura)/)&&has(q,/(cuant|posicion)/)){ const porC=[1,2,3,4,5,6].map(n=>({n,k:D.POS.filter(p=>p.n===n&&!p.libre).length})); return out({h:`<b>${oc.length}</b> de 12 posiciones ocupadas`,k:[[oc.length,"Ocupadas"],[libres.length,"Libres","ok"],[oc.filter(p=>p.k==="rojo").length,"Fuera de tiempo",oc.some(p=>p.k==="rojo")?"crit":""]],rows:porC.map(c=>row("C"+c.n,`${c.k} de 2`)),ver:["#/colectores","Abrir colectores"]}); }
+    if(has(q,/(primero|se va a vencer|proxima a vencer|proximo a vencer|vence antes)/)){ const l=oc.filter(p=>p.k!=="rojo"&&p.mr).sort((a,b)=>a.mr-b.mr); if(!l.length) return out({h:"Ninguna posición tiene límite próximo"}); return out({h:`La primera en vencer es <b>${esc(l[0].nombre)}</b> (${l[0].id})`,s:`Límite de siembra ${fmtS(l[0].mr)} · ${rel(l[0].mr,D.now)}`,rows:l.slice(1,4).map((p,i)=>row(`${i+2}.ª`,`${esc(p.nombre)} (${p.id}) · ${fmtS(p.mr)}`))}); }
+    if(has(q,/(fuera de tiempo|vencid|pasad|atrasad|critic)/)){ const l=oc.filter(p=>p.k==="rojo"); return out({h:l.length?`<b>${l.length}</b> ${plural(l.length,"posición fuera de tiempo","posiciones fuera de tiempo")}`:"<b>Ninguna</b> posición fuera de tiempo",rows:l.map(p=>row(p.id,`<b>${esc(p.nombre)}</b> · pasó el límite ${rel(p.mr,D.now)}`)),btn:l.length?[["Abrir colectores","open:#/colectores"]]:null}); }
+    if(has(q,/(cerca del limite|por vencer|proximo a vencer|casi)/)){ const l=oc.filter(p=>p.k==="naranja"); return out({h:l.length?`<b>${l.length}</b> cerca del límite`:"<b>Ninguna</b> cerca del límite",rows:l.map(p=>row(p.id,`<b>${esc(p.nombre)}</b> · sembrar antes de ${fmtS(p.mr)} <small>${rel(p.mr,D.now)}</small>`))}); }
+    if(has(q,/(libre|vacio|vacia|espacio|desocupad|cabe)/)){ const porC={}; libres.forEach(p=>(porC[p.n]=porC[p.n]||[]).push(p.id)); return out({h:`<b>${libres.length}</b> de 12 posiciones libres`,rows:Object.entries(porC).map(([n,a])=>row("C"+n,a.join(" y "))),ver:["#/analisis","Ver cuántas habrá en 72 h","cap"]}); }
+    if(has(q,/(cuanto|volumen|hl|hectolitros|cantidad)/)){ let tot=0; const por={}; oc.forEach(p=>{ if(p.vol>0){ tot+=+p.vol; por[p.n]=(por[p.n]||0)+ +p.vol; } }); return out({h:`<b>${f(tot,0)} Hl</b> de levadura en colectores`,s:`${oc.length} posiciones ocupadas de 12`,rows:Object.entries(por).map(([n,v])=>row("C"+n,f(v,0)+" Hl")),note:oc.some(p=>!(p.vol>0))?`${oc.filter(p=>!(p.vol>0)).map(p=>p.id).join(", ")} sin volumen registrado.`:null}); }
+    const porC=[1,2,3,4,5,6].map(n=>{ const ps=D.POS.filter(p=>p.n===n), o=ps.filter(p=>!p.libre), peor=o.some(p=>p.k==="rojo")?"rojo":o.some(p=>p.k==="naranja")?"naranja":"verde"; return {n,o,peor,ps}; });
+    return out({h:`Colectores: <b>${oc.length}</b> de 12 posiciones ocupadas`,rows:porC.map(c=>row("C"+c.n,c.o.length?`${c.o.map(p=>esc(p.nombre)).join(" · ")} ${pill({rojo:"fuera de tiempo",naranja:"cerca del límite",verde:"en tiempo"}[c.peor],TONE[c.peor])}`:"libre")),ver:["#/colectores","Abrir colectores"]}); }
+
+  /* ---------- 8. Base de datos de levadura ---------- */
+  function sembradas(D,rs){ const sie=[]; rs.forEach(r=>(r.siembras||[]).forEach(s=>sie.push({tq:+s.tq,lote:s.lote,fecha:s.fecha,nombre:r.nombre,gen:+r.generacion}))); return sie; }
+  function familia(D,fam,marca){ fam=fam.toUpperCase(); const R=D.REG.filter(r=>String(r.familia).toUpperCase()===fam&&(!marca||r.marca===marca));
+    if(!R.length) return out({h:`No encuentro la familia <b>${esc(fam)}</b>${marca?" de "+esc(tit(marca)):""}`,s:"Revisa la letra o prueba con «familias con más cosechas»."},["Familias con más cosechas","Qué familias tengo en proceso"]);
+    const marcas=[...new Set(R.map(r=>r.marca))].filter(Boolean).sort((a,b)=>R.filter(r=>r.marca===b).length-R.filter(r=>r.marca===a).length);
+    const bl=marcas.map(m=>{ const rs=R.filter(r=>r.marca===m), g=rs.map(r=>+r.generacion).filter(x=>!isNaN(x)), pr=D.P.filter(o=>o.fam===fam&&o.mk===m), co=D.OC.filter(o=>o.fam===fam&&o.mk===m), si=sembradas(D,rs).filter(s=>!D.lotes.has(s.lote)), tq=new Set(si.map(s=>s.tq)).size;
+      return `<div class="ans-sec"><div class="ans-st">Familia ${esc(fam)} · ${esc(tit(m))}</div><div class="ans-s">${rs.length} cosechas · Gen ${Math.min(...g)}${Math.max(...g)!==Math.min(...g)?" a "+Math.max(...g):""}</div>
+        ${row("En proceso",pr.length?chips(pr.map(o=>fvc(o,esc(o.lev)))):'<span class="mut">ninguno</span>')}${row("En colectores",co.length?chips(co.map(posc)):'<span class="mut">ninguno</span>')}${row("Ya se usó",`<b>${si.length}</b> ${plural(si.length,"siembra terminada","siembras terminadas")} en <b>${tq}</b> ${plural(tq,"tanque","tanques")}`)}
+        <a class="ans-ver" href="#/detalle/familia/${esc(fam)}/${encodeURIComponent(m)}">Ver detalle completo ›</a></div>`; });
+    const otras=[...new Set(D.P.concat(D.OC).filter(o=>o.fam&&o.fam!==fam&&o.mk).map(o=>o.fam+"|"+o.mk))].slice(0,3).map(k=>{ const [a,b]=k.split("|"); return {label:`Familia ${a} · ${tit(b)}`,q:`familia ${a} ${b.toLowerCase()}`}; });
+    return out({rows:bl},otras,{fam,marca}); }
+  function genMapa(D){ const m={}; const g=n=>m[n]||(m[n]={g:n,t:[],c:[]}); D.P.forEach(o=>{ if(o.gen!=null) g(o.gen).t.push(o); }); D.OC.forEach(o=>{ if(o.gen!=null) g(o.gen).c.push(o); }); return Object.values(m).sort((a,b)=>a.g-b.g); }
+  function generaciones(D,gen,donde){ let gs=genMapa(D); if(gen.length) gs=gs.filter(x=>gen.includes(x.g));
+    if(donde==="col") gs=gs.map(x=>({g:x.g,t:[],c:x.c})).filter(x=>x.c.length); if(donde==="t") gs=gs.map(x=>({g:x.g,t:x.t,c:[]})).filter(x=>x.t.length);
+    const nT=gs.reduce((a,x)=>a+x.t.length,0), nC=gs.reduce((a,x)=>a+x.c.length,0);
+    if(!gs.length) return out({h:gen.length?`Ahora mismo <b>no tienes</b> levadura de Gen ${gen.join(", ")}`:"No hay levadura en uso ahora",s:gen.length?`En la base de datos hay ${D.REG.filter(r=>gen.includes(+r.generacion)).length} cosechas de esa generación.`:null},[{label:"Todas las generaciones",q:"que generaciones tengo en este momento"}]);
+    return out({h:donde==="col"?`En colectores tienes <b>${nC}</b> ${plural(nC,"unidad","unidades")}`:donde==="t"?`En fermentación tienes <b>${nT}</b> ${plural(nT,"unidad","unidades")}`:`Ahora tienes <b>${nT+nC}</b> ${plural(nT+nC,"unidad","unidades")} de levadura`,s:donde?null:`${nT} en fermentación · ${nC} en colectores`,
+      rows:gs.map(x=>`<div class="ans-g"><b class="gn">Gen ${x.g}</b><span><b>${x.t.length+x.c.length}</b> ${x.t.length?`<small>${x.t.length} en tanque</small>`:""}${x.c.length?` <small>${x.c.length} en colector</small>`:""}<span class="cps">${[...x.t.map(o=>fvc(o,esc(o.lev))),...x.c.map(posc)].join("")}</span></span></div>`),ver:["#/detalle/generaciones","Ver el detalle por generación"]},
+      gen.length?[{label:"Todas las generaciones",q:"que generaciones tengo en este momento"}]:[{label:"Solo en colectores",q:"que generaciones tengo en colectores"},{label:"Solo en fermentación",q:"que generaciones tengo en fermentacion"}],{gen:gen[0]}); }
+  function levadura(D,nombre){ const R=D.REG.filter(r=>r.nombre===nombre), enT=D.P.filter(o=>o.lev===nombre), enC=D.OC.filter(o=>o.nombre===nombre); if(!R.length&&!enT.length&&!enC.length) return null; const r=R[0], pn=parse(nombre);
+    const sie=r?(r.siembras||[]).map(s=>({tq:+s.tq,lote:s.lote,fecha:s.fecha})):[], proc=sie.filter(s=>D.lotes.has(s.lote)), hechas=sie.filter(s=>!D.lotes.has(s.lote)), pa=r&&padre(D,r);
+    return out({h:`<b>${esc(nombre)}</b>`,s:`${esc(tit(pn.marca||(r&&r.marca)||""))} · familia ${esc(pn.fam||"")} · Gen ${pn.gen!=null?pn.gen:""}${r?" · "+pill(estadoTxt(r.st),r.st==="inventario"?"ok":r.st==="descartada"?"crit":"idle"):""}`,
+      rows:[r?row("Cosechada",`FV ${esc(r.tq)}${r.t0?" · "+fmtS(parseDT(r.t0)):""}${pa?` · viene de <b>${esc(pa.nombre)}</b>`:""}`):null,
+        row("En proceso",proc.length?chips(proc.map(s=>{ const o=byTq(D,s.tq); return o&&o.lote===s.lote?fvc(o):fvPlain(s.tq); })):'<span class="mut">ninguna siembra en curso</span>'),
+        row("En colector",enC.length?chips(enC.map(posc)):'<span class="mut">ya no queda en colectores</span>'),
+        row("Ya se usó",hechas.length?`en <b>${new Set(hechas.map(s=>s.tq)).size}</b> ${plural(new Set(hechas.map(s=>s.tq)).size,"tanque","tanques")}`:'<span class="mut">sin siembras terminadas</span>'),
+        r&&r.viab!=null?row("Calidad",`viabilidad ${pct(r.viab)} · consistencia ${pct(r.cons)} · pH ${r.ph!=null?f(r.ph,2):"—"}`):null],ver:["#/detalle/levadura/"+encodeURIComponent(nombre),"Ver su historia completa"]},["De dónde viene "+nombre],{lev:nombre}); }
+  function linaje(D,nombre){ const r=D.REG.find(x=>x.nombre===nombre); if(!r) return null; const ch=[r]; let c=r; for(let i=0;i<8;i++){ const p=padre(D,c); if(!p||ch.includes(p)) break; ch.push(p); c=p; }
+    return out({h:`Linaje de <b>${esc(nombre)}</b>`,s:`${ch.length} ${plural(ch.length,"generación","generaciones")} hacia atrás`,rows:[`<div class="ans-line">${ch.map((x,i)=>`<div><i></i><span><b>${esc(x.nombre)}</b> <small>Gen ${x.generacion} · FV ${esc(x.tq)}${x.t0?" · "+fmtS(parseDT(x.t0)):""}</small></span></div>`).join("")}</div>`],ver:["#/detalle/levadura/"+encodeURIComponent(nombre),"Ver su historia completa"]},[],{lev:nombre}); }
+  function estadosBD(D,q,e){ const fl=r=>(!e.marcas.length||e.marcas.includes(r.marca))&&(!e.fam||String(r.familia).toUpperCase()===e.fam)&&(!e.gens.length||e.gens.includes(+r.generacion)); const R=D.REG.filter(fl), c={}; R.forEach(r=>c[r.st]=(c[r.st]||0)+1);
+    const foco=has(q,/descartad/)?"descartada":has(q,/vaciad/)?"vaciada":has(q,/(utiliz|usad|use|usamos)/)?"utilizada":has(q,/(disponible|inventario)/)?"inventario":null, et=[e.gens.length?"Gen "+e.gens.join(", "):"",e.fam?"familia "+e.fam:"",e.marcas.length?e.marcas.map(tit).join(" y "):""].filter(Boolean).join(" · ");
+    const names={utilizada:"ya utilizadas",descartada:"descartadas",vaciada:"vaciadas sin resiembra",inventario:"disponibles en colector",incompleto:"incompletas"};
+    return out({h:foco?`<b>${c[foco]||0}</b> cosechas ${names[foco]} de ${R.length}${et?" ("+et+")":""}`:`<b>${R.length}</b> cosechas en la base de datos${et?" ("+et+")":""}`,k:["utilizada","inventario","vaciada","descartada"].map(k=>[c[k]||0,names[k][0].toUpperCase()+names[k].slice(1),foco===k?"on":""]),rows:[row("En fermentación ahora",`<b>${D.P.filter(o=>(!e.marcas.length||e.marcas.includes(String(o.mk)))&&(!e.fam||o.fam===e.fam)&&(!e.gens.length||e.gens.includes(o.gen))).length}</b> tanques`)],ver:["#/detalle/estados","Ver el panorama completo"]}); }
+  function familiasAhora(D){ const m={}; const add=(o,k)=>{ if(!o.fam||!o.mk) return; const key=o.fam+"|"+o.mk; (m[key]=m[key]||{fam:o.fam,mk:o.mk,t:[],c:[]})[k].push(o); }; D.P.forEach(o=>add(o,"t")); D.OC.forEach(o=>add(o,"c"));
+    const a=Object.values(m).sort((x,y)=>(y.t.length+y.c.length)-(x.t.length+x.c.length)); if(!a.length) return out({h:"No hay familias en uso ahora"});
+    return out({h:`<b>${a.length}</b> ${plural(a.length,"familia","familias")} en uso ahora`,rows:a.map(x=>`<div class="ans-g"><b class="gn">${esc(x.fam)}</b><span><b>${esc(tit(x.mk))}</b> <small>${x.t.length} en tanque · ${x.c.length} en colector</small><span class="cps">${[...x.t.map(o=>fvc(o)),...x.c.map(posc)].join("")}</span></span></div>`)},a.slice(0,3).map(x=>({label:`Familia ${x.fam} · ${tit(x.mk)}`,q:`familia ${x.fam} ${x.mk.toLowerCase()}`}))); }
+  function familiasTop(D){ const m={}; D.REG.forEach(r=>{ if(!r.familia||!r.marca) return; const k=r.familia+"|"+r.marca; (m[k]=m[k]||{fam:r.familia,mk:r.marca,n:0,g:0}).n++; m[k].g=Math.max(m[k].g,+r.generacion||0); }); const a=Object.values(m).sort((x,y)=>y.n-x.n).slice(0,6);
+    return out({h:"Familias con más cosechas",rows:a.map((x,i)=>row(`${i+1}.`,`<b>${esc(x.fam)} · ${esc(tit(x.mk))}</b> — ${x.n} cosechas <small>hasta Gen ${x.g}</small>`))},a.slice(0,3).map(x=>({label:`Familia ${x.fam} · ${tit(x.mk)}`,q:`familia ${x.fam} ${x.mk.toLowerCase()}`}))); }
+  function porGrupo(D,q,e){ const key=has(q,/viab/)?"viab":has(q,/consist/)?"cons":has(q,/\bph\b/)?"ph":"viab", nom={viab:"viabilidad",cons:"consistencia",ph:"pH"}[key], porMarca=has(q,/marca/), fmt=v=>key==="ph"?f(v,2):pct(v);
+    const grupos={}; D.REG.forEach(r=>{ const k=porMarca?r.marca:r.generacion; if(k==null||k===""||r[key]==null) return; (grupos[k]=grupos[k]||[]).push(r[key]); }); const a=Object.entries(grupos).map(([k,v])=>({k,v:V.mean(v),n:v.length})).sort((x,y)=>porMarca?y.v-x.v:(+x.k)-(+y.k));
+    if(!a.length) return out({h:"No hay datos para calcularlo"}); const mejor=a.slice().sort((x,y)=>y.v-x.v)[0];
+    return out({h:`${nom[0].toUpperCase()+nom.slice(1)} promedio ${porMarca?"por marca":"por generación"}`,s:`Mejor: <b>${porMarca?esc(tit(mejor.k)):"Gen "+mejor.k}</b> con ${fmt(mejor.v)}`,rows:a.map(x=>row(porMarca?tit(x.k):"Gen "+x.k,`<b>${fmt(x.v)}</b> <small>${x.n} cosechas</small>`)),ver:["#/analisis","Ver los gráficos","ten"]}); }
+  function marcaRank(D,q){ const m={}; D.REG.forEach(r=>{ if(!r.marca) return; (m[r.marca]=m[r.marca]||{k:r.marca,n:0,v:[],c:[]}).n++; m[r.marca].v.push(r.viab); m[r.marca].c.push(r.cons); }); const a=Object.values(m); const key=has(q,/viab/)?"viab":has(q,/consist/)?"cons":"n", peor=has(q,/(menos|menor|peor)/);
+    a.forEach(x=>{ x.viab=V.mean(x.v); x.cons=V.mean(x.c); }); a.sort((x,y)=>peor?x[key]-y[key]:y[key]-x[key]); const fm=x=>key==="n"?x.n+" cosechas":pct(x[key]); return out({h:`<b>${esc(tit(a[0].k))}</b> ${peor?"tiene menos":"tiene más"} ${key==="n"?"cosechas":key==="viab"?"viabilidad":"consistencia"}: ${fm(a[0])}`,rows:a.slice(1).map((x,i)=>row(`${i+2}.ª`,`${esc(tit(x.k))} · ${fm(x)}`))}); }
+  function calidadRank(D,q,e){ const key=has(q,/viab/)?"viab":has(q,/consist/)?"cons":has(q,/\bph\b/)?"ph":"viab", nom={viab:"viabilidad",cons:"consistencia",ph:"pH"}[key];
+    const enc=has(q,/(promedio|media)/); const fuente=has(q,/(historic|base de datos|todas|siempre)/)?"bd":"col";
+    if(enc){ const src=fuente==="bd"?D.REG:D.OC.map(p=>({[key]:p[key]})), v=V.mean(src.map(x=>x[key])); return out({h:`${nom[0].toUpperCase()+nom.slice(1)} promedio${fuente==="bd"?" histórica":" en colectores"}: <b>${key==="ph"?f(v,2):pct(v)}</b>`,s:fuente==="bd"?`${src.length} cosechas`:`${src.length} posiciones`}); }
+    const peor=has(q,/(peor|menor|mas baja|mas bajo|minim)/); let src=D.OC.filter(p=>p[key]!=null).map(p=>({n:p.nombre,v:p[key],w:p.id}));
+    if(!src.length) return out({h:`No hay ${nom} registrada en colectores`}); src.sort((a,b)=>peor?a.v-b.v:b.v-a.v); const t=src.slice(0,3);
+    return out({h:`${peor?"Menor":"Mejor"} ${nom}: <b>${esc(t[0].n)}</b> (${t[0].w}) con <b>${key==="ph"?f(t[0].v,2):pct(t[0].v)}</b>`,rows:t.slice(1).map((x,i)=>row(`${i+2}.º`,`${esc(x.n)} (${x.w}) · ${key==="ph"?f(x.v,2):pct(x.v)}`)),note:"Entre las levaduras que hay ahora en colectores."}); }
+  function marcaResumen(D,m){ const rs=D.REG.filter(r=>r.marca===m), P=D.P.filter(o=>String(o.marca).toUpperCase()===m);
+    return out({h:`<b>${esc(tit(m))}</b>`,s:`${rs.length} cosechas en la base de datos`,k:[[P.length,"Tanques ahora"],[V.mean(rs.map(r=>r.viab))!=null?pct(V.mean(rs.map(r=>r.viab))):"—","Viabilidad media"],[AL.de(m)!=null?f(AL.de(m),1):"—","Alta °P"]],rows:[P.length?row("En fermentación",chips(P.map(o=>fvc(o)))):null],ver:["#/analisis","Ver tendencias",""]}); }
+
+  /* ---------- 9. Historial ---------- */
+  function rango(q,now){ const d=new Date(now), hoy=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+    if(has(q,/\bayer\b/)) return {a:hoy-864e5,b:hoy,t:"ayer"}; if(has(q,/\bhoy\b|ahorita|en el dia/)) return {a:hoy,b:now+1,t:"hoy"};
+    const h=q.match(/ultimas?\s+(\d{1,3})\s*horas?/); if(h) return {a:now-h[1]*HOUR,b:now+1,t:"en las últimas "+h[1]+" h"}; const dd=q.match(/ultimos?\s+(\d{1,2})\s*dias?/); if(dd) return {a:now-dd[1]*864e5,b:now+1,t:"en los últimos "+dd[1]+" días"};
+    if(has(q,/esta semana|semana/)) return {a:now-7*864e5,b:now+1,t:"en la última semana"}; if(has(q,/turno/)){ const hs=Math.floor(d.getHours()/8)*8, s=new Date(d); s.setHours(hs,0,0,0); return {a:+s,b:now+1,t:"en este turno"}; } if(has(q,/este mes|mes/)) return {a:now-30*864e5,b:now+1,t:"en el último mes"}; return null; }
+  function historial(D,q,e){ const ev=App.Hist.eventos(), tipo=has(q,/cosech/)?"cosecha":has(q,/sembr|siembra/)?"siembra":has(q,/descart/)?"descarte":has(q,/liber/)?"colector":null, rg=rango(q,D.now);
+    let l=ev.filter(x=>(!tipo||x.tipo===tipo)&&(!rg||(+parseDT(x.t)>=rg.a&&+parseDT(x.t)<rg.b))&&+parseDT(x.t)<=D.now+60000);
+    if(e.fvs.length) l=l.filter(x=>e.fvs.includes(+x.fv)); if(e.levs.length) l=l.filter(x=>(x.lev||[]).some(n=>e.levs.includes(n))); if(e.gens.length) l=l.filter(x=>e.gens.includes(+x.gen)); if(e.cols.length) l=l.filter(x=>e.cols.some(c=>String(x.col||"").toUpperCase()==="C"+c));
+    const nom={cosecha:"cosechas",siembra:"siembras",descarte:"descartes",colector:"liberaciones de colector"}[tipo]||"movimientos"; const n=l.length;
+    if(has(q,/(ultim[oa]|cuando fue|mas reciente)/)&&!rg){ const x=l[0]; if(!x) return out({h:`No encuentro ${tipo?"ninguna "+nom.replace(/s$/,""):"movimientos"} con esos datos`}); return out({h:`Lo último: <b>${esc(x.t1)}</b>`,s:`${fmtS(parseDT(x.t))} · ${rel(parseDT(x.t),D.now)}`,rows:[row("Detalle",esc(x.t2||""))],ver:["#/historial","Abrir el historial"]}); }
+    const por={}; l.forEach(x=>por[x.tipo]=(por[x.tipo]||0)+1);
+    if(!n&&rg){ const ult=ev.filter(x=>(!tipo||x.tipo===tipo)&&+parseDT(x.t)<=D.now+60000)[0]; return out({h:`No hay ${nom} registrados ${rg.t}`,s:ult?`Lo último fue <b>${esc(ult.t1)}</b> el ${fmtS(parseDT(ult.t))} (${rel(parseDT(ult.t),D.now)}).`:null,ver:["#/historial","Abrir el historial"]}); }
+    return out({h:`<b>${n}</b> ${n===1?nom.replace(/s$/,""):nom}${rg?" "+rg.t:""}`,k:!tipo?[[por.cosecha||0,"Cosechas"],[por.siembra||0,"Siembras"],[por.descarte||0,"Descartes"]]:null,rows:l.slice(0,5).map(x=>row(fmtS(parseDT(x.t)).slice(0,11),`${esc(x.t1)} <small>${esc(x.t2||"")}</small>`)),ver:n>5?["#/historial","Ver todo en el historial"]:["#/historial","Abrir el historial"]}); }
+
+  /* ---------- 10. Análisis: calendario y capacidad ---------- */
+  function proximos(D,q){ const h=q.match(/(\d{1,3})\s*(horas?|h\b)/), dd=q.match(/(\d{1,2})\s*dias?/), win=h?+h[1]*HOUR:dd?+dd[1]*864e5:has(q,/manana/)?48*HOUR:has(q,/hoy/)?24*HOUR:72*HOUR;
+    const l=D.P.filter(o=>o.r.t0&&+parseDT(o.r.t0)>D.now&&+parseDT(o.r.t0)<=D.now+win).sort((a,b)=>+parseDT(a.r.t0)-+parseDT(b.r.t0)); const lbl=h?`${h[1]} h`:dd?`${dd[1]} días`:has(q,/manana/)?"48 h":has(q,/hoy/)?"24 h":"72 h";
+    return out({h:l.length?`<b>${l.length}</b> ${plural(l.length,"T0 llega","T0 llegan")} en las próximas ${lbl}`:`Ningún T0 en las próximas ${lbl}`,rows:l.slice(0,6).map(o=>row(fmtS(o.r.t0).slice(0,11),`${fvc(o)} <small>${rel(o.r.t0,D.now)}</small>`)),ver:["#/analisis","Ver el calendario",""]},[]); }
+  function libresEn(D,h,k){ const T=D.now+h*HOUR; let l=D.POS.filter(p=>p.libre).length; D.OC.forEach(p=>{ if(Math.max(D.now,p.mr||D.now)<=T) l++; }); D.P.forEach(o=>{ if(!o.r.t0) return; const t=Math.max(D.now,+parseDT(o.r.t0)+12*HOUR); if(t<=T) l-=k; }); return l; }
+  function capacidad(D,q){ const hh=q&&has(q,/manana/)?24:(q&&(q.match(/(\d{1,3})\s*horas?/)||[])[1])?+q.match(/(\d{1,3})\s*horas?/)[1]:0;
+    if(hh){ const v2=libresEn(D,hh,2), v1=libresEn(D,hh,1); const mn=Math.min(v1,v2), mx=Math.max(v1,v2); return out({h:mn<0?`En ${hh===24?"24 h (mañana)":hh+" h"} habría como máximo <b>${Math.max(0,mx)}</b> posiciones libres y, en el peor caso, <b>faltarían ${-mn}</b>`:`En ${hh===24?"24 h (mañana)":hh+" h"} habría entre <b>${mn}</b> y <b>${mx}</b> posiciones libres`,s:"Suponiendo que cada levadura se siembra en su límite y que cada cosecha llega a T0 + 12 h y ocupa 1 o 2 posiciones.",k:[[libresEn(D,0,2),"Libres hoy"],[Math.min(v1,v2),"Mínimo previsto",Math.min(v1,v2)<0?"crit":"warn"],[Math.max(v1,v2),"Máximo previsto","ok"]],ver:["#/analisis","Ver la proyección a 72 h","cap"]}); }
+    const libres=D.POS.filter(p=>p.libre).length, fuera=D.OC.filter(p=>p.k==="rojo").length, porRec=D.P.filter(o=>["rojo","naranja","verde"].includes(o.st.k)).length;
+    return out({h:`Hoy hay <b>${libres}</b> posiciones libres de 12`,s:fuera?`${fuera} posiciones están fuera de tiempo para sembrar.`:"Todas las posiciones están dentro de tiempo.",k:[[libres,"Libres","ok"],[porRec,"Cosechas por recibir","warn"],[fuera,"Fuera de tiempo",fuera?"crit":""]],note:porRec*2>libres?"Si cada cosecha ocupa 2 posiciones, <b>no alcanzan</b> para recibir todas.":"Alcanzan para recibir las cosechas pendientes.",ver:["#/analisis","Ver la proyección a 72 h","cap"]}); }
+
+  /* ---------- 11. Glosario, cómo hacer, ayuda ---------- */
+  const GLOS=[[/\bt0\b|t cero/,"T0","Es el momento en que la levadura queda lista para retirar. Se calcula con la curva de extracto (15 % y 75 % de atenuación hasta el extracto límite). Desde el T0, lo ideal es retirar hacia T0 + 12 h y el máximo es T0 + 24 h."],
+    [/ventana/,"Ventana de retiro","El tiempo en que se puede retirar la levadura: de T0 a T0 + 24 h. Lo ideal es hacia T0 + 12 h; pasado T0 + 24 h el retiro se considera vencido."],
+    [/\balta\b|dar de alta/,"Alta","Se da de alta un tanque cuando el extracto aparente baja hasta el valor definido para su marca (Estándar 10, Light 9,5, Azteca 9, Club 9 °P; se cambia en Ajustes)."],
+    [/atenu/,"Atenuación","Qué tanto ha bajado el extracto desde el original: (E. original − extracto actual) / (E. original − E. límite). A 75 % se calcula el T0."],
+    [/extracto limite|e limite|limite de extracto/,"Extracto límite","El extracto al que se considera terminada la fermentación. Con él se proyecta cuándo llega el T0."],
+    [/generacion|\bgen\b/,"Generación","Cuántas veces se ha resembrado una línea de levadura. Al cosechar un tanque sembrado con Gen N, la nueva levadura es Gen N + 1. Se vigila desde la generación configurada en Ajustes."],
+    [/familia/,"Familia","La letra del nombre de la levadura (por ejemplo la I en LI3F11): identifica la línea de la que viene. La misma letra puede existir en varias marcas."],
+    [/viabilidad/,"Viabilidad","El porcentaje de células vivas de la levadura. Se mide al cosechar y se muestra en %."],
+    [/consistencia/,"Consistencia","La concentración de la levadura cosechada, en %. Se registra al cosechar."],
+    [/\bph\b/,"pH","La acidez de la levadura al cosechar."],
+    [/limite de siembra|limite abi|\babi\b/,"Límite de siembra (ABI)","El plazo máximo para sembrar una levadura que está en un colector, contado desde su ingreso al colector. Pasado el límite aparece como «fuera de tiempo»."],
+    [/copec/,"Máximo COPeC","Otra fecha límite que se calcula desde el T0 de la cosecha. La plataforma la muestra junto al límite ABI en el detalle del colector."],
+    [/colector|posicion/,"Colector y posición","Hay 6 colectores (C1 a C6) y cada uno tiene 2 posiciones (P1 y P2): 12 en total. En cada posición se guarda levadura cosechada hasta sembrarla."],
+    [/uso excepcional|ciclo recomendado/,"Uso excepcional / último ciclo","Avisos de generación alta. Desde la generación de «vigilar» se marca atención; desde la «crítica» se indica uso excepcional. Ambos umbrales se cambian en Ajustes."],
+    [/vaciada sin resiembra/,"Vaciada sin resiembra","Una cosecha cuyo colector se liberó sin que la levadura se sembrara en ningún tanque."],
+    [/lote|consecutivo/,"Lote (consecutivo F)","El número de lote de cada llenado de fermentador, por ejemplo F474. Identifica cada fermentación."],
+    [/\bfv\b|fermentador/,"FV","Fermentador (tanque). Hay 32: FV 1 a FV 32."],
+    [/\bhl\b|hectolitro/,"Hl","Hectolitros: 1 Hl son 100 litros. Los volúmenes de levadura se registran en Hl."]];
+  function glosario(q){ for(const [re,t,d] of GLOS) if(re.test(q)) return out({h:`<b>${esc(t)}</b>`,s:esc(d)}); return null; }
+  const HOWTO=[[/muestra/,"Registrar una muestra de extracto",["Toca «Agregar muestra» (el botón + de abajo) o abre el tanque.","Elige el FV y escribe fecha, hora y extracto en °P.","Guarda: el T0 y la alta se recalculan solos."],[["Agregar muestra","quick:muestra"]]],
+    [/retir|cosech/,"Retirar la levadura de un tanque",["Abre el tanque o usa «Retirar levadura».","Escribe el volumen y a qué colector va.","Confirma: queda en el colector y se registra en el historial."],[["Retirar levadura","quick:retiro"]]],
+    [/s(ie|e)mbr|resiembr/,"Sembrar una levadura en un tanque",["Entra a Colectores y abre el colector que tiene la levadura.","Pulsa «Sembrar» en su posición.","Elige el FV destino y el volumen; confirma."],[["Abrir colectores","open:#/colectores"]]],
+    [/(registr|agreg|cre|anad|mete|meter|ingres)\w*\s+(un\s+|otro\s+)?(nuevo\s+)?(tanque|fv|fermentador)|nuevo (tanque|fv)|llenar/,"Registrar un tanque nuevo",["Ve a Tanques y pulsa «Registrar tanque».","Completa marca, lote y fin de llenado.","Guarda: aparecerá con su T0 proyectado."],[["Registrar tanque","quick:crear"]]],
+    [/liber.*colector|vaciar/,"Liberar un colector",["Abre el colector.","En la posición, pulsa «Liberar colector».","Indica el motivo y confirma."],[["Abrir colectores","open:#/colectores"]]],
+    [/descart/,"Descartar una levadura",["Abre el colector con esa levadura.","Pulsa «Marcar para descarte».","Confirma; queda registrado en el historial."],[["Abrir colectores","open:#/colectores"]]],
+    [/extracto de alta|cambiar.*alta/,"Cambiar el extracto de alta",["Ve a Ajustes.","En «Extracto de alta por marca» cambia el valor.","Pulsa «Guardar extracto de alta»."],[["Ir a Ajustes","open:#/config"]]],
+    [/exportar|excel|descargar|importar/,"Exportar o importar Excel",["Ve a Explorar.","Usa «Exportar Excel» o «Importar Excel» arriba a la derecha."],[["Ir a Explorar","open:#/bd"]]],
+    [/tema|oscuro|claro|modo/,"Cambiar el tema (claro u oscuro)",["Pulsa el ícono de sol o luna en la barra de arriba.","También está en Ajustes → Experiencia de uso."],[["Cambiar tema","open:theme"]]],
+    [/pantalla|tv|monitor|planta/,"Ver la pantalla de planta",["Pulsa el ícono del monitor en la barra de arriba.","Usa «Pantalla completa» para el televisor."],[["Abrir pantalla de planta","open:#/pantalla"]]],
+    [/alerta|aviso|notifica|sonido/,"Activar las alertas",["Pulsa la campana de la barra de arriba.","Activa el sonido o los avisos del navegador.","Elige con cuánta anticipación quieres el aviso."],[]]];
+  function comoHacer(q){ for(const [re,t,pasos,btn] of HOWTO) if(re.test(q)) return out({h:`<b>${esc(t)}</b>`,rows:pasos.map((p,i)=>`<div class="ans-step"><i>${i+1}</i><span>${esc(p)}</span></div>`),btn:btn.length?btn:null}); return null; }
+  function ayuda(){ const cat=[["Retiros y tanques",["Cuántos tanques están vencidos","Qué hago primero","T0 del FV 27","Cuándo llega a alta el FV 10"]],["Colectores",["Qué colector está fuera de tiempo","Cuántas posiciones libres hay","Qué hay en C5","Cuántos Hl tengo"]],["Levadura",["Qué generaciones tengo en este momento","Qué pasó con la familia I","De dónde viene EJ10F21","Cuántas se han descartado"]],["Análisis",["Qué T0 llegan en 48 horas","Capacidad de colectores","Calidad por generación","Compara el FV 10 con el FV 4"]],["Dudas",["Qué es el T0","Qué significa alta","Cómo registro una muestra","Qué hice hoy"]]];
+    return out({h:"Esto es lo que puedo contestarte",s:"Pregúntame con tus palabras; estos son ejemplos. Toca uno para probar.",rows:cat.map(([t,a])=>`<div class="ans-sec"><div class="ans-st">${t}</div>${chips(a.map(x=>`<button type="button" class="fvc ask" data-v34="ask:${esc(x)}">${esc(x)}</button>`))}</div>`)}); }
+
+  /* ---------- 12. Prioridades y resumen ---------- */
+  function resumen(D,q){ const rojo=D.P.filter(o=>o.st.k==="rojo"), cerca=D.P.filter(o=>["naranja","verde"].includes(o.st.k)), proc=D.P.filter(o=>["gris","sin","amarillo"].includes(o.st.k)), fuera=D.OC.filter(p=>p.k==="rojo"), libres=D.POS.filter(p=>p.libre).length;
+    const sig=D.P.filter(o=>o.r.t0&&+parseDT(o.r.t0)>D.now).sort((a,b)=>+parseDT(a.r.t0)-+parseDT(b.r.t0))[0], urg=[...rojo,...cerca];
+    const prio=has(q,/(primero|prioridad|urgente|atender|que hago|que debo|que toca|pendiente)/);
+    if(prio){ if(!urg.length) return out({h:"<b>Nada urgente</b> por ahora",s:sig?`Lo próximo: ${fvc(sig)} · T0 ${fmtS(sig.r.t0)} (${rel(sig.r.t0,D.now)}).`:null}); const a=urg[0];
+      return out({h:`Empieza por ${fvc(a)}`,s:esc(a.nx.txt),rows:[urg.length>1?row("Después",chips(urg.slice(1,7).map(o=>fvc(o)))+(urg.length>7?`<span class="more">y ${urg.length-7} más</span>`:"")):null,fuera.length?row("Colectores",`${fuera.length} ${plural(fuera.length,"posición fuera de tiempo","posiciones fuera de tiempo")}: ${fuera.map(p=>p.id).join(", ")}`):null],btn:App.Store.canWrite&&["rojo","naranja","verde"].includes(a.st.k)?[["Retirar FV "+a.tq,"retiro:"+a.lote]]:null,ver:urg.length>3?["#/tanques/pendiente","Ver todos"]:null},[],{fv:a.tq}); }
+    return out({h:"Resumen de la planta",k:[[rojo.length,"Vencidos",rojo.length?"crit":""],[cerca.length,"Por retirar",cerca.length?"warn":""],[proc.length,"En proceso"],[libres,"Posiciones libres","ok"]],rows:[rojo[0]?row("Primero",`${fvc(rojo[0])} <small>${rel(rojo[0].r.venc,D.now)}</small>`):null,sig?row("Próximo T0",`${fvc(sig)} <small>${fmtS(sig.r.t0)} · ${rel(sig.r.t0,D.now)}</small>`):null,fuera.length?row("Colectores",`${fuera.length} fuera de tiempo`):null],ver:["#/inicio","Abrir el inicio"]},["Qué hago primero","Capacidad de colectores"]); }
+
+  function sembrarCon(D,q,e){ const gc=Object.assign({seguimiento:6,alerta:8},App.S.config.generaciones||{}); let c=D.OC.filter(p=>p.k!=="rojo"&&+p.vol>0); if(e.marcas.length) c=c.filter(p=>e.marcas.includes(String(p.mk).toUpperCase()));
+    const vistos=new Set(); c=c.filter(p=>{ const k=p.nombre; if(vistos.has(k)) return false; vistos.add(k); return true; }).sort((a,b)=>(a.k==="naranja")-(b.k==="naranja")||(a.gen-b.gen)||((b.viab||0)-(a.viab||0)));
+    if(!c.length) return out({h:"Ahora <b>no hay levadura dentro de tiempo</b> para sembrar",s:e.marcas.length?"Prueba sin filtrar por marca.":"Las que hay en colectores ya pasaron su límite de siembra.",ver:["#/colectores","Abrir colectores"]});
+    const top=c.slice(0,3), a=top[0];
+    return out({h:`Te conviene <b>${esc(a.nombre)}</b> (${a.id})`,s:`Gen ${a.gen} · ${hl(a.vol)} · ${a.k==="naranja"?"cerca del límite: sembrar antes de "+fmtS(a.mr):"dentro del tiempo (límite "+fmtS(a.mr)+")"}`,rows:[...top.slice(1).map((p,i)=>row(`${i+2}.ª opción`,`<b>${esc(p.nombre)}</b> (${p.id}) · Gen ${p.gen} · viabilidad ${pct(p.viab)}`)),a.gen+1>=gc.alerta?`<div class="ans-n warn">Ojo: la próxima cosecha sería Gen ${a.gen+1}, cerca de la generación crítica (${gc.alerta}).</div>`:null,row("Criterio","dentro de tiempo, generación más baja y mejor viabilidad")],btn:[["Abrir colectores","open:#/colectores"]]}); }
+  /* ---------- 13. Búsqueda libre (último recurso: nunca callar) ---------- */
+  function buscar(D,q,texto){ const toks=q.split(" ").filter(t=>t.length>=3&&!/^(que|como|cual|cuales|cuanto|cuantos|cuantas|donde|cuando|los|las|del|por|para|con|una|uno|unos|hay|tengo|esta|este|esos|esas|dime|muestrame|quiero|saber|sobre|tiene|tienen|favor|puedes|necesito)$/.test(t));
+    const hits=[]; D.P.forEach(o=>{ const hay=[o.lev,o.lote,o.marca,"fv "+o.tq,o.fam&&"familia "+o.fam].filter(Boolean).join(" ").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); if(toks.some(t=>hay.includes(t))) hits.push(fvc(o)); });
+    const colHits=D.OC.filter(p=>toks.some(t=>String(p.nombre).toLowerCase().includes(t))).map(posc); const regHits=D.REG.filter(r=>toks.some(t=>String(r.nombre).toLowerCase()===t)).slice(0,5);
+    if(hits.length||colHits.length||regHits.length) return out({h:"Esto fue lo que encontré",rows:[hits.length?row("Tanques",chips(hits.slice(0,8))):null,colHits.length?row("Colectores",chips(colHits)):null,regHits.length?row("Levaduras",chips(regHits.map(r=>`<button type="button" class="fvc ask" data-v34="ask:${esc(r.nombre)}">${esc(r.nombre)}</button>`))):null]},["Qué puedes contestar"]);
+    return null; }
+  function sinRespuesta(D){ return out({h:"No encontré eso en los datos de la plataforma",s:"Puedo ayudarte con tanques, colectores, levaduras, historial, proyecciones y dudas de uso. Prueba con alguno:"
+    ,rows:[`<div class="ans-sec">${chips(["Qué hago primero","Resumen de la planta","Qué generaciones tengo","Qué colector está fuera de tiempo","Qué es el T0"].map(x=>`<button type="button" class="fvc ask" data-v34="ask:${esc(x)}">${esc(x)}</button>`))}</div>`],ver:null},["Qué puedes contestar"]); }
+
+  /* ---------- 14. Cerebro: decide qué responder ---------- */
+  let mem={};
+  const remember=(r,e)=>{ if(r&&r.mem) mem=Object.assign({},mem,r.mem); if(r) delete r.mem; return r; };
+  function cerebro(texto,env){ const q=Q(texto); if(!q) return null; const D=datos(); let e=ents(q,env,mem); const ctx=env&&env.ctx;
+    const solo=q.match(/^(?:el\s+|fv\s*|tanque\s+)?(\d{1,2})$/); if(solo&&+solo[1]>=1&&+solo[1]<=32) e.fvs=[+solo[1]];
+    const fuera=q.match(/\b(?:fv|tanque|fermentador)\s*(\d{1,3})\b/); if(fuera&&(+fuera[1]<1||+fuera[1]>32)) return out({h:"Los fermentadores van de <b>FV 1 a FV 32</b>",s:`No existe el FV ${fuera[1]}.`},["Cuántos FV están libres","Resumen de la planta"]);
+    // social
+    const soc=q.split(" ").length<=4?(has(q,/^(hola|holi|hello|hey|buenas|buenos dias|buenas tardes|buenas noches|saludos|que mas|quiubo|epa)\b/)?"hola":has(q,/^(gracias|muchas gracias|mil gracias|thanks|grax|te agradezco)\b/)?"gracias":has(q,/^(ok|okay|vale|listo|perfecto|genial|dale|entendido|claro|super|chevere|bacano)$/)?"ok":has(q,/^(chao|adios|hasta luego|nos vemos|bye)\b/)?"chao":null):null;
+    if(soc) return out({h:{hola:"¡Hola! Aquí estoy. ¿Qué quieres revisar?",gracias:"¡Con gusto! Si necesitas algo más, aquí estoy.",ok:"Listo.",chao:"¡Hasta luego!"}[soc]},soc==="hola"?["Qué hago primero","Resumen de la planta","Qué puedes contestar"]:[]);
+    // acciones (retirar 60 hl de c1...) las resuelve el motor anterior
+    if(has(q,/^(retira|retirar|sembra|siembra|registra|agrega|agregar|descarta|libera|actualiza|marca|elimina|borra|anula|cambia|corrige|crea)\b\s/)&&!has(q,/^(retirar|sembrar|registrar|agregar)\s+(el|la|los|las)?\s*(t0|alta)/)&&has(q,/\d/)) return false;
+    if(has(q,/(contrasena|password|clave de autorizacion)/)) return false;
+    if(has(q,/(problema|errores?|que esta mal|hay mal|algo mal|anda mal|que falla|diagnostic|inconsisten|revisa|revisar la|datos incompletos|que corregir|que arreglar)/)&&!e.fvs.length){ try{ const l=App.Bot.diagnosticar(); if(!l.length) return out({h:"Revisé errores, cálculos, tanques, retiros, colectores y generaciones: <b>no encontré problemas</b>"}); const sev={rojo:["Acción necesaria","crit"],naranja:["Atención","warn"],amarillo:["Seguimiento","idle"]};
+        return out({h:`Encontré <b>${l.length}</b> ${plural(l.length,"punto por revisar","puntos por revisar")}`,rows:l.slice(0,6).map(x=>`<div class="ans-sec">${pill((sev[x.sev]||sev.amarillo)[0],(sev[x.sev]||sev.amarillo)[1])}<div><b>${esc(x.que)}</b></div><div class="ans-s">${esc(x.solucion||"")}</div>${x.fix&&x.fix.go?`<a class="ans-ver" href="#/${esc(x.fix.go)}">${esc(x.fix.label||"Abrir")} ›</a>`:""}</div>`),note:l.length>6?`Y ${l.length-6} más. Pídeme «revisa la plataforma» desde el motor de diagnóstico para verlos todos.`:null}); }catch(err){ return null; } }
+    // glosario / cómo hacer / ayuda
+    if(has(q,/^(ayuda|help|menu|opciones)$|que puedes|que sabes|para que sirves|como funcionas|que me puedes|que mas puedes|ejemplos de preguntas|que te puedo preguntar/)) return ayuda();
+    if(has(q,/(como (hago|se hace|se|puedo|registro|agrego|siembro|retiro|cambio|activo|veo|exporto|importo|libero|descarto|creo|anado|meto|ingreso|saco|resiembro)|donde (registro|agrego|cambio|veo|siembro|retiro)|pasos para|quiero (registrar|agregar|sembrar|retirar)|ensename)/)){ const h=comoHacer(q); if(h) return h; }
+    if(has(q,/(que es|que son|que significa|que quiere decir|para que sirve|como se calcula|explica|definicion|significado)/)&&!e.fvs.length&&!e.levs.length){ const g=glosario(q); if(g) return g; }
+    // seguimiento con pronombres
+    const sinEnt=!e.fvs.length&&!e.cols.length&&!e.levs.length&&!e.fam&&!e.gens.length&&!e.marcas.length&&!e.lotes.length;
+    const cont=has(q,/^y\s|^y$|\b(su|sus|ese|esa|el mismo|la misma)\b/)||has(q,/\b(t0|vence|vencimiento|extracto|atenuacion|alta|ritmo|muestras|levadura|marca|lote|viene|limite|viabilidad)\b/);
+    const GLOBAL=/(\bmas\b|\bmenos\b|\bmarca\b|cosechas|siembras|descartes|sin muestras|sin extracto|sin levadura|cuales|que (fv|tanques?|colectores|levaduras?|familias|marcas)|cerca del limite|todos|todas|cuantos|cuantas|\bhay\b|tengo|tienen|estan|\bson\b|llegaron|llegan|por marca|cada|ranking|mejor|peor|mayor|menor|mas alta|mas baja)/;
+    if(sinEnt&&cont&&!has(q,GLOBAL)&&!has(q,/(generaciones|familias|colectores|tanques|fermentadores|levaduras|cuantos|cuantas|cuales|cual|llegan|vienen|horas|dias|siguiente|siguientes|proximo|proximos|mejor|peor|mayor|menor|resumen|prioridad|primero|hoy|ayer|historial|ayuda|capacidad|calendario|libres|vencidos|promedio|marcas|que es|que significa|como|todos)/)){ if(mem.fv&&!ctx) e.fvs=[mem.fv]; else if(mem.col&&!has(q,/tanque|fv/)) e.cols=[mem.col]; else if(mem.lev) e.levs=[mem.lev]; }
+    if(sinEnt&&!e.fvs.length&&ctx){ if(ctx.tipo==="fv"){ const o=D.P.find(x=>x.lote===ctx.lote); if(o&&!has(q,/(todos|cuantos|cuantas|cuales|resumen|prioridad|primero|colector|familia|generacion|historial|levadura hay|hay)/)) e.fvs=[o.tq]; } else if(ctx.tipo==="col"&&!e.cols.length&&!has(q,/(todos|cuantos|resumen|prioridad|primero|familia|generacion|tanque|fv)/)) e.cols=[+ctx.c]; else if(ctx.tipo==="lev"&&!e.levs.length&&!has(q,/(todos|cuantos|resumen)/)) e.levs=[ctx.nombre]; }
+    e.lotes.forEach(l=>{ const o=D.P.find(x=>x.lote===l); if(o&&!e.fvs.includes(o.tq)) e.fvs.push(o.tq); });
+    // seguimientos tipo "y la J?" / "y de light?"
+    const seg=q.match(/^y\s+(?:de\s+|para\s+|con\s+)?(?:la\s+|el\s+)?(?:familia\s+)?([a-z])$/); if(seg&&mem.fam&&!MARCA_PAL[seg[1]]) return remember(familia(D,seg[1],mem.marca),e);
+    if(has(q,/^y\s+(?:de\s+|para\s+|en\s+)?(light|estandar|azteca|aguila|pilsen|club colombia|club)$/)&&mem.fam) return remember(familia(D,mem.fam,e.marcas[0]),e);
+    if(has(q,/^y\s+(?:de\s+|para\s+)?(?:la\s+)?(?:gen|generacion)\s*\d/)&&e.gens.length) return remember(generaciones(D,e.gens),e);
+    if((e.fvs.length||e.cols.length||e.levs.length)&&has(q,/(historial|movimientos|ultim[oa]s? (siembra|cosecha|descarte|movimiento)|cuando fue (la|el) ultim|que se hizo|que paso (con|en)|que le hicieron|cosechas|siembras|descartes|liberaciones)/)&&!has(q,/(cuantas muestras|puedo|vence|venc)/)) return remember(historial(D,q,e),e);
+    // 1. un FV (o varios)
+    if(e.fvs.length&&!has(q,/familias|generaciones/)&&!(e.fam&&has(q,/familia/))){ const list=e.fvs.map(n=>byTq(D,n)||{libre:n}); const act=list.filter(x=>!x.libre), libre=list.filter(x=>x.libre);
+      if(!act.length) return out({h:`<b>FV ${libre.map(x=>x.libre).join(", ")}</b> ${libre.length>1?"están libres":"está libre"}`,s:"No tienen levadura sembrada."},["Cuántos FV están libres"]);
+      if(act.length>=2&&has(q,/(compar|contra|vs|versus|diferencia|cual (es )?mejor|cual va mejor|y el|y los)/)||act.length>=2) return remember(fvComparar(D,act.slice(0,4)),e);
+      const t=tema(q); const r=fvTema(D,act[0],q,t); return remember(r,e); }
+    // 2. colector / posición
+    if(e.cols.length&&!has(q,/familia|generaciones|cuantos tanques/)){ if(e.cols.length>1&&has(q,/(compar|contra|vs|y)/)){ const r=out({h:`Comparación de ${lst(e.cols.map(c=>"C"+c))}`,rows:e.cols.slice(0,4).map(n=>{ const ps=D.POS.filter(p=>p.n===n); return row("C"+n,ps.map(p=>p.libre?`${p.id} libre`:`<b>${esc(p.nombre)}</b> (${hl(p.vol)}) ${pill(colEstadoTxt(p),p.tone)}`).join(" · ")); })}); return remember(r,e); }
+      const n=e.cols[0], s=e.pos.length?e.pos[0][1]:null; return remember(colUno(D,n,q,s),e); }
+    // 3. levadura concreta
+    if(e.levs.length){ const nm=e.levs[0]; if(has(q,/(viene|origen|linaje|ancestro|padre|genealog|historia de la leva)/)){ const l=linaje(D,nm); if(l) return remember(l,e); }
+      if(has(q,/(viab|consist|\bph\b)/)){ const p=D.OC.find(x=>x.nombre===nm), r=D.REG.find(x=>x.nombre===nm), s=p||r; if(s){ return remember(out({h:`<b>${esc(nm)}</b>`,k:[[pct(s.viab),"Viabilidad"],[pct(s.cons),"Consistencia"],[s.ph!=null?f(s.ph,2):"—","pH"]],ver:["#/detalle/levadura/"+encodeURIComponent(nm),"Ver su historia completa"]},[],{lev:nm}),e); } }
+      if(has(q,/(hijos?|descendientes?|siguientes? generaciones?|de ella salio|salieron de)/)){ const r0=D.REG.find(x=>x.nombre===nm); const hs=r0?D.REG.filter(h=>h.id!==r0.id&&(r0.siembras||[]).some(z=>z.lote===h.lote)):[]; return remember(out({h:hs.length?`De <b>${esc(nm)}</b> salieron <b>${hs.length}</b> ${plural(hs.length,"cosecha","cosechas")}`:`De <b>${esc(nm)}</b> todavía no ha salido ninguna cosecha`,rows:hs.map(h=>row(`Gen ${h.generacion}`,`<b>${esc(h.nombre)}</b> <small>FV ${esc(h.tq)}${h.t0?" · "+fmtS(parseDT(h.t0)):""}</small> ${pill(estadoTxt(h.st),h.st==="inventario"?"ok":"idle")}`)),ver:["#/detalle/levadura/"+encodeURIComponent(nm),"Ver su historia completa"]},[],{lev:nm}),e); }
+      if(has(q,/(volumen|\bhl\b|\bcuanta\b|donde esta|ubic|en que colector|tiempo en colector|cuanto lleva|tiempo lleva|cuanto tiempo|limite|vence|sembrar antes)/)){ const ps=D.OC.filter(x=>x.nombre===nm), tq=D.P.filter(x=>x.lev===nm);
+        if(!ps.length&&!tq.length) return remember(out({h:`<b>${esc(nm)}</b> ya no está en colectores ni en tanques`,s:"Mira su historia para ver dónde se usó.",ver:["#/detalle/levadura/"+encodeURIComponent(nm),"Ver su historia completa"]},[],{lev:nm}),e);
+        return remember(out({h:`<b>${esc(nm)}</b> está en ${ps.length?lst(ps.map(p=>p.id)):""}${ps.length&&tq.length?" y ":""}${tq.length?"fermentación en "+lst(tq.map(o=>"FV "+o.tq)):""}`,rows:[...ps.map(p=>row(p.id,`${hl(p.vol)} · límite de siembra ${p.mr?fmtS(p.mr)+" <small>"+rel(p.mr,D.now)+"</small>":"—"} ${pill(colEstadoTxt(p),p.tone)}`)),tq.length?row("En proceso",chips(tq.map(o=>fvc(o)))):null]},[],{lev:nm}),e); }
+      const l=levadura(D,nm); if(l) return remember(l,e); }
+    // 4. familia
+    if(e.fam&&has(q,/familia|linea/)) return remember(familia(D,e.fam,e.marcas[0]),e);
+    if(has(q,/\bfamilias\b/)){ if(has(q,/(proceso|ahora|momento|actual|en uso|fermentando|colector|tengo)/)) return remember(familiasAhora(D),e); if(has(q,/cuantas/)) return out({h:`Hay <b>${new Set(D.REG.map(r=>r.marca+"|"+r.familia)).size}</b> familias en la base de datos`,s:`${new Set(D.P.concat(D.OC).map(o=>o.mk+"|"+o.fam)).size} están en uso ahora.`},["Qué familias tengo en proceso","Familias con más cosechas"]); return familiasTop(D); }
+    // 5. generaciones
+    if(has(q,/\bgeneraciones\b/)||(has(q,/generacion/)&&has(q,/(mas alta|mas baja|mayor|menor|maxima|minima|mas vieja|mas nueva|mas joven)/))||(has(q,/\bgen\b/)&&!e.gens.length&&has(q,/(tengo|tienes|tenemos|hay|cuales|que)/))||(e.gens.length&&!has(q,/familia|tanque|fv|colector|historial|cosecha|siembra/))){
+      if(e.gens.length&&has(q,/(\bhl\b|hectolitros?|volumen|litros)/)){ const l=D.OC.filter(p=>e.gens.includes(p.gen)), tot=l.reduce((a,p)=>a+(+p.vol||0),0); return remember(out({h:`Hay <b>${f(tot,0)} Hl</b> de Gen ${e.gens.join(", ")} en colectores`,rows:l.map(p=>row(p.id,`${esc(p.nombre)} · ${hl(p.vol)}`)),note:D.P.some(o=>e.gens.includes(o.gen))?"La levadura que está en fermentación no tiene volumen registrado aparte.":null}),e); }
+      const donde=has(q,/(colector|disponible|inventario)/)&&!has(q,/(proceso|fermentac)/)?"col":has(q,/(proceso|fermentac|tanque|fv)/)&&!has(q,/colector/)?"t":null;
+      if(has(q,/(mas alta|mayor|maxima|mas vieja)/)&&!e.gens.length){ const gs=genMapa(D); if(gs.length){ const m=gs[gs.length-1]; return remember(out({h:`La generación más alta en uso es <b>Gen ${m.g}</b>`,s:`${m.t.length+m.c.length} unidades`,rows:[row("Dónde",chips([...m.t.map(o=>fvc(o,esc(o.lev))),...m.c.map(posc)]))],ver:["#/detalle/generaciones","Ver todas las generaciones"]}),e); } }
+      if(has(q,/(mas baja|menor|minima|mas nueva|mas joven)/)&&!e.gens.length){ const gs=genMapa(D); if(gs.length){ const m=gs[0]; return remember(out({h:`La generación más baja en uso es <b>Gen ${m.g}</b>`,s:`${m.t.length+m.c.length} unidades`,rows:[row("Dónde",chips([...m.t.map(o=>fvc(o,esc(o.lev))),...m.c.map(posc)]))]}),e); } }
+      const r=generaciones(D,e.gens,donde); if(e.gens.length&&r.h.indexOf("no tienes")<0){ const hist=D.REG.filter(x=>e.gens.includes(+x.generacion)&&(!e.marcas.length||e.marcas.includes(x.marca))); r.h=r.h.replace(/<\/div>$/,`<div class="ans-n">En la base de datos hay ${hist.length} cosechas de esa generación (${hist.filter(x=>x.st==="utilizada").length} ya utilizadas).</div></div>`); } return remember(r,e); }
+    if(has(q,/cosechas?/)&&has(q,/(pendientes?|faltan|por recibir|por retirar|sin retirar)/)&&!rango(q,D.now)){ return fvLista(D,"por retirar "+q,e); }
+    // 6. estados de la base de datos
+    if(has(q,/(utiliz|usad|descartad|vaciad|inventario)/)&&has(q,/(cuant|cuales|que|numero)/)&&!has(q,/\b(fv|tanque)\b/)) return remember(estadosBD(D,q,e),e);
+    // 7. calidad
+    if(has(q,/\bmarca(s)?\b/)&&has(q,/(mas|menos|mayor|menor|mejor|peor)/)&&!has(q,/(tanque|fv)/)) return marcaRank(D,q);
+    if(has(q,/(viabilidad|consistencia|\bph\b)/)&&has(q,/(por generacion|por marca|cada generacion|cada marca)/)) return porGrupo(D,q,e);
+    if(has(q,/(viabilidad|consistencia|\bph\b)/)&&!has(q,/familia/)) return remember(calidadRank(D,q,e),e);
+    if(has(q,/cosechas?/)&&(e.gens.length||e.marcas.length||e.fam)&&!rango(q,D.now)&&has(q,/(cuant|numero|total)/)) return remember(estadosBD(D,q,e),e);
+    // 8. historial
+    if(has(q,/(historial|que (se )?(hizo|hicimos|paso)|movimientos|ultim[oa]s? (cosecha|siembra|descarte|movimiento)|cuando fue (la|el) ultim|cuant[oa]s? (cosechas|siembras|descartes|liberaciones)|que hice|turno)/)||(has(q,/(cosechas|siembras|descartes)/)&&rango(q,D.now))) return remember(historial(D,q,e),e);
+    // 9. análisis
+    if(has(q,/(que viene|que llega|proximas? \d+|en las proximas|siguientes? \d+|proximos? t0|siguientes? t0|calendario|que (t0|retiros?) (llegan|vienen)|cuando llegan|llegan en|proximas? (horas|dias)|vienen)/)&&!has(q,/(colector|alta)/)) return proximos(D,q);
+    if(has(q,/(capacidad|espacio|cabe|alcanzan|faltan posiciones|posiciones libres (tendre|habra|quedan)|cuantas posiciones (tendre|habra))/)&&!has(q,/colector \d/)) return capacidad(D,q);
+    if(has(q,/(tendencia|proyeccion|prediccion|calidad por generacion)/)&&!e.fvs.length&&!has(q,/\balta/)) return out({h:"Aquí tienes las proyecciones y tendencias",btn:[["Proyección de altas","open:#/analisis"],["Tendencias","open:#/analisis:ten"]]});
+    // 10. alta (global)
+    if(has(q,/\balta\b|\baltas\b|dar de alta/)){ const todas=D.P;
+      if(e.marcas.length&&has(q,/(extracto|cuanto|cual|que|grados|nivel)/)){ const m=e.marcas[0], a=AL.de(m); return out({h:a!=null?`El extracto de alta de <b>${esc(tit(m))}</b> es <b>${f(a,1)} °P</b>`:`<b>${esc(tit(m))}</b> no tiene extracto de alta definido`,btn:[["Cambiarlo en Ajustes","open:#/config"]]}); }
+      if(has(q,/(extracto|cuanto|cuales|que).*(marca|marcas|cada)|por marca|todas las marcas/)||has(q,/^(extracto de alta|altas?)$/)) return out({h:"Extracto de alta por marca",rows:Object.entries(AL.mapa()).map(([m,v])=>row(tit(m),v!=null?`<b>${f(v,1)} °P</b>`:'<span class="mut">sin definir</span>')),btn:[["Cambiar en Ajustes","open:#/config"]]});
+      const ya=todas.filter(o=>o.pr.estado==="alcanzada"), prox=todas.filter(o=>o.pr.estado==="proyectada").sort((a,b)=>a.pr.t-b.pr.t);
+      if(has(q,/(ya llego|ya llegaron|ya estan|cuales? (ya|llego)|cuantos?)/)) return out({h:`<b>${ya.length}</b> ${plural(ya.length,"fermentador ya está","fermentadores ya están")} en alta`,rows:[ya.length?`<div class="ans-r wide">${chips(ya.map(o=>fvc(o)))}</div>`:null],ver:["#/analisis","Ver proyección de altas",""]});
+      const fut=prox.filter(o=>o.pr.t>D.now); return out({h:fut[0]?`El próximo en llegar a la alta es ${fvc(fut[0])}: <b>${fmtS(fut[0].pr.t)}</b>`:"Ninguno llegará a la alta próximamente",s:fut[0]?rel(fut[0].pr.t,D.now):null,rows:[ya.length?row("Ya en alta",chips(ya.map(o=>fvc(o)))):null,prox.length&&prox.some(o=>o.pr.t<=D.now)?row("Con muestra vieja",chips(prox.filter(o=>o.pr.t<=D.now).map(o=>fvc(o)))):null],ver:["#/analisis","Ver proyección de altas",""]}); }
+    if(has(q,/(que|cual|con que)\s+(levadura\s+)?(puedo|debo|uso|usar|siembro|sembrar|me conviene|conviene|pongo|meto)|que siembro|con que siembro/)&&has(q,/(sembr|siembr|usar|uso|conviene|pongo|meto)/)) return sembrarCon(D,q,e);
+    // 11. marca sola
+    if(e.marcas.length===1&&!has(q,/(tanque|fv|colector|familia|generacion|vencid|retir)/)&&q.split(" ").length<=6) return marcaResumen(D,e.marcas[0]);
+    if(has(q,/(que|cual|con que)\s+(levadura\s+)?(puedo|debo|uso|usar|siembro|sembrar|me conviene|conviene|pongo|meto)|que siembro|con que siembro/)&&has(q,/(sembr|siembr|usar|uso|conviene|pongo|meto)/)) return sembrarCon(D,q,e);
+    // 12. colectores globales
+    if(has(q,/(colector|colectores|posicion|posiciones)/)||has(q,/(que levaduras? hay|levadura (hay|disponible)|levaduras? (estan |hay )?disponibles?|inventario|stock|cuantos hl|cuanto volumen|volumen de levadura|cuanta levadura)/)||(has(q,/levadura/)&&has(q,/(limite|fuera de tiempo|por sembrar|sembrar antes)/))) return colGlobal(D,q,e);
+    if(has(q,/(debo|puedo|toca|hay que|tengo que)\s+(retirar|cosechar)|que (tanque|fv)s?\s+(retiro|debo retirar|toca retirar)|a quien le toca/)&&!e.fvs.length&&!has(q,/colector/)) return resumen(D,"primero "+q);
+    if(has(q,/(vence primero|se vence primero|vencen primero|retiro primero|primero retiro|atender primero|mas urgente|mas atrasado|urgente|prioridad)/)&&!has(q,/colector/)) return resumen(D,"primero "+q);
+    // 13. tanques en lista / ranking
+    if(has(q,/(tanques?|fv|fermentadores?|retiros?|vencid|por vencer|en proceso|fermentando|listos?|atrasad)/)||e.gens.length||e.marcas.length) { if((has(q,/(libres?|vacios?|desocupad|disponibles?)/)||has(q,/sin levadura/))&&has(q,/(tanque|fv|fermentador)/)){ const us=new Set(D.P.map(o=>o.tq)), li=Array.from({length:32},(_,i)=>i+1).filter(n=>!us.has(n)); return out({h:`<b>${li.length}</b> de 32 fermentadores libres`,rows:[`<div class="ans-r wide">${chips(li.map(fvPlain))}</div>`]}); } return fvLista(D,q,e); }
+    // 14. prioridades / resumen
+    if(has(q,/(resumen|panorama|como estamos|como vamos|situacion|estado general|que hay que hacer|prioridad|primero|urgente|atender|que hago|que debo|que toca|pendiente|novedad|hay algo)/)) return resumen(D,q);
+    // 14b. fecha, hora, datos
+    if(has(q,/(que hora es|que hora son|que dia es|que fecha es|fecha de hoy)/)){ const d=new Date(D.now); return out({h:has(q,/hora/)?`Son las <b>${d.toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit",hour12:false})}</b>`:`Hoy es <b>${d.toLocaleDateString("es-CO",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</b>`}); }
+    if(has(q,/(donde se guardan|se guardan los datos|estan guardados|modo local|base de datos compartida|cuando se actualiz\w*|ultima actualizacion|datos actualizados|cuantos registros)/)){ const up=App.S.config.meta&&App.S.config.meta.actualizado; return out({h:App.Store.mode==="db"?"Los datos están en la <b>base compartida</b>":"Los datos se guardan <b>en este navegador</b>",s:up?`Última actualización: ${fmtS(up)}.`:null,rows:[row("En la plataforma",`${D.REG.length} cosechas · ${D.P.length} tanques activos · ${D.OC.length} posiciones ocupadas`),App.Store.canWrite?null:row("Modo","solo lectura")]}); }
+    // 15. glosario sin "que es"
+    const g=glosario(q); if(g&&q.split(" ").length<=4) return g;
+    // 16. búsqueda libre y, si no, menú: nunca se queda mudo
+    return buscar(D,q,texto)||sinRespuesta(D); }
+
+  /* ---------- 15. Conexión con LevaBot ---------- */
+  function partes(texto){ const p=texto.split(/\s+y\s+(?=(?:que|qué|cu[aá]nt[oa]s?|cu[aá]l(?:es)?|compara|muestra|dime|revisa|d[oó]nde|c[oó]mo|cu[aá]ndo)(?:\s|$))|\?\s+(?=\S)|;\s*/i).map(x=>x.trim()).filter(Boolean); return p.length>1?p.slice(0,3):[texto]; }
+  App.BotDirecto=function(texto,env){ try{
+      if(App.BotIA&&App.BotIA.activo()&&App.BotIA.abierta(texto)) return null;
+      const ps=partes(texto); if(ps.length>1){ const rs=ps.map(p=>cerebro(p,env)).filter(x=>x&&x!==false); if(rs.length===ps.length){ const r=rs[0]; r.h=rs.map(x=>x.h).join('<div class="ans-sep"></div>'); r.opts=[]; return remember(r,{}); } }
+      const r=cerebro(texto,env); if(r===false) return null; if(r){ return remember(r,{}); }
+    }catch(e){ console.error("cerebro",e); }
+    return prevDirecto(texto,env); };
+
+  /* ---------- 16. Botones dentro de las respuestas ---------- */
+  document.addEventListener("click",e=>{ const b=e.target.closest&&e.target.closest("[data-v34]"); if(b){ e.preventDefault(); const [k,...rest]=b.dataset.v34.split(":"), v=rest.join(":");
+      if(k==="ask"){ App.Bot._enviar(v); return; } if(k==="quick"&&App.Quick[v]){ App.Quick[v](); return; }
+      if(k==="retiro"){ App.Inv.retiro(v); return; } if(k==="muestra"){ App.Act.agregarMuestra(v); return; }
+      if(k==="open"){ if(v==="theme"){ App.Tema.toggle(); return; } const [h,tab]=v.split(/:(?=[a-z]+$)/); if(tab) LS.set("inventarioLevadura:v32tab",tab); location.hash=h; if(App.Bot&&window.innerWidth<701) App.Bot.cerrar(); return; } }
+    const an=e.target.closest&&e.target.closest("[data-an]"); if(an){ LS.set("inventarioLevadura:v32tab",an.dataset.an); } });
+
+  /* ---------- 17. Páginas de detalle (amigables) ---------- */
+  const back=`<a class="v34-back" href="javascript:history.back()">‹ Volver</a>`;
+  const stPill=st=>pill(estadoTxt(st),st==="inventario"?"ok":st==="descartada"?"crit":st==="utilizada"?"idle":"warn");
+  function dFamilia(a,m){ const D=datos(), fam=String(a||"").toUpperCase(); const all=D.REG.filter(r=>String(r.familia).toUpperCase()===fam); if(!all.length) return `<div class="v34-pg">${back}<div class="page-h"><div><h1>Familia ${esc(fam)}</h1><p>No hay cosechas de esta familia.</p></div></div></div>`;
+    const marcas=[...new Set(all.map(r=>r.marca))].filter(Boolean).sort((x,y)=>all.filter(r=>r.marca===y).length-all.filter(r=>r.marca===x).length), mk=m&&marcas.includes(m)?m:marcas[0], R=all.filter(r=>r.marca===mk).sort((x,y)=>(+x.generacion)-(+y.generacion)||String(x.t0).localeCompare(String(y.t0)));
+    const pr=D.P.filter(o=>o.fam===fam&&o.mk===mk), co=D.OC.filter(o=>o.fam===fam&&o.mk===mk), si=sembradas(D,R), term=si.filter(s=>!D.lotes.has(s.lote)), g=R.map(r=>+r.generacion), porTq={}; term.forEach(s=>{ const x=porTq[s.tq]||(porTq[s.tq]={tq:s.tq,n:0,ult:s.fecha,gens:new Set()}); x.n++; if(String(s.fecha)>String(x.ult)) x.ult=s.fecha; x.gens.add(s.gen); });
+    const porGen={}; R.forEach(r=>(porGen[r.generacion]=porGen[r.generacion]||[]).push(r));
+    return `<div class="v34-pg">${back}<div class="page-h"><div><h1>Familia ${esc(fam)} · ${esc(tit(mk))}</h1><p>${R.length} cosechas · generaciones ${Math.min(...g)} a ${Math.max(...g)}</p></div></div>
+      ${marcas.length>1?`<div class="v31-seg v34-seg">${marcas.map(x=>`<a href="#/detalle/familia/${esc(fam)}/${encodeURIComponent(x)}" class="${x===mk?"on":""}">${esc(tit(x))}</a>`).join("")}</div>`:""}
+      <div class="v32-kp"><div class="g"><b>${pr.length}</b><span>En proceso ahora</span></div><div><b>${co.length}</b><span>En colectores</span></div><div><b>${term.length}</b><span>Siembras terminadas</span></div><div><b>${R.filter(r=>r.st==="utilizada").length}</b><span>Cosechas ya utilizadas</span></div></div>
+      <div class="v31-card"><div class="v31-ch"><h2>Ahora mismo</h2><p>Lo que de esta familia está vivo hoy.</p></div>
+        ${pr.length?`<div class="v34-sub">En fermentación</div><div class="v34-cards">${pr.map(o=>`<a class="v34-mini" href="#/tanque/${esc(o.lote)}"><b>FV ${o.tq}</b><span>${esc(o.lev)} · Gen ${o.gen}</span>${pill(ST_TXT[o.st.k],TONE[o.st.k])}<small>${esc(o.nx.txt)}</small></a>`).join("")}</div>`:'<p class="v31-none">Ningún tanque con esta familia en fermentación.</p>'}
+        ${co.length?`<div class="v34-sub">En colectores</div><div class="v34-cards">${co.map(p=>`<a class="v34-mini" href="#/colectores/${p.n}"><b>${p.id}</b><span>${esc(p.nombre)} · Gen ${p.gen}</span>${pill(colEstadoTxt(p),p.tone)}<small>${hl(p.vol)}</small></a>`).join("")}</div>`:'<p class="v31-none">Nada de esta familia en colectores.</p>'}</div>
+      <div class="v31-card"><div class="v31-ch"><h2>Recorrido por generación</h2><p>Cada cosecha, su estado y dónde se sembró.</p></div>
+        ${Object.keys(porGen).sort((x,y)=>x-y).map(gn=>`<div class="v34-gen"><b class="gn">Gen ${gn}</b><div>${porGen[gn].map(r=>{ const s=(r.siembras||[]).map(z=>({tq:+z.tq,lote:z.lote})); return `<div class="v34-reg"><a href="#/detalle/levadura/${encodeURIComponent(r.nombre)}"><b>${esc(r.nombre)}</b></a> ${stPill(r.st)} <small>FV ${esc(r.tq)}${r.t0?" · "+fmtS(parseDT(r.t0)):""}</small>${s.length?`<span class="cps">${s.map(z=>D.lotes.has(z.lote)?fvc(byTq(D,z.tq)):fvPlain(z.tq)).join("")}</span>`:""}</div>`; }).join("")}</div></div>`).join("")}</div>
+      <div class="v31-card"><div class="v31-ch"><h2>Dónde se sembró</h2><p>Tanques que ya terminaron, con cuántas veces se usó esta familia en cada uno.</p></div>
+        ${Object.keys(porTq).length?`<table class="v32-tb"><thead><tr><th>Tanque</th><th>Veces</th><th>Generaciones</th><th>Última vez</th></tr></thead><tbody>${Object.values(porTq).sort((x,y)=>String(y.ult).localeCompare(String(x.ult))).map(x=>`<tr><td><b>FV ${x.tq}</b></td><td>${x.n}</td><td>${[...x.gens].sort((p,q)=>p-q).map(n=>"Gen "+n).join(", ")}</td><td>${fmtS(parseDT(x.ult))}</td></tr>`).join("")}</tbody></table>`:'<p class="v31-none">Todavía no hay siembras terminadas.</p>'}</div></div>`; }
+  function dGeneraciones(){ const D=datos(), gs=genMapa(D), hist={}; D.REG.forEach(r=>{ const g=+r.generacion; if(!isNaN(g)) (hist[g]=hist[g]||{n:0,u:0}).n++; if(r.st==="utilizada"&&!isNaN(g)) hist[g].u++; }); const todas=[...new Set([...gs.map(x=>x.g),...Object.keys(hist).map(Number)])].sort((a,b)=>a-b), mx=Math.max(...todas.map(g=>hist[g]?hist[g].n:0),1);
+    const nT=D.P.length, nC=D.OC.length;
+    return `<div class="v34-pg">${back}<div class="page-h"><div><h1>Generaciones</h1><p>Qué generaciones de levadura tienes ahora y cuántas se han usado en la historia.</p></div></div>
+      <div class="v32-kp"><div><b>${nT+nC}</b><span>Unidades en uso ahora</span></div><div class="g"><b>${nT}</b><span>En fermentación</span></div><div><b>${nC}</b><span>En colectores</span></div><div><b>${gs.length?gs[gs.length-1].g:"—"}</b><span>Generación más alta en uso</span></div></div>
+      <div class="v31-card"><div class="v31-ch"><h2>En uso ahora</h2></div><div class="v34-gens">${gs.map(x=>`<div class="v34-gcard"><b class="gn">Gen ${x.g}</b><span class="big">${x.t.length+x.c.length}</span><small>${x.t.length} en tanque · ${x.c.length} en colector</small><span class="cps">${[...x.t.map(o=>fvc(o,esc(o.lev))),...x.c.map(posc)].join("")}</span></div>`).join("")||'<p class="v31-none">No hay levadura en uso.</p>'}</div></div>
+      <div class="v31-card"><div class="v31-ch"><h2>En toda la historia</h2><p>Cosechas por generación (la parte oscura son las ya utilizadas).</p></div>
+        ${todas.map(g=>{ const h=hist[g]||{n:0,u:0}; return `<div class="v34-bar"><b>Gen ${g}</b><div><i style="width:${h.n/mx*100}%"><u style="width:${h.n?h.u/h.n*100:0}%"></u></i></div><span>${h.n}</span></div>`; }).join("")}</div></div>`; }
+  function dLevadura(nombre){ nombre=decodeURIComponent(nombre||""); const D=datos(), r=D.REG.find(x=>x.nombre===nombre); if(!r) return `<div class="v34-pg">${back}<div class="page-h"><div><h1>${esc(nombre)}</h1><p>No encuentro esta levadura en la base de datos.</p></div></div></div>`;
+    const ch=[r]; let c=r; for(let i=0;i<9;i++){ const p=padre(D,c); if(!p||ch.includes(p)) break; ch.push(p); c=p; } const sie=(r.siembras||[]), enC=D.OC.filter(p=>p.nombre===nombre), pn=parse(nombre), hijos=D.REG.filter(h=>sie.some(s=>s.lote===h.lote)&&h.id!==r.id);
+    return `<div class="v34-pg">${back}<div class="page-h"><div><h1>${esc(nombre)}</h1><p>${esc(tit(r.marca))} · familia ${esc(pn.fam||"")} · generación ${r.generacion} · ${stPill(r.st)}</p></div></div>
+      <div class="v32-kp"><div><b>${pct(r.viab)}</b><span>Viabilidad</span></div><div><b>${pct(r.cons)}</b><span>Consistencia</span></div><div><b>${r.ph!=null?f(r.ph,2):"—"}</b><span>pH</span></div><div><b>${sie.length}</b><span>Siembras</span></div></div>
+      <div class="v32-two"><div class="v31-card"><div class="v31-ch"><h2>Linaje</h2><p>De la más reciente a la más antigua.</p></div><div class="ans-line">${ch.map(x=>`<div><i></i><span><a href="#/detalle/levadura/${encodeURIComponent(x.nombre)}"><b>${esc(x.nombre)}</b></a> <small>Gen ${x.generacion} · FV ${esc(x.tq)}${x.t0?" · "+fmtS(parseDT(x.t0)):""}</small></span></div>`).join("")}</div></div>
+      <div class="v31-card"><div class="v31-ch"><h2>Dónde se sembró</h2></div>${sie.length?sie.map(s=>{ const act=D.lotes.has(s.lote); return `<div class="v32-ev ${act?"in":"out"}"><i></i><span><b>FV ${esc(s.tq)} · lote ${esc(s.lote)}</b><small>${fmtS(parseDT(s.fecha))}</small></span>${act?pill("en proceso","ok"):pill("terminada","idle")}</div>`; }).join(""):'<p class="v31-none">Sin siembras registradas.</p>'}</div></div>
+      <div class="v31-card"><div class="v31-ch"><h2>Cosecha y ubicación</h2></div>
+        <dl class="v32-dl"><div><dt>Cosechada del</dt><dd>FV ${esc(r.tq)}</dd></div><div><dt>Lote</dt><dd>${esc(r.lote)}</dd></div><div><dt>T0</dt><dd>${r.t0?fmtS(parseDT(r.t0)):"—"}</dd></div><div><dt>En colector</dt><dd>${enC.length?enC.map(p=>p.id).join(", "):"—"}</dd></div><div><dt>Siguientes cosechas</dt><dd>${hijos.length?hijos.map(h=>esc(h.nombre)).join(", "):"—"}</dd></div><div><dt>Estado</dt><dd>${estadoTxt(r.st)}</dd></div></dl></div></div>`; }
+  function dEstados(){ const D=datos(), c={}; D.REG.forEach(r=>c[r.st]=(c[r.st]||0)+1); const nom={utilizada:"Ya utilizadas",inventario:"Disponibles en colector",vaciada:"Vaciadas sin resiembra",descartada:"Descartadas",incompleto:"Incompletas"}, tot=D.REG.length; const marcas=[...new Set(D.REG.map(r=>r.marca))].filter(Boolean);
+    return `<div class="v34-pg">${back}<div class="page-h"><div><h1>Panorama de la levadura</h1><p>Qué ha pasado con cada cosecha de la base de datos.</p></div></div>
+      <div class="v32-kp">${["utilizada","inventario","vaciada","descartada"].map(k=>`<div><b>${c[k]||0}</b><span>${nom[k]}</span></div>`).join("")}</div>
+      <div class="v31-card"><div class="v31-ch"><h2>Por marca</h2></div><table class="v32-tb"><thead><tr><th>Marca</th><th>Cosechas</th><th>Utilizadas</th><th>Descartadas</th><th>Viabilidad media</th></tr></thead><tbody>${marcas.map(m=>{ const rs=D.REG.filter(r=>r.marca===m); return `<tr><td><b>${esc(tit(m))}</b></td><td>${rs.length}</td><td>${rs.filter(r=>r.st==="utilizada").length}</td><td>${rs.filter(r=>r.st==="descartada").length}</td><td>${pct(V.mean(rs.map(r=>r.viab)))}</td></tr>`; }).join("")}</tbody></table></div>
+      <div class="v31-card"><div class="v31-ch"><h2>Ahora</h2></div><dl class="v32-dl"><div><dt>En fermentación</dt><dd>${D.P.length} tanques</dd></div><div><dt>En colectores</dt><dd>${D.OC.length} posiciones</dd></div><div><dt>Total en la base</dt><dd>${tot} cosechas</dd></div></dl><a class="ans-ver" href="#/bd">Abrir el Explorador de levaduras ›</a></div></div>`; }
+  App.V.detalle={ render(tipo,a,b){ try{ if(tipo==="familia") return dFamilia(a,b); if(tipo==="generaciones") return dGeneraciones(); if(tipo==="levadura") return dLevadura(a); if(tipo==="estados") return dEstados(); }catch(e){ console.error("detalle",e); } return `<div class="v34-pg">${back}<div class="page-h"><div><h1>Detalle</h1><p>No hay detalle para esto.</p></div></div></div>`; } };
+
+  App.Cerebro={responder:(t,env)=>cerebro(t,env),datos};
 })();
 </script>
 </body>
