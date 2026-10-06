@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Inventario de Levadura · v30</title>
+<title>Inventario de Levadura · v31</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>
@@ -6106,7 +6106,7 @@ App.Bot=(function(){
 
   function noEntendi(a){ const k=[...a.K].filter(x=>!SOCIAL.includes(x));
     if(mem.last&&a.toks.length<=3&&!k.length){ return {h:pick("ne1",["No te entendí bien 🤔 ¿Me lo dices de otra forma?","Mmm, esa no la capté. ¿Me das un poco más de detalle?"])}; }
-    return {h:pick("ne2",["No estoy seguro de a qué te refieres. ¿Hablas de un tanque, de un colector o de una levadura?","No te entendí del todo 🤔 Dímelo con tus palabras; puedo buscar una familia, un FV, un lote, una levadura o un colector, y revisar su historial."]),
+    return {h:"No tengo esa respuesta. Prueba con algo como: <b>¿cuál vence primero?</b>, <b>T0 del FV 27</b>, <b>¿qué hay en C5?</b> o <b>¿cuántos Hl tengo?</b>",
       opts:[{label:"Un tanque (FV)",q:"que tanques tienen levadura",kw:["tanque","fv","fermentador"]},{label:"Un colector",q:"muestrame el inventario",kw:["colector","colectores"]},{label:"Una levadura",q:"como van las generaciones",kw:["levadura","leva","generacion"]}]}; }
 
   const ORDINAL=[["primera","primero","1","uno","1ra","1ro"],["segunda","segundo","2","dos","2da","2do"],["tercera","tercero","3","tres","3ra","3ro"]];
@@ -6117,6 +6117,7 @@ App.Bot=(function(){
     return hit.length===1&&a.toks.length<=6&&!Object.keys(a.ent).length?hit[0]:null; }
 
   function responder(texto){
+    { const d=App.BotDirecto&&App.BotDirecto(texto,{ctx,mem}); if(d) return d; }
     let a=analizar(texto);
     const op=resolverPendiente(a); if(op) a=analizar(op.q);
     if(/que mas hay disponible/.test(a.q)){a.K.delete("SALUDO");a.K.delete("INTENS");a.K.delete("MAX");a.K.delete("MIN");a.K.delete("WH");a.K.add("INV");a.K.add("COL");}
@@ -6166,9 +6167,9 @@ App.Bot=(function(){
   }
   function abrir(c){ if(!el) construir(); const nuevo=c||ctxDeRuta(); const cambio=ctxTxt(nuevo)!==ctxTxt(ctx); ctx=nuevo; el.hidden=false; document.body.classList.add("bot-open"); pintarCtx();
     const t=ctxTxt(ctx);
-    if(!msgs.length) decir(t?`¡Hola! 👋 Veo que estás en <b>${esc(t)}</b>. Pregúntame por su estado, levadura, tiempos o historial.`:`¡Hola! 👋 Soy LevaBot, tu asistente para consultar los datos y seguir el proceso. Pregúntame con tus palabras: puedo buscar una levadura, resumir su expediente, revisar siembras e historial o llevarte al registro relacionado.`,opcionesInicio());
+    if(!msgs.length) decir(t?`Estás en <b>${esc(t)}</b>. Pregúntame lo que necesites.`:`Soy LevaBot. Pregúntame lo que quieras del proceso y te respondo directo.`,opcionesInicio());
     else if(cambio&&t) decir(`Ahora hablamos de <b>${esc(t)}</b>. ¿Qué necesitas?`);
-    decir(resumenTurno());avisosProactivos();if(!proactiveTimer)proactiveTimer=setInterval(()=>{if(el&&!el.hidden)avisosProactivos();},300000);
+    avisosProactivos();if(!proactiveTimer)proactiveTimer=setInterval(()=>{if(el&&!el.hidden)avisosProactivos();},300000);
     setTimeout(()=>el.querySelector("#botI").focus(),50); }
   function opcionesInicio(){ const n=App.Traza.nombres().find(x=>App.Calc.parseLev(x)); const o=[{label:"Qué revisar primero",q:"que levadura retiro primero"},{label:"Inventario disponible",q:"que levadura hay disponible en colectores"}]; if(n) o.unshift({label:`Consultar ${n}`,q:`dame informacion completa de ${n}`}); return o; }
   function cerrar(){ if(el){ el.hidden=true; document.body.classList.remove("bot-open"); } }
@@ -6180,7 +6181,7 @@ App.Bot=(function(){
   function enviar(visible,interno){ if(ocupado) return; usuario(visible);
     if(guia&&/^(hecho|listo|siguiente|ya)\b/.test(norm(visible))){ guia.i++; if(guia.i<guia.pasos.length){ decir(pasoGuia()); return; } guia=null; }
     ocupado=true; pintar();
-    const espera=reduce?60:Math.min(900,280+String(visible).length*12);
+    const espera=reduce?30:140;
     setTimeout(()=>{ let r; try{ r=responder(interno||visible); }catch(e){ console.error(e); r={h:"Tuve un problema leyendo los datos para responder eso. Intenta de nuevo o dímelo de otra forma."}; }
       ocupado=false; mem.pend=r.opts&&r.opts.length?r.opts:null; decir(r.h,r.opts); if(r.after) setTimeout(r.after,250); },espera); }
   const reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -7198,7 +7199,7 @@ App.Hist = App.Hist || (function(){
    ============================================================ */
 (function(){
   const {$,esc,fmtS,f} = App.U, C=App.C;
-  const NAV=[ {g:null,items:[["inicio","Inicio","home"]]}, {g:"Operación",items:[["tanques","Tanques","tank"],["levaduras","Levaduras","yeast"],["colectores","Colectores","grid"],["bd","Explorar levaduras","db"]]}, {g:"Información",items:[["historial","Historial","history"]]}, {g:null,items:[["config","Configuración","settings"]]} ];
+  const NAV=[ {g:null,items:[["inicio","Inicio","home"]]}, {g:"Operación",items:[["tanques","Tanques","tank"],["levaduras","Levaduras","yeast"],["colectores","Colectores","grid"],["bd","Explorar levaduras","db"]]}, {g:"Información",items:[["historial","Historial","history"],["analisis","Análisis","chart"]]}, {g:null,items:[["config","Configuración","settings"]]} ];
   const ALIAS={inventario:"levaduras",bdlev:"historial",tanque:"tanques"};
   const route=()=>{ const h=(location.hash||"#/inicio").slice(2).split("/"); return {name:h[0]||"inicio",arg:h.slice(1).map(decodeURIComponent)}; };
   App.go=p=>{ location.hash="#/"+p; };
@@ -7252,7 +7253,7 @@ App.Hist = App.Hist || (function(){
     $("#nav").innerHTML=NAV.map(gr=>(gr.g?`<div class="nav-g">${gr.g}</div>`:"")+gr.items.map(([k,l,ic])=>{ const b=badge[k]; return `<a href="#/${k}" ${cur===k?'aria-current="page"':""}>${C.icon(ic)}<span>${l}</span>${b?`<span class="cnt ${b[1]}" aria-label="${b[0]} requieren atención">${b[0]}</span>`:""}</a>`; }).join("")).join("");
     const upd=App.S.config.meta&&App.S.config.meta.actualizado;
     $("#topStatus").innerHTML=`<span class="dot-live" aria-hidden="true"></span>${App.Store.mode==="db"?"Datos compartidos":"Datos en este navegador"}${upd?" · act. "+fmtS(upd):""}${App.Store.canWrite?"":' · <b>solo lectura</b>'}`;
-    $("#sideFoot").textContent="v29 · "+(App.Store.mode==="db"?"base compartida":"modo local"); }
+    $("#sideFoot").textContent="v31 · "+(App.Store.mode==="db"?"base compartida":"modo local"); }
   function render(force){ const a=document.activeElement, v=$("#view");
     if(!force&&(document.querySelector("dialog[open]")||(a&&v.contains(a)&&["INPUT","SELECT","TEXTAREA"].includes(a.tagName)))) return;
     let {name,arg}=route(); const cur=ALIAS[name]||name;
@@ -7733,7 +7734,7 @@ body.bot-open .content{padding-right:28px!important}
           ${ops.length?`<div class="acard aops">${C.timeline(ops.map(x=>({ic:x.ic,cls:x.cls,t1:x.t1,t2:x.t2,time:fmtS(x.t),go:x.id?"historial/"+x.id:null})))}</div>`:`<div class="acard aempty"><div><b>Aún no hay operaciones.</b><span>Las cosechas, siembras y descartes aparecerán aquí.</span></div></div>`}
         </section>
 
-        <footer class="afoot"><span>${App.Store.mode==="db"?"Datos compartidos":"Datos guardados en este navegador"}${upd?" · actualizado "+fmtS(upd):""}${App.Store.canWrite?"":" · solo lectura"}</span><span>v30</span></footer>
+        <footer class="afoot"><span>${App.Store.mode==="db"?"Datos compartidos":"Datos guardados en este navegador"}${upd?" · actualizado "+fmtS(upd):""}${App.Store.canWrite?"":" · solo lectura"}</span><span>v31</span></footer>
       </div>`;
     },
     mount(){
@@ -8050,5 +8051,397 @@ dialog footer,dialog .dlg-f,dialog .modal-f{border-top:1px solid var(--line)!imp
 })();
 </script>
 
+<style id="v31-styles">
+/* ============================================================
+   v31 — íconos unificados, alertas, planta, análisis, LevaBot flotante
+   ============================================================ */
+/* Recipiente de colectores = el del Inicio */
+.ccard-visual.v31-vessel{width:72px!important;height:112px!important;display:block!important;background:none!important;box-shadow:none!important;color:var(--faint);filter:none!important}
+.ccard-visual.v31-vessel .avessel{width:72px;height:112px}
+.ccard-body{align-items:center!important}
+/* fermentador en tarjetas de tanque */
+.unitank-art{color:var(--faint)!important;filter:none!important;opacity:1!important}
+.unitank-art .v31-fv{width:62px;height:93px;display:block}
+/* gráfica con la paleta Apple */
+svg[data-chart] polyline[stroke="var(--ink)"]{stroke:var(--accent)!important;stroke-width:3!important;stroke-linecap:round}
+svg[data-chart] circle[fill="var(--ink)"]{fill:var(--surface)!important;stroke:var(--accent)!important;stroke-width:2.6!important}
+svg[data-chart] line[stroke="var(--line-2)"]{stroke:var(--line)!important;opacity:.7}
+svg[data-chart] line[stroke-dasharray]{opacity:.75}
+svg[data-chart] text{font-family:inherit!important}
+.chart{background:transparent!important}
+/* resumen de Historial sin cajitas de color */
+.hist-overview-icon{display:none!important}
+.hist-overview-card{display:block!important}
+.hist-overview-card b{font-size:40px!important;font-weight:600!important;letter-spacing:-.04em!important;display:block;line-height:1.05}
+.hist-overview-card small{font-size:14px!important;font-weight:600;color:var(--muted)!important}
+/* guía de la gráfica plegable */
+details.v31-guide{background:var(--surface-2)!important;border-radius:16px!important;border:0!important;padding:0!important;box-shadow:none!important}
+details.v31-guide>summary{list-style:none;cursor:pointer;padding:16px 20px;display:flex;align-items:center;gap:12px}
+details.v31-guide>summary::-webkit-details-marker{display:none}
+details.v31-guide>summary::after{content:"Ver";margin-left:auto;color:var(--accent);font-size:14px}
+details.v31-guide[open]>summary::after{content:"Ocultar"}
+details.v31-guide>summary b{font-weight:600} details.v31-guide>summary small{display:block;color:var(--muted);font-size:13px}
+details.v31-guide>summary>span{display:none}
+details.v31-guide>:not(summary){margin:0 20px 18px}
+
+/* Barra superior: cabe todo sin encimarse */
+@media (min-width:901px){
+ .topbar{gap:14px!important}
+ .abrand span{display:none}
+ .anav{justify-content:flex-start!important;gap:0!important}
+ .anav a{padding:6px 9px!important}
+ .topbar .gsearch{flex:0 1 190px!important;max-width:190px!important;min-width:130px!important}
+}
+@media (min-width:1500px){ .abrand span{display:inline}.topbar .gsearch{flex-basis:230px!important;max-width:230px!important} }
+/* Botones de la barra superior */
+.v31-ib{position:relative;width:34px!important;height:34px;min-height:34px!important;padding:0!important;border-radius:50%!important;background:transparent!important;display:grid;place-items:center}
+.v31-ib .i{width:19px;height:19px}
+.v31-ib:hover{background:var(--v30-fill)!important}
+.v31-n{position:absolute;top:1px;right:0;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--a-red);color:#fff;font-size:10px;font-weight:600;line-height:16px;text-align:center}
+.v31-pop{position:fixed;top:58px;right:max(16px,calc((100vw - 1296px)/2 + 28px));width:min(380px,calc(100vw - 24px));max-height:min(560px,calc(100vh - 80px));overflow:auto;z-index:120;background:var(--surface);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.28),0 0 0 1px var(--line);padding:6px}
+.v31-pop-h{display:flex;justify-content:space-between;align-items:baseline;padding:14px 16px 8px}.v31-pop-h b{font-size:19px;font-weight:600;letter-spacing:-.02em}.v31-pop-h span{color:var(--muted);font-size:13px}
+.v31-pop-l{display:flex;flex-direction:column}
+.v31-al{display:flex;gap:12px;align-items:flex-start;padding:11px 16px;border-radius:12px;color:var(--ink)!important;text-decoration:none}
+.v31-al:hover{background:var(--v30-fill)}
+.v31-al i{width:9px;height:9px;border-radius:50%;margin-top:6px;flex:none;background:var(--muted)}
+.v31-al.crit i{background:var(--a-red)}.v31-al.warn i{background:#ff9500}.v31-al.ok i{background:#34c759}
+.v31-al b{display:block;font-size:14px;font-weight:600}.v31-al small{color:var(--muted);font-size:12.5px}
+.v31-none{color:var(--muted);padding:14px 16px;margin:0}
+.v31-pop-s{border-top:1px solid var(--line);margin-top:6px;padding:12px 16px 14px;display:flex;flex-direction:column;gap:10px;font-size:13.5px}
+.v31-pop-s label{display:flex;gap:9px;align-items:center;color:var(--ink-2)!important;font-size:13.5px!important}
+.v31-pop-s .v31-row{justify-content:space-between}.v31-pop-s select{width:auto;min-height:32px;padding:0 10px}
+.v31-pop-s .btn{align-self:flex-start}
+
+/* Pantalla de planta */
+.v31-tv header{display:flex;align-items:flex-end;gap:24px;padding:8px 0 24px}
+.v31-tv h1{margin:0;font-size:clamp(34px,4.4vw,56px);font-weight:600;letter-spacing:-.035em;line-height:1.05}
+.v31-tv header p{margin:6px 0 0;color:var(--muted);font-size:18px;text-transform:capitalize}
+.v31-clock{margin-left:auto;font-size:clamp(40px,6vw,88px);font-weight:600;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
+.v31-tv h2{font-size:24px;font-weight:600;letter-spacing:-.02em;margin:34px 0 14px}
+.v31-kp{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.v31-kp div{background:var(--surface);border-radius:18px;box-shadow:var(--v30-card);padding:22px 24px}
+.v31-kp b{display:block;font-size:clamp(40px,5vw,72px);font-weight:600;letter-spacing:-.04em;line-height:1}
+.v31-kp span{color:var(--muted);font-size:15px}
+.v31-kp .r b{color:var(--a-red)}.v31-kp .o b{color:var(--a-orange)}.v31-kp .g b{color:var(--muted)}
+.v31-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:12px}
+.v31-tile{display:flex;flex-direction:column;justify-content:space-between;min-height:104px;padding:14px 16px;border-radius:16px;background:var(--surface);box-shadow:var(--v30-card);color:var(--ink)!important;text-decoration:none;position:relative;overflow:hidden}
+.v31-tile::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:var(--faint);opacity:.5}
+.v31-tile.rojo::before{background:#ff3b30;opacity:1}.v31-tile.naranja::before,.v31-tile.amarillo::before{background:#ff9500;opacity:1}.v31-tile.verde::before{background:#34c759;opacity:1}.v31-tile.gris::before,.v31-tile.sin::before{background:#8e8e93;opacity:.8}
+.v31-tile b{font-size:34px;font-weight:600;letter-spacing:-.04em;line-height:1}
+.v31-tile small{color:var(--muted);font-size:12px}.v31-tile em{font-style:normal;font-size:12px;font-weight:600}
+.v31-tile.rojo em{color:var(--a-red)}.v31-tile.naranja em,.v31-tile.amarillo em{color:var(--a-orange)}
+.v31-tile.libre{opacity:.5;box-shadow:none;background:transparent;border:1.5px dashed var(--line)}
+.v31-tcols{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.v31-tcol{display:flex;flex-direction:column;align-items:center;gap:4px;padding:18px 10px;background:var(--surface);border-radius:18px;box-shadow:var(--v30-card);color:var(--ink)!important;text-decoration:none;text-align:center}
+.v31-tcol .avessel{width:56px;height:88px}.v31-tcol b{font-size:24px;font-weight:600}.v31-tcol small{color:var(--muted);font-size:12.5px}
+body.v31-tvmode:fullscreen .topbar,:fullscreen body.v31-tvmode .topbar{display:none!important}
+@media (max-width:1000px){.v31-grid{grid-template-columns:repeat(4,1fr)}.v31-tcols{grid-template-columns:repeat(3,1fr)}.v31-kp{grid-template-columns:repeat(2,1fr)}.v31-tv header{flex-wrap:wrap}}
+
+/* Análisis */
+.v31-an .v31-seg{margin-bottom:22px}
+.v31-seg{display:inline-flex;gap:2px;padding:3px;border-radius:980px;background:var(--v30-fill);flex-wrap:wrap}
+.v31-seg button{all:unset;cursor:pointer;padding:7px 16px;border-radius:980px;font-size:14px;font-weight:500;color:var(--ink-2)}
+.v31-seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.v31-seg.big button{padding:9px 22px;font-size:15px}
+.v31-card{background:var(--surface);border-radius:18px;box-shadow:var(--v30-card);padding:26px 28px;margin-bottom:20px}
+.v31-ch{margin-bottom:16px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.v31-ch h2{margin:0;font-size:24px;font-weight:600;letter-spacing:-.02em}.v31-ch p{margin:0;color:var(--muted)}
+.v31-gantt{position:relative}
+.v31-gantt .ax{position:relative;height:22px;margin:0 140px 6px 110px;font-size:11.5px;color:var(--muted)}
+.v31-gantt .ax span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.v31-gr{display:grid;grid-template-columns:110px 1fr 140px;align-items:center;gap:0;padding:7px 0;border-top:1px solid var(--line);color:var(--ink)!important;text-decoration:none}
+.v31-gr:hover{background:var(--v30-fill)}
+.v31-gr .n{font-weight:600;font-size:15px}.v31-gr .n small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.v31-gr .tr{position:relative;height:22px;background:linear-gradient(90deg,transparent 0,transparent 0);border-radius:11px;background:var(--v30-fill)}
+.v31-gr .tr i{position:absolute;top:0;bottom:0;border-radius:11px}
+.v31-gr .tr i.ok{background:color-mix(in srgb,#34c759 55%,transparent)}.v31-gr .tr i.wa{background:color-mix(in srgb,#ff9500 55%,transparent)}
+.v31-gr .tr b{position:absolute;top:3px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:var(--surface);border:3px solid var(--accent)}
+.v31-gr .tr em{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--a-red);margin-left:-1px}
+.v31-gr .w{text-align:right;font-size:13px;font-weight:600}.v31-gr .w small{display:block;color:var(--muted);font-weight:400}
+.v31-day{margin:18px 0 6px;font-size:13px;font-weight:600;color:var(--muted);text-transform:capitalize}
+.v31-it{display:grid;grid-template-columns:70px 1fr auto 130px;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);color:var(--ink)!important;text-decoration:none}
+.v31-it b{font-size:17px}.v31-it span{color:var(--muted);font-size:14px}.v31-it em{font-style:normal;font-weight:600}.v31-it small{color:var(--muted);text-align:right}
+.v31-ins{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:8px}.v31-ins li{background:var(--surface-2);border-radius:12px;padding:12px 16px;font-size:15px}
+.v31-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.v31-chart{background:var(--surface-2);border-radius:16px;padding:16px 18px 8px}.v31-chart h3{margin:0 0 4px;font-size:16px;font-weight:600;display:flex;justify-content:space-between;align-items:baseline}.v31-chart h3 small{color:var(--muted);font-weight:400;font-size:12px}
+.v31-chart svg{width:100%;height:auto}.v31-chart .vl{font-size:11.5px;font-weight:600;fill:var(--ink)}.v31-chart .ax{font-size:11px;fill:var(--muted)}
+.v31-foot{color:var(--muted);font-size:13px;margin:16px 0 0}
+@media (max-width:700px){.v31-gr{grid-template-columns:70px 1fr}.v31-gr .w{display:none}.v31-gantt .ax{margin:0 0 6px 70px}.v31-it{grid-template-columns:56px 1fr auto}.v31-it small{display:none}.v31-card{padding:20px 16px}}
+
+/* LevaBot: ventana flotante compacta, no ocupa toda la pantalla */
+@media (min-width:701px){
+ .bot{top:auto!important;right:24px!important;bottom:24px!important;left:auto!important;width:400px!important;height:min(620px,calc(100vh - 110px))!important;border-radius:24px!important;box-shadow:0 30px 80px rgba(0,0,0,.28),0 0 0 1px var(--line)!important;overflow:hidden;animation:v31pop .22s cubic-bezier(.2,.8,.2,1)}
+}
+@keyframes v31pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+@media (max-width:700px){ .bot{top:auto!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;height:82vh!important;border-radius:24px 24px 0 0!important;box-shadow:0 -20px 60px rgba(0,0,0,.3)!important} }
+.bot-h{padding:12px 14px!important}.bot-head-actions .btn{min-height:32px!important;padding:0 12px!important;font-size:13px!important}
+.bot-m{padding:14px 14px 10px!important}.bm{font-size:14.5px!important;line-height:1.45!important;max-width:92%!important}
+.bm a{color:var(--accent)!important;text-decoration:none;font-weight:600}.bm.b b{font-weight:600}
+.bot-status{padding:6px 14px!important}
+@media (prefers-reduced-motion:reduce){.bot{animation:none!important}}
+</style>
+<script id="v31-modules">
+/* ============================================================
+   v31 — Íconos unificados, alertas, pantalla de planta, análisis
+   (calendario de T0 y tendencias) y LevaBot directo.
+   Todo vive en este bloque; no modifica datos ni lógica de cálculo.
+   ============================================================ */
+(function(){
+  if(!window.App||!App.U||!App.C||!App.D) return;
+  const {esc,fmtS,f,parseDT,HOUR}=App.U, C=App.C;
+  const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+  const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+  const COL={rojo:"#ff3b30",naranja:"#ff9500",amarillo:"#ffcc00",verde:"#34c759",gris:"#8e8e93",sin:"#8e8e93"};
+  const rel=(t,n)=>C.rel(t,n||Date.now());
+  const pend=()=>App.D.pend(Date.now());
+  const tit=s=>String(s||"").toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase());
+  const hl=v=>v==null||isNaN(v)?"sin volumen":f(v,0)+" Hl";
+  const pct=v=>v==null?"—":f(v*100,1)+" %";
+
+  /* ---------- 1. Recipiente unificado (el del Inicio) ---------- */
+  function vaso(u,fillVar,id){ const fill=Math.max(0,Math.min(2,u))*37;
+    return `<svg viewBox="0 0 120 190" class="avessel" aria-hidden="true">
+      <rect x="52" y="4" width="16" height="10" rx="3" fill="currentColor" opacity=".45"/>
+      <clipPath id="v31c${id}"><path d="M20 40Q20 18 60 16Q100 18 100 40V150Q100 166 60 168Q20 166 20 150Z"/></clipPath>
+      <path d="M20 40Q20 18 60 16Q100 18 100 40V150Q100 166 60 168Q20 166 20 150Z" fill="var(--surface-2)" stroke="currentColor" stroke-width="2.5"/>
+      <rect x="18" y="${168-fill*2}" width="84" height="${fill*2}" fill="${fillVar}" opacity=".85" clip-path="url(#v31c${id})"/>
+      <line x1="20" y1="92" x2="100" y2="92" stroke="var(--surface)" stroke-width="2" stroke-dasharray="4 4" opacity=".9"/>
+      <path d="M40 168l-6 18M80 168l6 18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`; }
+  // fermentador: cuerpo + cono; el nivel muestra el avance de atenuación
+  function fermentador(nivel,color,id){ const h=Math.round(Math.max(0,Math.min(1,nivel))*84);
+    return `<svg viewBox="0 0 80 120" class="v31-fv" aria-hidden="true">
+      <clipPath id="v31f${id}"><path d="M12 24Q12 8 40 8Q68 8 68 24V74L48 108H32L12 74Z"/></clipPath>
+      <path d="M12 24Q12 8 40 8Q68 8 68 24V74L48 108H32L12 74Z" fill="var(--surface-2)" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+      <rect x="10" y="${108-h}" width="60" height="${h}" fill="${color}" opacity=".85" clip-path="url(#v31f${id})"/>
+      <path d="M40 8V2M34 2h12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M32 108v8M48 108v8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`; }
+
+  function pulirColectores(){
+    $$("#view .ccard").forEach(c=>{ if(c.dataset.v31) return; c.dataset.v31="1";
+      const n=+String(c.dataset.go||"").replace(/\D/g,""); if(!n) return;
+      const u=[1,2].filter(s=>App.S.colectores[`c${n}-${s}`]).length, vis=$(".ccard-visual",c); if(!vis) return;
+      vis.innerHTML=vaso(u,"var(--c)","k"+n); vis.classList.add("v31-vessel"); });
+    $$("#view .tank-card").forEach(c=>{ if(c.dataset.v31) return; c.dataset.v31="1";
+      const lote=decodeURIComponent(String(c.dataset.go||"").split("/")[1]||""), x=pend().find(p=>p.t.lote===lote), art=$(".unitank-art",c); if(!art||!x) return;
+      const col=COL[x.st.k]||COL.gris, niv=x.r.atenuacion!=null?Math.min(1,x.r.atenuacion/.75):0;
+      art.innerHTML=fermentador(niv,col,lote); art.title=x.r.atenuacion!=null?"Atenuación "+Math.round(x.r.atenuacion*100)+" %":"Sin muestras"; });
+  }
+  function pulirDetalle(){
+    const g=$("#view .curve-guide"); if(g&&!g.dataset.v31){ g.dataset.v31="1"; const d=document.createElement("details"); d.className="curve-guide v31-guide";
+      const t=$(".curve-guide-title",g); const s=document.createElement("summary"); s.innerHTML=t?t.innerHTML:"Cómo leer las líneas"; d.appendChild(s);
+      [...g.children].forEach(ch=>{ if(ch!==t) d.appendChild(ch); }); g.replaceWith(d); }
+  }
+
+  /* ---------- 2. Alertas: campana, sonido y avisos del sistema ---------- */
+  const AK="inventarioLevadura:v31alertas", SEEN="inventarioLevadura:v31vistas";
+  const pref=()=>Object.assign({sonido:true,sistema:false,antes:60},LS.get(AK,{}));
+  function beep(){ try{ const A=window.AudioContext||window.webkitAudioContext; if(!A) return; const c=new A(), t=c.currentTime;
+    [[880,0],[1175,.18]].forEach(([fr,d])=>{ const o=c.createOscillator(), g=c.createGain(); o.type="sine"; o.frequency.value=fr; g.gain.setValueAtTime(0,t+d); g.gain.linearRampToValueAtTime(.18,t+d+.02); g.gain.exponentialRampToValueAtTime(.001,t+d+.35); o.connect(g); g.connect(c.destination); o.start(t+d); o.stop(t+d+.4); }); setTimeout(()=>c.close&&c.close(),900); }catch(e){} }
+  function eventos(){
+    const out=[], P=pref(), pre=P.antes*60000;
+    pend().forEach(({t,r})=>{ if(!r.t0) return; const t0=+parseDT(r.t0), nom="FV "+t.tq, go="tanque/"+t.lote, k=t.lote+":"+t0;
+      out.push({key:"pre:"+k,at:t0-pre,title:nom+" llega a T0 en "+P.antes+" min",sub:"Prepare el retiro de "+(t.levadura&&t.levadura.nombre||"levadura"),sev:"warn",go});
+      out.push({key:"t0:"+k,at:t0,title:nom+" llegó a T0",sub:"Ya puede retirar la levadura",sev:"ok",go});
+      out.push({key:"12:"+k,at:t0+12*HOUR,title:nom+" pasó +12 h",sub:"Retire antes de +24 h",sev:"warn",go});
+      out.push({key:"24:"+k,at:t0+24*HOUR,title:nom+" venció (+24 h)",sub:"Retiro pendiente fuera de ventana",sev:"crit",go}); });
+    [1,2,3,4,5,6].forEach(n=>[1,2].forEach(s=>{ const c=App.S.colectores[`c${n}-${s}`]; if(!c) return; const tc=App.T.tiempoColector(c,Date.now()); if(!tc||!tc.mr) return; const mr=+tc.mr, id=`C${n}-P${s}`;
+      out.push({key:"cpre:"+id+":"+mr,at:mr-pre,title:id+" · "+c.nombre+" cerca del límite",sub:"Siembre en menos de "+P.antes+" min",sev:"warn",go:"colectores/"+n});
+      out.push({key:"cven:"+id+":"+mr,at:mr,title:id+" · "+c.nombre+" pasó el límite",sub:"Fuera de tiempo para sembrar",sev:"crit",go:"colectores/"+n}); }));
+    return out; }
+  function disparar(ev){ const P=pref(); try{ App.U.toast(ev.title); }catch(e){} if(P.sonido) beep();
+    if(P.sistema&&window.Notification&&Notification.permission==="granted"){ try{ new Notification(ev.title,{body:ev.sub,tag:ev.key}); }catch(e){} } }
+  function revisar(){ const now=Date.now(); let vistas=LS.get(SEEN,null); if(!vistas){ vistas={t:now}; LS.set(SEEN,vistas); return; }
+    const nuevos=eventos().filter(e=>e.at>vistas.t&&e.at<=now).sort((a,b)=>a.at-b.at);
+    if(nuevos.length){ nuevos.slice(-3).forEach((e,i)=>setTimeout(()=>disparar(e),i*1200)); }
+    LS.set(SEEN,{t:now}); pintarCampana(); }
+  function activas(){ const now=Date.now(), a=[];
+    pend().forEach(({t,r,st})=>{ const h=r.t0?(+parseDT(r.t0)-now)/HOUR:null;
+      if(st.k==="rojo") a.push({sev:"crit",title:"FV "+t.tq+" · retiro vencido",sub:"Vencido "+rel(r.venc,now).replace(/^hace /,"hace "),go:"tanque/"+t.lote,o:0});
+      else if(st.k==="naranja"||st.k==="verde") a.push({sev:"warn",title:"FV "+t.tq+" · "+(st.k==="verde"?"lista para retirar":"retiro próximo"),sub:"Vence "+rel(r.venc,now),go:"tanque/"+t.lote,o:1});
+      else if(h!=null&&h>0&&h<=3) a.push({sev:"ok",title:"FV "+t.tq+" llega a T0",sub:rel(r.t0,now),go:"tanque/"+t.lote,o:2}); });
+    [1,2,3,4,5,6].forEach(n=>[1,2].forEach(s=>{ const c=App.S.colectores[`c${n}-${s}`]; if(!c) return; const tc=App.T.tiempoColector(c,now); if(!tc) return;
+      if(tc.k==="rojo") a.push({sev:"crit",title:`C${n}-P${s} · ${c.nombre} fuera de tiempo`,sub:"Pasó el límite de siembra",go:"colectores/"+n,o:0});
+      else if(tc.k==="naranja") a.push({sev:"warn",title:`C${n}-P${s} · ${c.nombre} cerca del límite`,sub:"Sembrar antes de "+fmtS(tc.mr),go:"colectores/"+n,o:1}); }));
+    return a.sort((x,y)=>x.o-y.o); }
+  function pintarCampana(){ const b=$("#v31Bell"); if(!b) return; const n=activas().filter(x=>x.sev!=="ok").length; b.dataset.n=n; const s=$(".v31-n",b); if(s){ s.textContent=n; s.hidden=!n; } }
+  function popover(){ const old=$("#v31Pop"); if(old){ old.remove(); return; }
+    const P=pref(), A=activas(), p=document.createElement("div"); p.id="v31Pop"; p.className="v31-pop"; p.setAttribute("role","dialog"); p.setAttribute("aria-label","Alertas");
+    p.innerHTML=`<div class="v31-pop-h"><b>Alertas</b><span>${A.length?A.length+" activas":"Todo al día"}</span></div>
+      <div class="v31-pop-l">${A.length?A.map(x=>`<a href="#/${x.go}" class="v31-al ${x.sev}"><i></i><span><b>${esc(x.title)}</b><small>${esc(x.sub)}</small></span></a>`).join(""):'<p class="v31-none">No hay retiros ni siembras pendientes.</p>'}</div>
+      <div class="v31-pop-s">
+        <label><input type="checkbox" id="v31Son" ${P.sonido?"checked":""}> Sonido al llegar un aviso</label>
+        <label><input type="checkbox" id="v31Sis" ${P.sistema?"checked":""}> Avisos del navegador (aunque esté en otra pestaña)</label>
+        <label class="v31-row">Avisar antes de <select id="v31Ant"><option value="30">30 min</option><option value="60">1 h</option><option value="120">2 h</option></select></label>
+        <button type="button" class="btn sm" id="v31Test">Probar aviso</button></div>`;
+    document.body.appendChild(p); $("#v31Ant").value=String(P.antes);
+    const save=()=>LS.set(AK,{sonido:$("#v31Son").checked,sistema:$("#v31Sis").checked,antes:+$("#v31Ant").value});
+    $("#v31Son").onchange=save; $("#v31Ant").onchange=save;
+    $("#v31Sis").onchange=async e=>{ if(e.target.checked){ if(!window.Notification){ e.target.checked=false; App.U.toast("Este navegador no admite avisos del sistema."); } else { const r=Notification.permission==="granted"?"granted":await Notification.requestPermission(); if(r!=="granted"){ e.target.checked=false; App.U.toast("Permiso de avisos no concedido."); } } } save(); };
+    $("#v31Test").onclick=()=>disparar({title:"Aviso de prueba",sub:"Así sonará un aviso de retiro.",key:"test"+Date.now()});
+    p.addEventListener("click",e=>{ if(e.target.closest("a")) p.remove(); });
+    setTimeout(()=>document.addEventListener("click",function h(e){ if(!e.target.closest("#v31Pop,#v31Bell")){ p.remove(); document.removeEventListener("click",h); } }),0); }
+  function topbar(){ const tb=$(".topbar"); if(!tb||$("#v31Bell")) return; const anchor=$(".theme-btn",tb)||$("#botBtn",tb);
+    const mk=(id,label,svg,fn)=>{ const b=document.createElement("button"); b.type="button"; b.id=id; b.className="btn v31-ib"; b.setAttribute("aria-label",label); b.title=label; b.innerHTML=svg; b.onclick=fn; return b; };
+    const bell=mk("v31Bell","Alertas",'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7.5 2 7.5H4S6 15 6 9M10 20a2 2 0 0 0 4 0"/></svg><span class="v31-n" hidden>0</span>',popover);
+    const tv=mk("v31Tv","Pantalla de planta",'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',()=>App.go("pantalla"));
+    tb.insertBefore(bell,anchor); tb.insertBefore(tv,bell); pintarCampana(); }
+
+  /* ---------- 3. Pantalla de planta ---------- */
+  let tvTimer=null;
+  function tvHTML(){ const now=Date.now(), P=pend(), by={}; P.forEach(x=>by[x.t.tq]=x);
+    const cnt=k=>P.filter(x=>k.includes(x.st.k)).length, venc=cnt(["rojo"]), prox=cnt(["naranja","verde","amarillo"]), proc=cnt(["gris","sin"]);
+    const tiles=Array.from({length:32},(_,i)=>{ const n=i+1, x=by[n]; if(!x) return `<a class="v31-tile libre"><b>${n}</b><small>Libre</small></a>`;
+      const nx=C.siguiente(x.r,x.st,now); return `<a href="#/tanque/${esc(x.t.lote)}" class="v31-tile ${x.st.k}"><b>${n}</b><small>${esc(x.t.levadura&&x.t.levadura.nombre||"")}</small><em>${esc(nx.txt.replace("Vencida hace","Venc.").replace("Vence en","Vence").replace("hace ",""))}</em></a>`; }).join("");
+    const cols=[1,2,3,4,5,6].map(n=>{ const ps=[1,2].map(s=>App.S.colectores[`c${n}-${s}`]), u=ps.filter(Boolean).length;
+      const ks=ps.filter(Boolean).map(c=>App.T.tiempoColector(c,now).k), k=!u?"verde":ks.includes("rojo")?"rojo":ks.includes("naranja")?"naranja":"verde";
+      return `<a href="#/colectores/${n}" class="v31-tcol"><span style="color:var(--faint)">${vaso(u,COL[k],"tv"+n)}</span><b>C${n}</b><small>${u?ps.filter(Boolean).map(c=>esc(c.nombre)).join(" · "):"Libre"}</small></a>`; }).join("");
+    const d=new Date(now);
+    return `<div class="v31-tv"><header><div><h1>Planta</h1><p>${d.toLocaleDateString("es-CO",{weekday:"long",day:"numeric",month:"long"})}</p></div>
+      <div class="v31-clock">${d.toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit",hour12:false})}</div>
+      <button type="button" class="btn" id="v31Full">Pantalla completa</button></header>
+      <section class="v31-kp"><div class="r"><b>${venc}</b><span>Retiros vencidos</span></div><div class="o"><b>${prox}</b><span>Por retirar</span></div><div class="g"><b>${proc}</b><span>En fermentación</span></div><div><b>${32-P.length}</b><span>FV libres</span></div></section>
+      <h2>Fermentadores</h2><section class="v31-grid">${tiles}</section>
+      <h2>Colectores</h2><section class="v31-tcols">${cols}</section></div>`; }
+  App.V.pantalla={ render(){ return tvHTML(); },
+    mount(){ clearInterval(tvTimer); const full=$("#v31Full"); if(full) full.onclick=()=>{ const el=document.documentElement; if(document.fullscreenElement) document.exitFullscreen(); else (el.requestFullscreen||function(){}).call(el); };
+      tvTimer=setInterval(()=>{ if(!/^#\/pantalla/.test(location.hash)){ clearInterval(tvTimer); return; } const v=$("#view"); if(v&&!document.querySelector("dialog[open]")){ v.innerHTML=tvHTML(); App.V.pantalla.mount(); } },30000); } };
+
+  /* ---------- 4. Análisis: calendario de T0 y tendencias ---------- */
+  let aTab=LS.get("inventarioLevadura:v31tab","cal"), aMarca="todas";
+  function calendario(){ const now=Date.now(), W0=-24*HOUR, W1=72*HOUR, span=W1-W0;
+    const rows=pend().filter(x=>x.r.t0).map(x=>({x,t0:+parseDT(x.r.t0)})).filter(o=>o.t0+24*HOUR>now+W0&&o.t0<now+W1).sort((a,b)=>a.t0-b.t0);
+    const pos=ms=>Math.max(0,Math.min(100,((ms-now)-W0)/span*100));
+    const ticks=[-24,-12,0,12,24,36,48,60,72].map(h=>`<span style="left:${pos(now+h*HOUR)}%">${h===0?"Ahora":(h>0?"+":"")+h+" h"}</span>`).join("");
+    const bars=rows.map(({x,t0})=>{ const a=pos(t0), b=pos(t0+12*HOUR), c=pos(t0+24*HOUR);
+      return `<a class="v31-gr" href="#/tanque/${esc(x.t.lote)}"><span class="n">FV ${x.t.tq}<small>${esc(tit(x.t.marca))}</small></span>
+        <span class="tr"><i class="ok" style="left:${a}%;width:${Math.max(0,b-a)}%"></i><i class="wa" style="left:${b}%;width:${Math.max(0,c-b)}%"></i><b style="left:${a}%"></b><em style="left:${pos(now)}%"></em></span>
+        <span class="w">${fmtS(t0)}<small>${rel(t0,now)}</small></span></a>`; }).join("");
+    const prox=rows.filter(o=>o.t0>now).slice(0,6);
+    const dia=ms=>{ const d=new Date(ms), h=new Date(now); const dd=Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-new Date(h.getFullYear(),h.getMonth(),h.getDate()))/864e5); return dd===0?"Hoy":dd===1?"Mañana":d.toLocaleDateString("es-CO",{weekday:"long",day:"numeric"}); };
+    const grupos={}; prox.forEach(o=>{ (grupos[dia(o.t0)]=grupos[dia(o.t0)]||[]).push(o); });
+    return `<section class="v31-card"><div class="v31-ch"><h2>Próximas 72 horas</h2><p>Cada barra muestra la ventana de retiro: verde de T0 a +12 h, naranja hasta +24 h.</p></div>
+      ${rows.length?`<div class="v31-gantt"><div class="ax">${ticks}</div>${bars}</div>`:'<p class="v31-none">No hay T0 en este rango.</p>'}</section>
+      <section class="v31-card"><div class="v31-ch"><h2>Siguientes T0</h2></div>${Object.keys(grupos).length?Object.entries(grupos).map(([d,l])=>`<h3 class="v31-day">${esc(d)}</h3>${l.map(o=>`<a class="v31-it" href="#/tanque/${esc(o.x.t.lote)}"><b>FV ${o.x.t.tq}</b><span>${esc(tit(o.x.t.marca))} · ${esc(o.x.t.levadura&&o.x.t.levadura.nombre||"")}</span><em>${fmtS(o.t0)}</em><small>${rel(o.t0,now)}</small></a>`).join("")}`).join(""):'<p class="v31-none">Ningún T0 en las próximas 72 horas.</p>'}</section>`; }
+  const mean=a=>{ const v=a.filter(x=>x!=null&&!isNaN(x)); return v.length?v.reduce((s,x)=>s+x,0)/v.length:null; };
+  function barras(titulo,datos,fmt,unidad,color){ const vals=datos.filter(d=>d.v!=null); if(!vals.length) return ""; const mn=Math.min(...vals.map(d=>d.v)), mx=Math.max(...vals.map(d=>d.v)), lo=mn-(mx-mn||1)*.6, W=560,H=210,pl=10,pb=34,bw=Math.min(46,(W-pl*2)/datos.length-10);
+    const y=v=>34+(H-pb-52)*(1-(v-lo)/((mx-lo)||1));
+    const line=vals.map((d,i)=>{ const idx=datos.indexOf(d); return `${i?"L":"M"}${pl+(idx+.5)*((W-pl*2)/datos.length)},${y(d.v)}`; }).join(" ");
+    return `<div class="v31-chart"><h3>${titulo}<small>${unidad}</small></h3><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(titulo)}">
+      ${datos.map((d,i)=>{ const cx=pl+(i+.5)*((W-pl*2)/datos.length); if(d.v==null) return `<text x="${cx}" y="${H-12}" text-anchor="middle" class="ax">G${d.g}</text>`; const yy=y(d.v); return `<rect x="${cx-bw/2}" y="${yy}" width="${bw}" height="${H-pb-yy}" rx="8" fill="${color}" opacity=".16"/><circle cx="${cx}" cy="${yy}" r="4.5" fill="${color}"/><text x="${cx}" y="${yy-10}" text-anchor="middle" class="vl">${fmt(d.v)}</text><text x="${cx}" y="${H-12}" text-anchor="middle" class="ax">G${d.g}</text><title>Gen ${d.g}: ${fmt(d.v)} (${d.n} registros)</title>`; }).join("")}
+      <path d="${line}" fill="none" stroke="${color}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`; }
+  function tendencias(){ const R=(App.BDM.registros()||[]).filter(r=>r.generacion!=null&&(aMarca==="todas"||r.marca===aMarca));
+    const marcas=[...new Set((App.BDM.registros()||[]).map(r=>r.marca).filter(Boolean))].sort();
+    const gens=[...new Set(R.map(r=>+r.generacion))].sort((a,b)=>a-b);
+    const D=k=>gens.map(g=>{ const l=R.filter(r=>+r.generacion===g); return {g,n:l.length,v:mean(l.map(r=>r[k]))}; });
+    const V=D("viab"), K=D("cons"), H=D("ph");
+    const best=V.filter(d=>d.v!=null).sort((a,b)=>b.v-a.v)[0], worst=V.filter(d=>d.v!=null&&d.n>=3).sort((a,b)=>a.v-b.v)[0];
+    const ins=[]; if(best) ins.push(`Mejor viabilidad: <b>Gen ${best.g}</b> con ${pct(best.v)} (${best.n} registros).`); if(worst&&worst!==best) ins.push(`Menor viabilidad: <b>Gen ${worst.g}</b> con ${pct(worst.v)}.`);
+    const hi=V.filter(d=>d.g>=8&&d.v!=null), lo=V.filter(d=>d.g<=4&&d.v!=null); if(hi.length&&lo.length){ const dif=(mean(hi.map(d=>d.v))-mean(lo.map(d=>d.v)))*100; ins.push(`Las generaciones 8 en adelante ${dif<0?"pierden":"ganan"} <b>${f(Math.abs(dif),1)} puntos</b> de viabilidad frente a las 1–4.`); }
+    return `<section class="v31-card"><div class="v31-ch"><h2>Calidad por generación</h2><p>Promedio de todos los registros de cosecha${aMarca==="todas"?"":" de "+esc(tit(aMarca))}.</p>
+      <div class="v31-seg" role="group" aria-label="Marca"><button data-m="todas" class="${aMarca==="todas"?"on":""}">Todas</button>${marcas.map(m=>`<button data-m="${esc(m)}" class="${aMarca===m?"on":""}">${esc(tit(m))}</button>`).join("")}</div></div>
+      ${ins.length?`<ul class="v31-ins">${ins.map(i=>`<li>${i}</li>`).join("")}</ul>`:""}
+      <div class="v31-charts">${barras("Viabilidad",V,v=>f(v*100,1)+"%","promedio","var(--accent)")}${barras("Consistencia",K,v=>f(v*100,1)+"%","promedio","#34c759")}${barras("pH",H,v=>f(v,2),"promedio","#ff9500")}</div>
+      <p class="v31-foot">${R.length} registros · ${gens.length} generaciones</p></section>`; }
+  App.V.analisis={ render(){ return `<div class="v31-an"><div class="page-h"><div><h1>Análisis</h1><p>Qué viene en las próximas horas y cómo se comporta la levadura por generación.</p></div></div>
+      <div class="v31-seg big" role="tablist"><button data-t="cal" class="${aTab==="cal"?"on":""}" role="tab">Calendario de T0</button><button data-t="ten" class="${aTab==="ten"?"on":""}" role="tab">Tendencias</button></div>
+      ${aTab==="cal"?calendario():tendencias()}</div>`; },
+    mount(){ $$("#view [data-t]").forEach(b=>b.onclick=()=>{ aTab=b.dataset.t; LS.set("inventarioLevadura:v31tab",aTab); App.render(true); });
+      $$("#view [data-m]").forEach(b=>b.onclick=()=>{ aMarca=b.dataset.m; App.render(true); }); } };
+
+  /* ---------- 5. LevaBot directo ---------- */
+  const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim();
+  const A=(q,...ws)=>ws.some(w=>w instanceof RegExp?w.test(q):q.includes(w));
+  const fvN=n=>`<a href="#/tanque/${esc(n.t.lote)}">FV ${n.t.tq}</a>`;
+  const lst=a=>a.length<=1?a.join(""):a.slice(0,-1).join(", ")+" y "+a[a.length-1];
+  const plur=(n,s,p)=>n===1?s:p;
+  function findFV(q,ctx){ const m=q.match(/\b(?:fv|tanque|tq|fermentador|f v)\s*0*(\d{1,2})\b/); const P=pend();
+    if(m) return P.find(x=>+x.t.tq===+m[1])||{libre:+m[1]};
+    const b=q.match(/\b(?:el|del|al|de el)\s+0*(\d{1,2})\b(?!\s*(?:h|hl|p|%|d\b))/); if(b&&+b[1]>=1&&+b[1]<=32) return P.find(x=>+x.t.tq===+b[1])||{libre:+b[1]};
+    const l=q.match(/\bf(\d{3})\b/); if(l) return P.find(x=>x.t.lote==="F"+l[1])||null;
+    if(ctx&&ctx.tipo==="fv"&&!/\b(colector|levadura)\b/.test(q)) return P.find(x=>x.t.lote===ctx.lote)||null; return null; }
+  function findCol(q,ctx){ const m=q.match(/\b(?:colector|col|cava)\s*0*([1-6])\b/)||q.match(/\bc\s?([1-6])\b(?!\d)/); if(m) return +m[1]; if(ctx&&ctx.tipo==="col") return +ctx.c; return null; }
+  function findLev(q){ const m=q.match(/\b([a-z]{1,2}\d{1,2}f\d{1,3})\b/); return m?m[1].toUpperCase():null; }
+  function ficha(x,now){ const {t,r,st}=x, L=t.levadura||{}, nx=C.siguiente(r,st,now);
+    return `<b>${fvN(x)}</b> · ${esc(tit(t.marca))} · lote ${esc(t.lote)}<br>${esc(nx.txt)}${r.t0?` · T0 ${fmtS(r.t0)}`:""}<br>${L.nombre?esc(L.nombre)+" (Gen "+esc(L.generacion)+")"+(r.nombreCosecha?" → "+esc(r.nombreCosecha):""):"Sin levadura registrada"}${r.ext!=null?`<br>Extracto ${f(r.ext,2)} °P · atenuación ${Math.round((r.atenuacion||0)*100)} %`:"<br>Sin muestras de extracto"}`; }
+  function colRes(n,now){ return [1,2].map(s=>{ const c=App.S.colectores[`c${n}-${s}`]; return {s,c,tc:c?App.T.tiempoColector(c,now):null}; }); }
+  const stTxt=k=>({rojo:"fuera de tiempo",naranja:"cerca del límite",verde:"dentro del tiempo"}[k]||"");
+
+  function directo(texto,env){ const q=norm(texto); if(!q||q.length<3) return null; const now=Date.now(), P=pend(), ctx=env&&env.ctx;
+    if(/^(hola|buenas|buenos dias|buenas tardes|buenas noches|hey|ola|gracias|ok|listo|chao|adios)\b/.test(q)&&q.split(" ").length<=3) return null;
+    const fv=findFV(q,ctx), col=findCol(q,ctx), lev=findLev(q), wh=A(q,"cuant","cual","que ","quien","donde","cuando","a que","hay");
+
+    /* ---- Un FV concreto ---- */
+    if(fv){ if(fv.libre!=null) return {h:`<b>FV ${fv.libre}</b> está libre: no tiene levadura sembrada.`};
+      const {t,r,st}=fv, L=t.levadura||{};
+      if(A(q,"hora","cuando","vence","venc","limite","maximo","plazo","tiempo","t0","t cero")&&!A(q,"extracto","atenu")){
+        if(!r.t0) return {h:`<b>${fvN(fv)}</b> todavía no tiene T0: faltan muestras de extracto o el extracto límite.`};
+        const t0=+parseDT(r.t0), v=+parseDT(r.venc);
+        if(A(q,"t0","t cero","llega","empieza","cuando")&&!A(q,"vence","venc","limite","maximo"))
+          return {h:`El T0 de <b>${fvN(fv)}</b> ${t0>now?"será":"fue"} el <b>${fmtS(t0)}</b> (${rel(t0,now)}).<br>Retiro ideal: ${fmtS(t0+12*HOUR)} · máximo: ${fmtS(v)}.`};
+        return {h:`El retiro de <b>${fvN(fv)}</b> ${v>now?"vence":"venció"} el <b>${fmtS(v)}</b> (${rel(v,now)}).<br>T0: ${fmtS(t0)} · ideal: ${fmtS(t0+12*HOUR)}.`}; }
+      if(A(q,"extracto","grados","plato","atenu")){ if(r.ext==null) return {h:`<b>${fvN(fv)}</b> aún no tiene muestras de extracto.`};
+        return {h:`<b>${fvN(fv)}</b>: extracto <b>${f(r.ext,2)} °P</b>, atenuación <b>${Math.round((r.atenuacion||0)*100)} %</b>.<br>Última muestra ${rel(r.extFecha,now)}${r.falta75>0?` · faltan ${f(r.falta75,2)} °P para el 75 %`:""}.`}; }
+      if(A(q,"levadura","leva","sembr","gen","cepa","cosecha como")&&!A(q,"cuant","hl")) return {h:L.nombre?`<b>${fvN(fv)}</b> tiene <b>${esc(L.nombre)}</b> (Gen ${esc(L.generacion)}).${r.nombreCosecha?`<br>Al cosecharla saldrá como <b>${esc(r.nombreCosecha)}</b> (Gen ${esc((+L.generacion||0)+1)}).`:""}`:`<b>${fvN(fv)}</b> no tiene levadura registrada.`};
+      if(A(q,"marca","cerveza","lote","consecutivo","que se fermenta","que tiene")) return {h:`<b>${fvN(fv)}</b>: ${esc(tit(t.marca))}, lote <b>${esc(t.lote)}</b>${L.nombre?`, sembrado con ${esc(L.nombre)}`:""}.`};
+      if(A(q,"muestra")&&A(q,"cuant")) return {h:`<b>${fvN(fv)}</b> tiene <b>${(t.muestras||[]).length}</b> ${plur((t.muestras||[]).length,"muestra","muestras")} de extracto.`};
+      if(A(q,"retir","sacar","cosech")&&A(q,"puedo","ya","se puede","listo","debo","toca")){ const ok=["rojo","naranja","verde"].includes(st.k);
+        return {h:ok?`<b>Sí.</b> ${fvN(fv)} ${st.k==="rojo"?"ya pasó el máximo: retírala cuanto antes":"está en ventana de retiro"} (${rel(r.venc,now)}).`:`<b>Todavía no.</b> ${fvN(fv)} ${r.t0?"llega a T0 "+rel(r.t0,now):"no tiene T0 calculado"}.`}; }
+      return {h:ficha(fv,now)}; }
+
+    /* ---- Un colector concreto ---- */
+    if(col){ const rs=colRes(col,now), ocu=rs.filter(x=>x.c);
+      if(A(q,"libre","vacio","espacio","cabe","disponible")&&!A(q,"levadura hay")) return {h:ocu.length===2?`<b>C${col}</b> está llena (2 de 2 posiciones).`:`<b>C${col}</b> tiene <b>${2-ocu.length}</b> ${plur(2-ocu.length,"posición libre","posiciones libres")}.`};
+      if(A(q,"limite","vence","tiempo","sembrar","hora")){ if(!ocu.length) return {h:`<b>C${col}</b> está vacía.`}; return {h:ocu.map(x=>`<b>C${col}-P${x.s}</b> · ${esc(x.c.nombre)}: límite de siembra <b>${fmtS(x.tc.mr)}</b> (${rel(x.tc.mr,now)}).`).join("<br>")}; }
+      if(!ocu.length) return {h:`<b>C${col}</b> está vacía: lista para recibir cosecha.`};
+      return {h:`<b>C${col}</b> · ${ocu.length} de 2 posiciones<br>`+rs.map(x=>x.c?`P${x.s}: <b>${esc(x.c.nombre)}</b> · Gen ${esc(x.c.generacion)} · ${hl(x.c.vol)} · ${stTxt(x.tc.k)}`:`P${x.s}: libre`).join("<br>")}; }
+
+    /* ---- Una levadura concreta ---- */
+    if(lev&&A(q,"viab","consist","ph","volumen","hl","cuanta","donde","esta","ubic","gen")){ const cs=[]; [1,2,3,4,5,6].forEach(n=>[1,2].forEach(s=>{ const c=App.S.colectores[`c${n}-${s}`]; if(c&&c.nombre===lev) cs.push({id:`C${n}-P${s}`,c}); }));
+      const reg=(App.BDM.registros()||[]).filter(r=>r.nombre===lev).sort((a,b)=>String(b.t0).localeCompare(String(a.t0)))[0], src=(cs[0]&&cs[0].c)||reg;
+      if(src){ const g=src.generacion!=null?" (Gen "+src.generacion+")":"";
+        if(A(q,"viab")) return {h:`Viabilidad de <b>${esc(lev)}</b>${g}: <b>${pct(src.viab)}</b>.`};
+        if(A(q,"consist")) return {h:`Consistencia de <b>${esc(lev)}</b>${g}: <b>${pct(src.cons)}</b>.`};
+        if(A(q,/\bph\b/)) return {h:`pH de <b>${esc(lev)}</b>${g}: <b>${src.ph!=null?f(src.ph,2):"—"}</b>.`};
+        if(cs.length&&A(q,"volumen","hl","cuanta")) return {h:`<b>${esc(lev)}</b>: ${cs.map(x=>`${x.id} (${hl(x.c.vol)})`).join(" · ")}.`};
+        if(cs.length&&A(q,"donde","esta","ubic")) return {h:`<b>${esc(lev)}</b> está en ${lst(cs.map(x=>"<b>"+x.id+"</b>"))}.`}; } }
+
+    /* ---- Preguntas globales ---- */
+    const venc=P.filter(x=>x.st.k==="rojo"), cerca=P.filter(x=>["naranja","verde"].includes(x.st.k)), proc=P.filter(x=>["gris","sin","amarillo"].includes(x.st.k));
+    if(A(q,"cuant")&&A(q,"vencid","atrasad","retiro pendiente","retiros pendientes","fuera de tiempo")&&!A(q,"colector")){
+      return {h:venc.length?`<b>${venc.length}</b> ${plur(venc.length,"tanque con retiro vencido","tanques con retiro vencido")}: ${lst(venc.map(fvN))}.<br>El más atrasado es ${fvN(venc[0])} (${rel(venc[0].r.venc,now)}).`:"<b>Ninguno.</b> No hay retiros vencidos."}; }
+    if(A(q,"primero","urgente","atender","prioridad","vence primero","se vence","siguiente retiro","proximo retiro","que hago")&&!A(q,"colector","levadura hay")){
+      const L=[...venc,...cerca]; if(!L.length){ const n=proc.filter(x=>x.r.t0).sort((a,b)=>+parseDT(a.r.t0)-+parseDT(b.r.t0))[0]; return {h:n?`Nada urgente. Lo próximo es ${fvN(n)}: T0 ${fmtS(n.r.t0)} (${rel(n.r.t0,now)}).`:"Nada urgente por ahora."}; }
+      const a=L[0]; return {h:`Empieza por <b>${fvN(a)}</b>: ${esc(C.siguiente(a.r,a.st,now).txt.toLowerCase())}.${L.length>1?`<br>Después: ${lst(L.slice(1,5).map(fvN))}${L.length>5?` y ${L.length-5} más`:""}.`:""}`}; }
+    if(A(q,"proximo t0","siguiente t0","proxima cosecha","cual llega","que llega")&&A(q,"t0","cosecha","llega")){ const n=P.filter(x=>x.r.t0&&+parseDT(x.r.t0)>now).sort((a,b)=>+parseDT(a.r.t0)-+parseDT(b.r.t0))[0];
+      return {h:n?`El próximo T0 es el de <b>${fvN(n)}</b>: <b>${fmtS(n.r.t0)}</b> (${rel(n.r.t0,now)}).`:"No hay T0 pendientes por llegar."}; }
+    if(A(q,"cuant","que","cual")&&A(q,"libre","vacio","disponible","desocupado")&&A(q,"fv","tanque","fermentador")){ const usados=new Set(P.map(x=>+x.t.tq)), libres=Array.from({length:32},(_,i)=>i+1).filter(n=>!usados.has(n));
+      return {h:`<b>${libres.length}</b> de 32 fermentadores libres${libres.length?": FV "+libres.join(", ")+".":"."}`}; }
+    if(A(q,"cuant")&&A(q,"fv","tanque","fermentador")&&A(q,"proceso","fermentando","activo","ocupado","llen")){ return {h:`<b>${P.length}</b> fermentadores con levadura: ${venc.length} vencidos, ${cerca.length} por retirar y ${proc.length} en proceso.`}; }
+    if(A(q,"colector")&&A(q,"fuera de tiempo","vencid","pasad","limite","atrasad","critic")&&!A(q,"libre")){ const o=[]; [1,2,3,4,5,6].forEach(n=>[1,2].forEach(s=>{ const c=App.S.colectores[`c${n}-${s}`]; if(!c) return; const tc=App.T.tiempoColector(c,now); if(tc.k==="rojo") o.push(`<b>C${n}-P${s}</b> · ${esc(c.nombre)} (${rel(tc.mr,now)})`); }));
+      return {h:o.length?`<b>${o.length}</b> ${plur(o.length,"posición fuera de tiempo","posiciones fuera de tiempo")}:<br>${o.join("<br>")}`:"<b>Ninguna.</b> Todas las posiciones están dentro del tiempo."}; }
+    if(A(q,"colector","posicion")&&A(q,"libre","vacio","disponible","espacio")){ const o=[]; let tot=0; [1,2,3,4,5,6].forEach(n=>{ const l=2-[1,2].filter(s=>App.S.colectores[`c${n}-${s}`]).length; if(l){ tot+=l; o.push(`C${n} (${l})`); } });
+      return {h:`<b>${tot}</b> ${plur(tot,"posición libre","posiciones libres")}: ${o.join(", ")||"ninguna"}.`}; }
+    if(A(q,"generacion","gen ")&&A(q,"mas alta","mayor","maxima","mas vieja","mas alto")){ const all=[]; P.forEach(x=>x.t.levadura&&x.t.levadura.generacion!=null&&all.push({g:+x.t.levadura.generacion,w:"en "+fvN(x),n:x.t.levadura.nombre})); [1,2,3,4,5,6].forEach(n=>[1,2].forEach(s=>{ const c=App.S.colectores[`c${n}-${s}`]; if(c&&c.generacion!=null) all.push({g:+c.generacion,w:`en C${n}-P${s}`,n:c.nombre}); }));
+      if(!all.length) return null; const mx=Math.max(...all.map(x=>x.g)), top=all.filter(x=>x.g===mx); return {h:`La generación más alta en uso es <b>Gen ${mx}</b>: ${lst(top.map(x=>`${esc(x.n)} ${x.w}`))}.`}; }
+    if(A(q,"generacion","gen ")&&A(q,"mas baja","menor","minima","mas nueva","mas joven")){ const all=[]; [1,2,3,4,5,6].forEach(n=>[1,2].forEach(s=>{ const c=App.S.colectores[`c${n}-${s}`]; if(c&&c.generacion!=null) all.push({g:+c.generacion,w:`C${n}-P${s}`,n:c.nombre}); })); if(!all.length) return null; const mn=Math.min(...all.map(x=>x.g)), top=all.filter(x=>x.g===mn); return {h:`La generación más baja disponible es <b>Gen ${mn}</b>: ${lst(top.map(x=>`${esc(x.n)} (${x.w})`))}.`}; }
+    if(A(q,"viabilidad","consistencia")&&A(q,"mejor","mayor","peor","menor","mas alta","mas baja","promedio")){ const key=A(q,"viab")?"viab":"cons", nombre=key==="viab"?"viabilidad":"consistencia", all=[]; [1,2,3,4,5,6].forEach(n=>[1,2].forEach(s=>{ const c=App.S.colectores[`c${n}-${s}`]; if(c&&c[key]!=null) all.push({v:c[key],id:`C${n}-P${s}`,n:c.nombre}); }));
+      if(!all.length) return {h:`No hay ${nombre} registrada en los colectores.`}; if(A(q,"promedio")) return {h:`${nombre[0].toUpperCase()+nombre.slice(1)} promedio en colectores: <b>${pct(mean(all.map(x=>x.v)))}</b>.`};
+      const peor=A(q,"peor","menor","mas baja"), o=all.sort((a,b)=>peor?a.v-b.v:b.v-a.v)[0]; return {h:`${peor?"Menor":"Mejor"} ${nombre}: <b>${esc(o.n)}</b> (${o.id}) con <b>${pct(o.v)}</b>.`}; }
+    if(A(q,"cuant")&&A(q,"volumen","hl","hectolitros","levadura","litros")&&!A(q,"fv","tanque")){ let tot=0,n=0; const por={}; [1,2,3,4,5,6].forEach(c=>[1,2].forEach(s=>{ const x=App.S.colectores[`c${c}-${s}`]; if(x){ n++; if(x.vol>0){ tot+=+x.vol; por["C"+c]=(por["C"+c]||0)+ +x.vol; } } }));
+      return {h:`Hay <b>${f(tot,0)} Hl</b> de levadura en <b>${n}</b> ${plur(n,"posición","posiciones")} de colector.<br>${Object.entries(por).map(([k,v])=>`${k}: ${f(v,0)} Hl`).join(" · ")}`}; }
+    if(A(q,"que levadura","que levaduras","levadura hay","inventario","stock","disponible")&&!A(q,"fv","tanque")){ const o=[]; [1,2,3,4,5,6].forEach(n=>[1,2].forEach(s=>{ const c=App.S.colectores[`c${n}-${s}`]; if(c){ const tc=App.T.tiempoColector(c,now); o.push(`<b>${esc(c.nombre)}</b> · C${n}-P${s} · Gen ${esc(c.generacion)} · ${hl(c.vol)}${tc.k==="rojo"?" · fuera de tiempo":tc.k==="naranja"?" · cerca del límite":""}`); } }));
+      return {h:o.length?`<b>${o.length}</b> posiciones con levadura:<br>${o.join("<br>")}`:"No hay levadura en los colectores."}; }
+    if(A(q,"resumen","como estamos","como vamos","que hay que hacer","panorama","situacion","estado general")){ const cf=[1,2,3,4,5,6].reduce((s,n)=>s+[1,2].filter(x=>App.S.colectores[`c${n}-${x}`]).length,0);
+      return {h:`<b>${venc.length}</b> retiros vencidos · <b>${cerca.length}</b> por retirar · <b>${proc.length}</b> en fermentación.<br>Colectores: <b>${cf}</b> de 12 posiciones ocupadas.${venc[0]?`<br>Primero: ${fvN(venc[0])}.`:""}`}; }
+    return null; }
+  App.BotDirecto=function(texto,env){ try{ return directo(texto,env); }catch(e){ console.error("directo",e); return null; } };
+
+  /* ---------- Arranque / observadores ---------- */
+  function ciclo(){ try{ topbar(); pulirColectores(); pulirDetalle(); const r=(location.hash||"").slice(2).split("/")[0]; document.body.classList.toggle("v31-tvmode",r==="pantalla"); $$(".anav a").forEach(a=>{}); }catch(e){} }
+  let busy=false; new MutationObserver(()=>{ if(busy) return; busy=true; requestAnimationFrame(()=>{ ciclo(); busy=false; }); }).observe(document.body,{childList:true,subtree:true});
+  ciclo(); revisar(); setInterval(revisar,30000);
+  window.addEventListener("hashchange",()=>{ const p=$("#v31Pop"); if(p) p.remove(); });
+})();
+</script>
 </body>
 </html>
