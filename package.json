@@ -1,0 +1,9 @@
+{
+  "name": "inventario-levadura",
+  "private": true,
+  "type": "module",
+  "description": "Inventario de Levadura + LevaBot IA (función de Netlify)",
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest"
+  }
+}

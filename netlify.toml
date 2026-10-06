@@ -1,0 +1,11 @@
+[build]
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+
+# La página principal es el inventario
+[[redirects]]
+  from = "/"
+  to = "/Inventario_Levadura_LevaBot_v32.html"
+  status = 200
