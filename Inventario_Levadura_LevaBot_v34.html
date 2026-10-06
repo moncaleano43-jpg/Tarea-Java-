@@ -8052,6 +8052,8 @@ dialog footer,dialog .dlg-f,dialog .modal-f{border-top:1px solid var(--line)!imp
 })();
 </script>
 
+
+@media (min-width:701px){ .bot{width:440px!important} }
 <style id="v31-styles">
 /* ============================================================
    v31 — íconos unificados, alertas, planta, análisis, LevaBot flotante
@@ -8999,7 +9001,7 @@ body.v31-tvmode:fullscreen .topbar,:fullscreen body.v31-tvmode .topbar{display:n
       ver:["#/tanque/"+encodeURIComponent(o.lote),"Abrir el tanque"]},["Cuándo llega a alta el FV "+o.tq,"De dónde viene su levadura"],{fv:o.tq}); }
   function consejo(o,now){ const k=o.st.k; if(k==="rojo") return "Retírala cuanto antes y deja el motivo de la demora."; if(k==="naranja") return `Retírala antes del máximo (${fmtS(o.r.venc)}).`; if(k==="verde") return "Ya puedes retirarla; lo ideal es hacia T0 + 12 h."; if(k==="amarillo") return "Prepárate: el T0 está cerca."; return o.r.ext==null?"Toma una muestra de extracto para afinar el T0.":"Sigue tomando muestras; el T0 se afina con cada una."; }
   function tema(q){ const T=[["alta",/\balta\b|dar de alta|extracto de alta/],["porque",/por que|porque|razon|motivo|a que se debe/],["puedo",/\b(puedo|se puede|podemos|toca|debo|hay que|ya)\b.*\b(retir|cosech|sacar)/],["vence",/venc|limite|plazo|maximo|hasta cuando|ultimo momento/],["t0",/\bt0\b|t cero|cuando.*(retir|cosech|sacar)|hora de retiro|ventana|a que hora|mejor momento|momento ideal/],
-      ["atenuacion",/atenu/],["extracto",/extracto|grados|plato|densidad|\bp\b/],["ritmo",/ritmo|velocidad|rapido|lento|\bcae\b|caida|baja por dia|ha bajado|cuanto baja|va bajando/],["muestras",/muestras?/],["linaje",/viene|origen|linaje|ancestro|padre|genealog/],
+      ["atenuacion",/atenu/],["extracto",/extracto|grados|plato|densidad|\bp\b/],["ritmo",/ritmo|velocidad|rapido|lento|\bcae\b|caida|baja por dia|ha bajado|cuanto baja|va bajando/],["muestras",/\bmuestras?\b/],["linaje",/viene|origen|linaje|ancestro|padre|genealog/],
       ["levadura",/levadura|\bleva\b|cepa|sembr|que tiene|con que/],["marca",/marca|cerveza|que se fermenta|\blote\b|consecutivo/],["familia",/familia|linea/],["gen",/generacion|\bgen\b/],["llenado",/llen(o|ado)|fin de llenado|hace cuanto/],["porque",/por que|porque|razon|motivo|a que se debe/],["hacer",/que (hago|debo|hay que|toca|sigue)|recomiend|consejo|que pasa si/],["estado",/estado|como (va|esta|anda|vamos)|situacion/]];
     for(const [k,re] of T) if(re.test(q)) return k; return null; }
   function fvTema(D,o,q,t){ const {r}=o, now=D.now, nom=`FV ${o.tq}`, p=o.pr;
@@ -9239,7 +9241,7 @@ body.v31-tvmode:fullscreen .topbar,:fullscreen body.v31-tvmode .topbar{display:n
     // seguimiento con pronombres
     const sinEnt=!e.fvs.length&&!e.cols.length&&!e.levs.length&&!e.fam&&!e.gens.length&&!e.marcas.length&&!e.lotes.length;
     const cont=has(q,/^y\s|^y$|\b(su|sus|ese|esa|el mismo|la misma)\b/)||has(q,/\b(t0|vence|vencimiento|extracto|atenuacion|alta|ritmo|muestras|levadura|marca|lote|viene|limite|viabilidad)\b/);
-    const GLOBAL=/(\bmas\b|\bmenos\b|\bmarca\b|cosechas|siembras|descartes|sin muestras|sin extracto|sin levadura|cuales|que (fv|tanques?|colectores|levaduras?|familias|marcas)|cerca del limite|todos|todas|cuantos|cuantas|\bhay\b|tengo|tienen|estan|\bson\b|llegaron|llegan|por marca|cada|ranking|mejor|peor|mayor|menor|mas alta|mas baja)/;
+    const GLOBAL=/(inventario|stock|muestrame|lista de|\bmas\b|\bmenos\b|\bmarca\b|cosechas|siembras|descartes|sin muestras|sin extracto|sin levadura|cuales|que (fv|tanques?|colectores|levaduras?|familias|marcas)|cerca del limite|todos|todas|cuantos|cuantas|\bhay\b|tengo|tienen|estan|\bson\b|llegaron|llegan|por marca|cada|ranking|mejor|peor|mayor|menor|mas alta|mas baja)/;
     if(sinEnt&&cont&&!has(q,GLOBAL)&&!has(q,/(generaciones|familias|colectores|tanques|fermentadores|levaduras|cuantos|cuantas|cuales|cual|llegan|vienen|horas|dias|siguiente|siguientes|proximo|proximos|mejor|peor|mayor|menor|resumen|prioridad|primero|hoy|ayer|historial|ayuda|capacidad|calendario|libres|vencidos|promedio|marcas|que es|que significa|como|todos)/)){ if(mem.fv&&!ctx) e.fvs=[mem.fv]; else if(mem.col&&!has(q,/tanque|fv/)) e.cols=[mem.col]; else if(mem.lev) e.levs=[mem.lev]; }
     if(sinEnt&&!e.fvs.length&&ctx){ if(ctx.tipo==="fv"){ const o=D.P.find(x=>x.lote===ctx.lote); if(o&&!has(q,/(todos|cuantos|cuantas|cuales|resumen|prioridad|primero|colector|familia|generacion|historial|levadura hay|hay)/)) e.fvs=[o.tq]; } else if(ctx.tipo==="col"&&!e.cols.length&&!has(q,/(todos|cuantos|resumen|prioridad|primero|familia|generacion|tanque|fv)/)) e.cols=[+ctx.c]; else if(ctx.tipo==="lev"&&!e.levs.length&&!has(q,/(todos|cuantos|resumen)/)) e.levs=[ctx.nombre]; }
     e.lotes.forEach(l=>{ const o=D.P.find(x=>x.lote===l); if(o&&!e.fvs.includes(o.tq)) e.fvs.push(o.tq); });
