@@ -7733,7 +7733,7 @@ body.bot-open .content{padding-right:28px!important}
           ${ops.length?`<div class="acard aops">${C.timeline(ops.map(x=>({ic:x.ic,cls:x.cls,t1:x.t1,t2:x.t2,time:fmtS(x.t),go:x.id?"historial/"+x.id:null})))}</div>`:`<div class="acard aempty"><div><b>Aún no hay operaciones.</b><span>Las cosechas, siembras y descartes aparecerán aquí.</span></div></div>`}
         </section>
 
-        <footer class="afoot"><span>${App.Store.mode==="db"?"Datos compartidos":"Datos guardados en este navegador"}${upd?" · actualizado "+fmtS(upd):""}${App.Store.canWrite?"":" · solo lectura"}</span><span>v29</span></footer>
+        <footer class="afoot"><span>${App.Store.mode==="db"?"Datos compartidos":"Datos guardados en este navegador"}${upd?" · actualizado "+fmtS(upd):""}${App.Store.canWrite?"":" · solo lectura"}</span><span>v30</span></footer>
       </div>`;
     },
     mount(){
@@ -7959,6 +7959,57 @@ dialog h2,dialog h3{font-weight:600!important;letter-spacing:-.02em!important}
 .search-in input:focus,.gsearch input:focus{background:transparent!important;box-shadow:none!important;border:0!important}
 .search-in:focus-within,.gsearch .box:focus-within{box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)!important}
 
+
+/* ---------- Ronda 2: auditoría completa ---------- */
+/* buscadores: una sola capa gris (le gana al selector genérico de inputs) */
+.search-in input:not([type=checkbox]):not([type=radio]):not([type=range]),.gsearch input:not([type=checkbox]):not([type=radio]):not([type=range]){background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important}
+.search-in input:not([type=checkbox]):not([type=radio]):not([type=range]):focus,.gsearch input:not([type=checkbox]):not([type=radio]):not([type=range]):focus{background:transparent!important;box-shadow:none!important;border:0!important}
+.search-in{border:0!important}
+[class*="search"] input:not([type=checkbox]):not([type=radio]):not([type=range]){background:transparent!important;box-shadow:none!important;border-color:transparent!important}
+
+/* Colectores: detalle */
+.cpanel{padding:28px!important}
+.posx,.posx.collector-detail,.posx.libre{background:var(--surface-2)!important;box-shadow:none!important;border:0!important;border-radius:16px!important}
+.collector-time-hero,.collector-metrics>*,.collector-deadlines>*,.collector-timeline .ct-step{border:0!important;box-shadow:none!important;background:var(--surface)!important;border-radius:14px!important}
+.collector-time-hero{padding:18px 20px!important}
+.collector-section-title{font-size:17px!important;font-weight:600!important;color:var(--ink)!important;letter-spacing:-.01em!important;text-transform:none!important}
+.collector-detail .acts{display:flex!important;flex-wrap:wrap;gap:8px!important}
+.ccard.on{box-shadow:0 0 0 2px var(--accent),var(--v30-card)!important}
+.ccard-fill-track{height:6px!important;border-radius:3px!important}
+.status-chip{background:transparent!important;padding:0!important;font-weight:600!important}
+
+/* Explorar: tarjetas y grupos */
+.bd-final-group{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}
+.bd-final-card{border:0!important;border-radius:18px!important;box-shadow:var(--v30-card)!important;background:var(--surface)!important}
+.bd-final-card:hover{transform:scale(1.008);box-shadow:var(--a-card-sh-h)!important}
+.bd-final-card [class*="grid"]>*,.bd-final-card [class*="mini"]{background:var(--surface-2)!important;border:0!important;border-radius:12px!important}
+.bd-final-group h3{font-size:24px!important;font-weight:600!important;letter-spacing:-.02em!important}
+.bd-hero,.bd-final-hero,.bd-final-search{background:transparent!important;border:0!important;box-shadow:none!important;padding:0 0 18px!important}
+.bd-final-hero h2,.bd-hero h2{font-size:22px!important;font-weight:600!important;letter-spacing:-.02em!important}
+
+/* LevaBot: panel limpio, burbujas planas */
+.bot{background:var(--surface)!important;background-image:none!important;border:0!important;backdrop-filter:saturate(180%) blur(24px)}
+.bot-h{background:transparent!important;background-image:none!important;border-bottom:1px solid var(--line)!important}
+.bot-status,.bot-ctx{border:0!important;background:var(--v30-fill)!important;border-radius:980px!important}
+.bot-m{background:transparent!important;background-image:none!important}
+.bm,.bm.b{background:var(--surface-2)!important;background-image:none!important;border:0!important;border-radius:20px!important;box-shadow:none!important;color:var(--ink)!important}
+.bm.u,.bm.me,.bm.user{background:var(--accent)!important;color:#fff!important}
+.bot-f{border:0!important;border-top:1px solid var(--line)!important;background:transparent!important}
+.bot-opts .chip,.bot .chip{background:var(--v30-fill)!important;border-radius:980px!important}
+.bot-opts .chip:hover{background:var(--v30-fill-h)!important}
+
+/* Diálogos: botón Cerrar como píldora gris */
+dialog .btn.close,dialog [data-close],dialog .modal-x{background:var(--v30-fill)!important;border:0!important;color:var(--ink)!important}
+dialog header,dialog .dlg-h,dialog .modal-h{border-bottom:1px solid var(--line)!important}
+dialog footer,dialog .dlg-f,dialog .modal-f{border-top:1px solid var(--line)!important;background:transparent!important}
+
+/* Detalle de tanque: tarjetas internas planas */
+.fv-t0 .tl,.fv-t0>div{border-radius:14px}
+.curve-stat,.curve-kpi,.curve-card,[class^="curve-"]>div{border-radius:14px}
+.card .card,.sec .sec{box-shadow:none!important;background:var(--surface-2)!important}
+.card .card .card{background:var(--surface)!important}
+.life-v2 .life-card,.life-card{border:0!important;background:var(--surface-2)!important;box-shadow:none!important;border-radius:16px!important}
+
 /* ---------- Móvil ---------- */
 @media (max-width:900px){
   .content .page-h{padding:6px 0 22px!important;flex-direction:column;align-items:flex-start!important;gap:14px}
@@ -7967,5 +8018,37 @@ dialog h2,dialog h3{font-weight:600!important;letter-spacing:-.02em!important}
 }
 @media (prefers-reduced-motion:reduce){ .tanques-v2 .tank-card:hover,.card:hover{transform:none!important} }
 </style>
+<script id="apple-everywhere-v30-js">
+/* v30 — pulido en vivo: caja de oración en etiquetas heredadas, sin emojis en títulos,
+   versión visible. No toca datos ni lógica: solo el texto mostrado. */
+(function(){
+  const MARCAS=/^(LIGHT|ESTANDAR|ESTÁNDAR|AZTECA|AGUILA|ÁGUILA|PILSEN|CLUB COLOMBIA)$/;
+  const caja=t=>{ const s=t.trim(); if(MARCAS.test(s)) return s.toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase());
+    const l=s.toLowerCase(); return l.charAt(0).toUpperCase()+l.slice(1); };
+  const EMO=/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B50}\u{23F0}\u{231A}]\uFE0F?/gu;
+  function nodo(n){
+    const v=n.nodeValue; if(!v||v.length<2) return;
+    const s=v.trim(); if(!s) return;
+    // etiquetas heredadas en MAYÚSCULAS (no códigos tipo LI4F13 ni "FV 1 · UTK 19")
+    if(/^[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ·:\-]{3,}$/.test(s) && !/\b(FV|UTK|ABI|COPEC|T0|HL|ID)\b/.test(s) && /[AEIOUÁÉÍÓÚ]/.test(s)){
+      n.nodeValue=v.replace(s,caja(s)); return; }
+    // emojis decorativos al inicio de un texto con más contenido
+    if(EMO.test(s)){ EMO.lastIndex=0; const resto=s.replace(EMO,"").trim();
+      if(resto.length>2) n.nodeValue=v.replace(EMO,"").replace(/^\s+/,"");
+      else if(!resto){ const p=n.parentElement; if(p&&p.tagName!=="BUTTON"&&p.parentElement&&p.parentElement.textContent.replace(EMO,"").trim().length>3) n.nodeValue=""; } }
+    EMO.lastIndex=0;
+  }
+  function barrer(r){
+    if(!r||r.nodeType!==1&&r.nodeType!==11) return;
+    const w=document.createTreeWalker(r,NodeFilter.SHOW_TEXT,{acceptNode:n=>{ const p=n.parentElement; return !p||/^(SCRIPT|STYLE|TEXTAREA|INPUT)$/.test(p.tagName)||p.closest(".bot,.bm")?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT; }});
+    const L=[]; while(w.nextNode()) L.push(w.currentNode); L.forEach(nodo);
+  }
+  let busy=false;
+  const mo=new MutationObserver(ms=>{ if(busy) return; busy=true; requestAnimationFrame(()=>{ try{ const v=document.getElementById("view"); if(v) barrer(v); document.querySelectorAll("dialog[open]").forEach(barrer); const f=document.querySelector(".afoot span:last-child"); if(f&&/v29/.test(f.textContent)) f.textContent="v30"; }catch(e){} busy=false; }); });
+  mo.observe(document.body,{childList:true,subtree:true,characterData:true});
+  try{ barrer(document.getElementById("view")); }catch(e){}
+})();
+</script>
+
 </body>
 </html>
