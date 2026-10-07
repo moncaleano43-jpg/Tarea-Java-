@@ -6,6 +6,24 @@
 <title>Informe de Cavas</title>
 <style>/*__CSS__*/
 .tab{display:none}.tab.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:8px 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card b{display:block;font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+.card span{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+.card.crit b{color:var(--crit)}.card.warn b{color:var(--warn)}
+.mapa-wrap{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:6px}
+.mapa-wrap h3{margin:4px 0 8px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.mapa{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-bottom:12px}
+.tile{border:1px solid var(--line);border-left:5px solid var(--line);border-radius:8px;padding:6px 8px;min-height:68px;font-size:12px;line-height:1.3;background:var(--bg)}
+.tile .n{font-weight:700;font-size:15px}.tile div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tile .m{display:flex;justify-content:space-between;gap:4px}
+.tile.vacio{opacity:.45;border-style:dashed}
+.tile.ok{border-left-color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,var(--card))}
+.tile.info{border-left-color:var(--info);background:var(--info-bg)}
+.tile.warn{border-left-color:var(--warn);background:var(--warn-bg)}
+.tile.crit{border-left-color:var(--crit);background:var(--crit-bg)}
+.tile.click{cursor:pointer}.tile.click:hover{outline:2px solid var(--brand)}
+.leyenda{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.leyenda i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 </style>
 <script>/*__CHART__*/</script>
 </head>
@@ -24,7 +42,12 @@
   <section id="dashboard" class="tab active">
     <div class="toolbar">
       <label>Estado a la fecha <input type="datetime-local" id="ahora"></label>
-      <span id="kpis"></span>
+    </div>
+    <div class="cards" id="cards"></div>
+    <div class="mapa-wrap">
+      <h3>Fermentadores (FV)</h3><div class="mapa" id="mapaFv"></div>
+      <h3>Maduradores (SV)</h3><div class="mapa" id="mapaSv"></div>
+      <div class="leyenda"><span><i style="background:var(--ok)"></i>Sin alertas</span><span><i style="background:var(--info)"></i>Informativa</span><span><i style="background:var(--warn)"></i>Aviso</span><span><i style="background:var(--crit)"></i>Crítica</span><span><i style="border:1px dashed var(--muted)"></i>Vacío</span></div>
     </div>
     <h2>Fermentadores (FV)</h2><div class="scroll"><table id="tblFv"></table></div>
     <h2>Maduradores (SV)</h2><div class="scroll"><table id="tblSv"></table></div>
@@ -107,9 +130,7 @@ function resumen(ahora) {
 function dashboard() {
   const ahora = $('#ahora').value || toLocalInput(new Date());
   const r = resumen(ahora);
-  const all = [...r.fv, ...r.sv].flatMap(x => x.al);
-  $('#kpis').innerHTML = `<span class="badge">${r.fv.length} FV</span><span class="badge">${r.sv.length} SV</span>` +
-    `<span class="badge CRITICA">${all.filter(a => a.nivel === 'CRITICA').length} críticas</span><span class="badge AVISO">${all.filter(a => a.nivel === 'AVISO').length} avisos</span>`;
+  pintarResumen(r);
   table($('#tblFv'), [
     { t: 'FV', f: x => x.tq }, { t: 'Cons', f: x => x.cons }, { t: 'Marca', f: x => x.marca }, { t: 'Etapa', f: x => x.etapa },
     { t: 'Horas en FV', num: 1, f: x => fmt(x.horas, 0) }, { t: 'E.O °P', num: 1, f: x => fmt(x.eo_ponderado, 2) },
@@ -122,6 +143,37 @@ function dashboard() {
     { t: 'Origen', f: x => [x.fv_cons, x.fv2_cons].filter(Boolean).join(' + ') }, { t: 'Volumen Hl', num: 1, f: x => fmt(x.vol_total_hl, 0) },
     { t: 'Horas en SV', num: 1, f: x => fmt(x.horas, 0) }, { t: 'Muestreo final', f: x => fdate(x.fecha_muestreo_final) },
     { t: 'RDF %', num: 1, f: x => fmt(x.rdf) }, { t: 'pH', num: 1, f: x => fmt(x.ph, 2) }, { t: 'Alertas', h: x => alertas(x.al) }], r.sv);
+}
+
+// ---- tarjetas y mapa de la cava ----
+const ABREV = { 'AGUILA': 'A', 'LIGHT': 'L', 'ESTANDAR': 'S', 'AZTECA': 'Z', 'PILSEN': 'PS', 'CLUB COLOMBIA': 'CC', 'BUDWEISER': 'B' };
+const abrev = m => ABREV[(m || '').toUpperCase()] || (m || '').slice(0, 3);
+const maxTq = (arr, extra) => Math.max(...arr.map(x => x.tq || 0), ...extra.map(x => x.tq || 0), 0);
+const estado = al => al.some(a => a.nivel === 'CRITICA') ? 'crit' : al.some(a => a.nivel === 'AVISO') ? 'warn' : al.length ? 'info' : 'ok';
+
+function pintarResumen(r) {
+  const nFv = maxTq(DATA.fermentaciones, []), nSv = maxTq(DATA.maduraciones, []);
+  const all = [...r.fv, ...r.sv].flatMap(x => x.al);
+  const crit = all.filter(a => a.nivel === 'CRITICA').length, avi = all.filter(a => a.nivel === 'AVISO').length;
+  const hl = r.fv.reduce((s, x) => s + (x.volumen_hl || 0), 0) + r.sv.reduce((s, x) => s + (x.vol_total_hl || 0), 0);
+  const card = (v, t, c = '') => `<div class="card ${c}"><b>${v}</b><span>${t}</span></div>`;
+  $('#cards').innerHTML = card(`${r.fv.length}<small style="font-size:14px;color:var(--muted)"> / ${nFv}</small>`, 'FV ocupados') +
+    card(`${r.sv.length}<small style="font-size:14px;color:var(--muted)"> / ${nSv}</small>`, 'SV ocupados') +
+    card(crit, 'Alertas críticas', crit ? 'crit' : '') + card(avi, 'Avisos', avi ? 'warn' : '') +
+    card(fmt(hl, 0), 'Hl en cava');
+  const tile = (n, x, detalle, clic) => {
+    if (!x) return `<div class="tile vacio"><div class="n">${n}</div><div>vacío</div></div>`;
+    const tip = `${x.cons} · ${x.marca} · ${x.etapa}` + (x.al.length ? '\n' + x.al.map(a => '• ' + a.mensaje).join('\n') : '');
+    return `<div class="tile ${estado(x.al)} ${clic ? 'click' : ''}" ${clic ? `data-cons="${esc(x.cons)}"` : ''} title="${esc(tip)}">` +
+      `<div class="m"><span class="n">${n}</span><b>${esc(abrev(x.marca))}</b></div><div>${esc(x.etapa)}</div><div>${detalle}</div></div>`;
+  };
+  $('#mapaFv').innerHTML = Array.from({ length: nFv }, (_, i) => i + 1).map(n => {
+    const x = r.fv.find(f => f.tq === n); return tile(n, x, x ? fmt(x.horas, 0) + ' h' : '', true);
+  }).join('');
+  $('#mapaSv').innerHTML = Array.from({ length: nSv }, (_, i) => i + 1).map(n => {
+    const x = r.sv.find(f => f.tq === n); return tile(n, x, x ? fmt(x.horas, 0) + ' h' : '', false);
+  }).join('');
+  $$('#mapaFv .tile.click').forEach(t => t.onclick = () => verFermentacion(t.dataset.cons));
 }
 
 // ---- fermentaciones ----
