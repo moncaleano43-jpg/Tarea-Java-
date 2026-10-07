@@ -66,7 +66,8 @@
       const M = metasT();
       const rows = prepT(ctx.rows('trasiego'), M).sort((a, b) => a.t - b.t);
       const prev = prepT(ctx.previas('trasiego'), M);
-      return { M, rows, prev, R: resT(rows, M), P: prev.length >= 8 ? resT(prev, M) : null };
+      const PT = resT(prev, M);
+      return { M, rows, prev, R: resT(rows, M), P: PT.nPlan >= 8 ? PT : null };
     });
   }
 
@@ -104,7 +105,7 @@
     const pOn = (R.aTiempo / R.nPlan) * 100, adelant = pl.filter((r) => r.delay < -M.dmax).length;
     const tono = pOn < 40 ? 'bad' : pOn < 70 ? 'warn' : 'ok';
     const tr = X.tendencia(per.map((p) => p.med), 'down');
-    const lectura = UI.lectura(`Solo el <strong>${f(pOn, 0)} %</strong> de las ${R.nPlan} actividades terminó dentro del plan (≤ ${M.dmax} h de desvío)${P && P.nPlan ? `; antes era ${f((P.aTiempo / P.nPlan) * 100, 0)} %` : ''}. El desvío mediano es ${f(R.delayMed, 1)} h (promedio ${f(R.delayMean, 1)} h) y <strong>${adelant}</strong> actividades terminaron más de ${M.dmax} h antes de lo planeado. El plan es encadenado: cada trasiego empieza 1 h después de terminar el anterior, así que un retraso se arrastra a los siguientes y el desvío acumulado suma ${f(R.delayNet, 0)} h netas (${f(R.perdidas, 0)} h solo de retrasos).${tr && tr.trend !== 'sin tendencia' ? ` El desvío mediano por ${by === 'month' ? 'mes' : 'semana'} <strong>${tr.trend === 'sube' ? 'viene subiendo' : 'viene bajando'}</strong> (${X.sig(tr.p, tr.n)}).` : ''}`, tono);
+    const lectura = UI.lectura(`${pOn >= 70 ? 'El' : 'Solo el'} <strong>${f(pOn, 0)} %</strong> de las ${R.nPlan} actividades terminó dentro del plan (≤ ${M.dmax} h de desvío)${P && P.nPlan ? `; antes era ${f((P.aTiempo / P.nPlan) * 100, 0)} %` : ''}. El desvío mediano es ${f(R.delayMed, 1)} h (promedio ${f(R.delayMean, 1)} h) y <strong>${adelant}</strong> actividades terminaron más de ${M.dmax} h antes de lo planeado. El plan es encadenado: cada trasiego empieza 1 h después de terminar el anterior, así que un retraso se arrastra a los siguientes y el desvío acumulado suma ${f(R.delayNet, 0)} h netas (${f(R.perdidas, 0)} h solo de retrasos).${tr && tr.trend !== 'sin tendencia' ? ` El desvío mediano por ${by === 'month' ? 'mes' : 'semana'} <strong>${tr.trend === 'sube' ? 'viene subiendo' : 'viene bajando'}</strong> (${X.sig(tr.p, tr.n)}).` : ''}`, tono);
     return UI.card('Cumplimiento del plan', 'Fin real frente al fin planeado de cada actividad (trasiegos y CIP).', UI.grid([lineP, hist], 2) + lectura, { id: 'op-cumpl' });
   }
 
@@ -119,8 +120,7 @@
     const par = S.pareto(con.map((e) => ({ label: e.causa, value: e.h })), { vital: 80 });
     const graf = X.fig('pareto', { title: 'Horas perdidas por causa (Pareto)', items: con.map((e) => ({ label: e.causa, value: e.h })), unit: 'h', h: 340 });
     const tabla = UI.tabla([
-      { k: 'causa', t: 'Causa' }, { k: 'n', t: 'Veces', num: 1 }, { k: 'h', t: 'Horas perdidas', num: 1, f: (v) => f(v, 1) }, { k: 'pct', t: '%', num: 1, f: (v) => f(v, 0) + ' %' }, { k: 'cum', t: '% acum.', num: 1, f: (v) => f(v, 0) + ' %' },
-      { k: 'orig', t: 'Textos del Excel', f: (v) => `<span title="${esc(v)}">${esc(sh(v, 26))}</span>` },
+      { k: 'causa', t: 'Causa', f: (v, r) => `<span title="${esc(sh(r.orig, 400))}">${esc(v)}</span>` }, { k: 'n', t: 'Veces', num: 1 }, { k: 'h', t: 'Horas perdidas', num: 1, f: (v) => f(v, 1) }, { k: 'pct', t: '%', num: 1, f: (v) => f(v, 0) + ' %' }, { k: 'cum', t: '% acum.', num: 1, f: (v) => f(v, 0) + ' %' },
     ], par.items.map((x) => { const e = g.get(x.label) || {}; return { causa: x.label, n: e.n || 0, h: x.value, pct: x.pct, cum: x.cum, orig: e.orig ? [...e.orig].join(' · ') : '', source: 'Programa de trasiego' }; }), { id: 'tb-op-par', nombre: 'trasiego_horas_perdidas_por_causa', max: 8 });
     const vital = par.items[0], totCon = X.sum(con.map((e) => e.h));
     const lectura = UI.lectura(`De ${f(R.perdidas, 0)} h perdidas, ${f(totCon, 0)} h tienen causa registrada y <strong>${sin ? f(sin.h, 0) : 0} h (${f(R.perdidas ? ((sin ? sin.h : 0) / R.perdidas) * 100 : 0, 0)} %) no tienen causa</strong>: justificarlas en el programa haría el Pareto más completo. Entre las que sí tienen, la causa vital es <strong>${esc(vital.label)}</strong> con ${f(vital.value, 1)} h (${f(vital.pct, 0)} %); ${par.vitalFew.length <= 3 ? `${par.vitalFew.length === 1 ? 'esa sola causa' : 'estas ' + par.vitalFew.length + ' causas'} explican el 80 % de las horas perdidas con causa` : 'se necesitan ' + par.vitalFew.length + ' causas para llegar al 80 %'} (regla 80/20).`, sin && sin.h > totCon ? 'warn' : '');
@@ -474,7 +474,7 @@
         const { R, M, rows, P } = d;
         if (R.nPlan >= 5) {
           const pOn = (R.aTiempo / R.nPlan) * 100;
-          out.push({ sev: pOn < 40 ? 'alta' : pOn < 70 ? 'media' : 'ok', titulo: `Solo ${f(pOn, 0)} % de las actividades de trasiego cumple el plan`, detalle: `${R.tarde} de ${R.nPlan} terminaron con más de ${M.dmax} h de retraso; desvío mediano ${f(R.delayMed, 1)} h${P && P.nPlan ? ` (antes ${f((P.aTiempo / P.nPlan) * 100, 0)} % a tiempo)` : ''}.`, valor: f(pOn, 0) + ' %' });
+          out.push({ sev: pOn < 40 ? 'alta' : pOn < 70 ? 'media' : 'ok', titulo: `${pOn >= 70 ? '' : 'Solo '}${f(pOn, 0)} % de las actividades de trasiego cumple el plan`, detalle: `${R.tarde} de ${R.nPlan} terminaron con más de ${M.dmax} h de retraso; desvío mediano ${f(R.delayMed, 1)} h${P && P.nPlan ? ` (antes ${f((P.aTiempo / P.nPlan) * 100, 0)} % a tiempo)` : ''}.`, valor: f(pOn, 0) + ' %' });
           const g = new Map(); rows.filter((r) => r.delay > 0 && r.grupo !== SIN).forEach((r) => g.set(r.grupo, (g.get(r.grupo) || 0) + r.delay));
           const top = [...g.entries()].sort((a, b) => b[1] - a[1])[0];
           if (top) out.push({ sev: 'media', titulo: `Causa vital de retrasos de trasiego: ${top[0]}`, detalle: `${f(top[1], 0)} h perdidas con esta causa de ${f(R.perdidas, 0)} h totales de retraso (${f(R.perdidas ? (R.sinCausaH / R.perdidas) * 100 : 0, 0)} % de las horas perdidas no tiene causa registrada).`, valor: f(top[1], 0) + ' h' });
