@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Informe de Cavas</title>
+<style>/*__CSS__*/
+.tab{display:none}.tab.active{display:block}
+</style>
+<script>/*__CHART__*/</script>
+</head>
+<body>
+<header>
+  <h1>Informe de Cavas <span class="muted" id="gen" style="font-weight:400;font-size:13px"></span></h1>
+  <nav id="tabs">
+    <button data-tab="dashboard" class="active">Dashboard</button>
+    <button data-tab="fermentaciones">Fermentación</button>
+    <button data-tab="maduraciones">Maduración</button>
+    <button data-tab="levaduras">Levadura</button>
+    <button data-tab="indicadores">Indicadores</button>
+  </nav>
+</header>
+<main>
+  <section id="dashboard" class="tab active">
+    <div class="toolbar">
+      <label>Estado a la fecha <input type="datetime-local" id="ahora"></label>
+      <span id="kpis"></span>
+    </div>
+    <h2>Fermentadores (FV)</h2><div class="scroll"><table id="tblFv"></table></div>
+    <h2>Maduradores (SV)</h2><div class="scroll"><table id="tblSv"></table></div>
+  </section>
+  <section id="fermentaciones" class="tab">
+    <div class="toolbar"><label>Marca <select id="fMarca"><option value="">Todas</option></select></label>
+      <label><input type="checkbox" id="fActivas"> Solo activas</label>
+      <span class="muted">Clic en una fila para ver la curva</span></div>
+    <div id="detalleFer" hidden>
+      <h2 id="detalleTitulo"></h2>
+      <div class="charts"><div><canvas id="chExtracto"></canvas></div><div><canvas id="chTemp"></canvas></div></div>
+    </div>
+    <div class="scroll" style="margin-top:12px"><table id="tblFer"></table></div>
+  </section>
+  <section id="maduraciones" class="tab"><div class="scroll"><table id="tblMad"></table></div></section>
+  <section id="levaduras" class="tab">
+    <div class="toolbar"><label><input type="checkbox" id="levDisp"> Solo disponibles para resiembra</label></div>
+    <div class="scroll"><table id="tblLev"></table></div>
+  </section>
+  <section id="indicadores" class="tab">
+    <div class="toolbar"><label>Desde <input type="date" id="indDesde"></label><label>Hasta <input type="date" id="indHasta"></label></div>
+    <div id="indCont"></div>
+  </section>
+</main>
+<script>
+'use strict';
+const DATA = /*__DATA__*/;
+const $ = (s, el = document) => el.querySelector(s), $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const fmt = (v, d = 1) => v == null ? '–' : Number(v).toLocaleString('es-CO', { maximumFractionDigits: d, minimumFractionDigits: d });
+const fdate = v => v ? v.replace('T', ' ').slice(0, 16) : '–';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const hrs = (a, b) => (new Date(b) - new Date(a)) / 36e5;
+const toLocalInput = d => { const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+
+function table(el, cols, rows, onClick) {
+  el.innerHTML = '<thead><tr>' + cols.map(c => `<th>${esc(c.t)}</th>`).join('') + '</tr></thead><tbody>' +
+    (rows.length ? rows.map((r, i) => `<tr class="${onClick ? 'click' : ''}" data-i="${i}">` +
+      cols.map(c => `<td class="${c.num ? 'num' : ''}">${c.h ? c.h(r) : esc(c.f(r))}</td>`).join('') + '</tr>').join('')
+      : `<tr><td colspan="${cols.length}" class="muted">Sin registros</td></tr>`) + '</tbody>';
+  if (onClick) $$('tbody tr', el).forEach(tr => tr.onclick = () => onClick(rows[tr.dataset.i]));
+}
+const alertas = a => a.map(x => `<span class="badge alerta ${x.nivel}">${esc(x.mensaje)}</span>`).join('');
+
+// ---- especificaciones ----
+const SPEC = {};
+DATA.especificaciones.forEach(e => (SPEC[e.marca] ??= {})[e.parametro] = e);
+const spec = (marca, p) => (SPEC[(marca || '').toUpperCase()] || {})[p];
+const ocupado = x => (x.etapa || '').toUpperCase() !== 'VACIO';
+const ultimo = (arr, ahora) => arr.filter(m => m[0] <= ahora).sort((a, b) => a[0] < b[0] ? 1 : -1)[0];
+
+// ---- dashboard (misma lógica que la plataforma Java) ----
+function resumen(ahora) {
+  const fv = DATA.fermentaciones.filter(ocupado).sort((a, b) => a.tq - b.tq).map(f => {
+    const t0 = f.fin_llenado || f.inicio_llenado;
+    const horas = t0 ? hrs(t0, ahora) : null;
+    const ult = ultimo(DATA.muestras[f.cons] || [], ahora), tmp = ultimo(DATA.temperaturas[f.cons] || [], ahora);
+    const ext = ult ? ult[2] : null;
+    const aten = ext != null && f.eo_ponderado > 0 ? (f.eo_ponderado - ext) / f.eo_ponderado * 100 : null;
+    const al = [];
+    const mx = spec(f.marca, 'Tiempo Max en FV (h)');
+    if (mx && horas != null && horas > mx.limite_sup) al.push({ nivel: 'CRITICA', mensaje: `Excede el tiempo máximo en FV (${fmt(horas, 0)} h > ${fmt(mx.limite_sup, 0)} h)` });
+    const eo = spec(f.marca, 'E.O Mosto (°P)');
+    if (eo && f.eo_ponderado != null && eo.limite_sup != null && eo.limite_inf != null && (f.eo_ponderado > eo.limite_sup || f.eo_ponderado < eo.limite_inf))
+      al.push({ nivel: 'AVISO', mensaje: `E.O fuera de especificación (${fmt(f.eo_ponderado, 2)} °P; rango ${fmt(eo.limite_inf, 2)}–${fmt(eo.limite_sup, 2)})` });
+    if (f.e_limite != null && ext != null && ext <= f.e_limite && (f.etapa || '').toUpperCase() === 'EN')
+      al.push({ nivel: 'INFO', mensaje: `Extracto ${fmt(ext, 2)} °P alcanzó el límite (${fmt(f.e_limite, 2)} °P): evaluar paso a descanso` });
+    if (f.viabilidad != null && f.viabilidad < 0.95) al.push({ nivel: 'AVISO', mensaje: `Viabilidad de levadura sembrada baja (${fmt(f.viabilidad * 100)} %)` });
+    if (f.temp_siembra != null && (f.temp_siembra < 3 || f.temp_siembra > 4)) al.push({ nivel: 'AVISO', mensaje: `Temperatura de siembra fuera de [3–4 °C]: ${fmt(f.temp_siembra)} °C` });
+    return { ...f, horas, ext, aten, ph: ult ? ult[3] : null, fult: ult ? ult[0] : null, tm: tmp ? tmp[2] : null, ti: tmp ? tmp[3] : null, al };
+  });
+  const sv = DATA.maduraciones.filter(ocupado).sort((a, b) => a.tq - b.tq).map(m => {
+    const t0 = m.fin_trasiego || m.inicio_trasiego;
+    const horas = t0 ? hrs(t0, ahora) : null, al = [];
+    if (horas != null && !m.fecha_muestreo_final && horas >= 12) al.push({ nivel: 'AVISO', mensaje: `Análisis fisicoquímico final pendiente (${fmt(horas, 0)} h en SV)` });
+    return { ...m, horas, al };
+  });
+  return { fv, sv };
+}
+
+function dashboard() {
+  const ahora = $('#ahora').value || toLocalInput(new Date());
+  const r = resumen(ahora);
+  const all = [...r.fv, ...r.sv].flatMap(x => x.al);
+  $('#kpis').innerHTML = `<span class="badge">${r.fv.length} FV</span><span class="badge">${r.sv.length} SV</span>` +
+    `<span class="badge CRITICA">${all.filter(a => a.nivel === 'CRITICA').length} críticas</span><span class="badge AVISO">${all.filter(a => a.nivel === 'AVISO').length} avisos</span>`;
+  table($('#tblFv'), [
+    { t: 'FV', f: x => x.tq }, { t: 'Cons', f: x => x.cons }, { t: 'Marca', f: x => x.marca }, { t: 'Etapa', f: x => x.etapa },
+    { t: 'Horas en FV', num: 1, f: x => fmt(x.horas, 0) }, { t: 'E.O °P', num: 1, f: x => fmt(x.eo_ponderado, 2) },
+    { t: 'Extracto °P', num: 1, f: x => fmt(x.ext, 2) }, { t: 'Atenuación %', num: 1, f: x => fmt(x.aten) },
+    { t: 'pH', num: 1, f: x => fmt(x.ph, 2) }, { t: 'Último muestreo', f: x => fdate(x.fult) },
+    { t: 'T M/I °C', f: x => `${fmt(x.tm)} / ${fmt(x.ti)}` }, { t: 'Levadura', f: x => `${x.levadura ?? '–'} (g${x.generacion ?? '–'})` },
+    { t: 'Alertas', h: x => alertas(x.al) }], r.fv, x => verFermentacion(x.cons));
+  table($('#tblSv'), [
+    { t: 'SV', f: x => x.tq }, { t: 'Cons', f: x => x.cons }, { t: 'Marca', f: x => x.marca }, { t: 'Etapa', f: x => x.etapa },
+    { t: 'Origen', f: x => [x.fv_cons, x.fv2_cons].filter(Boolean).join(' + ') }, { t: 'Volumen Hl', num: 1, f: x => fmt(x.vol_total_hl, 0) },
+    { t: 'Horas en SV', num: 1, f: x => fmt(x.horas, 0) }, { t: 'Muestreo final', f: x => fdate(x.fecha_muestreo_final) },
+    { t: 'RDF %', num: 1, f: x => fmt(x.rdf) }, { t: 'pH', num: 1, f: x => fmt(x.ph, 2) }, { t: 'Alertas', h: x => alertas(x.al) }], r.sv);
+}
+
+// ---- fermentaciones ----
+let charts = {};
+function fermentaciones() {
+  const m = $('#fMarca').value, act = $('#fActivas').checked;
+  const rows = DATA.fermentaciones.filter(f => (!m || f.marca === m) && (!act || ocupado(f)))
+    .sort((a, b) => (b.inicio_llenado || '') < (a.inicio_llenado || '') ? -1 : 1).slice(0, 400);
+  table($('#tblFer'), [
+    { t: 'Cons', f: x => x.cons }, { t: 'FV', f: x => x.tq }, { t: 'Marca', f: x => x.marca }, { t: 'Etapa', f: x => x.etapa },
+    { t: 'Inicio llenado', f: x => fdate(x.inicio_llenado) }, { t: 'Vol Hl', num: 1, f: x => fmt(x.volumen_hl, 0) },
+    { t: 'E.O °P', num: 1, f: x => fmt(x.eo_ponderado, 2) }, { t: 'Levadura', f: x => x.levadura ?? '–' },
+    { t: 'Gen', num: 1, f: x => x.generacion ?? '–' }, { t: 'Viab %', num: 1, f: x => x.viabilidad == null ? '–' : fmt(x.viabilidad * 100) },
+    { t: 'AF real', f: x => fdate(x.fecha_af_real) }], rows, x => verFermentacion(x.cons));
+}
+function verFermentacion(cons) {
+  $('#tabs [data-tab=fermentaciones]').click();
+  const f = DATA.fermentaciones.find(x => x.cons === cons);
+  $('#detalleFer').hidden = false;
+  $('#detalleTitulo').textContent = `${f.cons} · FV ${f.tq} · ${f.marca} · E.O ${fmt(f.eo_ponderado, 2)} °P`;
+  Object.values(charts).forEach(c => c.destroy());
+  const ms = (DATA.muestras[cons] || []).filter(m => m[1] != null && m[2] != null).map(m => ({ x: m[1], y: m[2] }));
+  charts.e = new Chart($('#chExtracto'), { type: 'line', data: { datasets: [{ label: 'Extracto (°P)', data: ms, borderColor: '#b45309', backgroundColor: '#b45309', tension: .25 }] },
+    options: { parsing: false, scales: { x: { type: 'linear', title: { display: true, text: 'Horas de fermentación' } }, y: { title: { display: true, text: '°P' } } }, plugins: { title: { display: true, text: 'Curva de atenuación' } } } });
+  const ts = (DATA.temperaturas[cons] || []).filter(t => t[1] != null);
+  charts.t = new Chart($('#chTemp'), { type: 'line', data: { datasets: [
+      { label: 'Temp. M (°C)', data: ts.filter(t => t[2] != null).map(t => ({ x: t[1], y: t[2] })), borderColor: '#1d4ed8', backgroundColor: '#1d4ed8', pointRadius: 2 },
+      { label: 'Temp. I (°C)', data: ts.filter(t => t[3] != null).map(t => ({ x: t[1], y: t[3] })), borderColor: '#15803d', backgroundColor: '#15803d', pointRadius: 2 }] },
+    options: { parsing: false, scales: { x: { type: 'linear', title: { display: true, text: 'Horas' } }, y: { title: { display: true, text: '°C' } } }, plugins: { title: { display: true, text: 'Temperatura' } } } });
+  $('#detalleFer').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ---- maduración / levadura ----
+function maduraciones() {
+  const rows = [...DATA.maduraciones].sort((a, b) => (b.inicio_trasiego || '') < (a.inicio_trasiego || '') ? -1 : 1).slice(0, 400);
+  table($('#tblMad'), [
+    { t: 'Cons', f: x => x.cons }, { t: 'SV', f: x => x.tq }, { t: 'Marca', f: x => x.marca }, { t: 'Etapa', f: x => x.etapa },
+    { t: 'Origen', f: x => [x.fv_cons, x.fv2_cons].filter(Boolean).join(' + ') || '–' }, { t: 'Inicio trasiego', f: x => fdate(x.inicio_trasiego) },
+    { t: 'Vol Hl', num: 1, f: x => fmt(x.vol_total_hl, 0) }, { t: 'E.O °P', num: 1, f: x => fmt(x.extracto_original, 2) },
+    { t: 'E.Real °P', num: 1, f: x => fmt(x.extracto_real, 2) }, { t: 'Alcohol %v/v', num: 1, f: x => fmt(x.alcohol_v, 2) },
+    { t: 'RDF %', num: 1, f: x => fmt(x.rdf) }, { t: 'pH', num: 1, f: x => fmt(x.ph, 2) }, { t: 'Color EBC', num: 1, f: x => fmt(x.color) },
+    { t: 'Amargo', num: 1, f: x => fmt(x.amargo) }, { t: 'O2 ppb', num: 1, f: x => fmt(x.o2_ppb) }, { t: 'CO2', num: 1, f: x => fmt(x.co2, 2) }], rows);
+}
+function levaduras() {
+  let rows = [...DATA.levaduras].sort((a, b) => (b.fin_remocion || '') < (a.fin_remocion || '') ? -1 : 1);
+  if ($('#levDisp').checked) rows = rows.filter(l => l.tq_resiembra == null);
+  table($('#tblLev'), [
+    { t: 'Código', f: x => x.codigo }, { t: 'Marca', f: x => x.marca }, { t: 'Gen', num: 1, f: x => x.generacion ?? '–' },
+    { t: 'FV fuente', f: x => x.utq_fuente ?? '–' }, { t: 'Fin remoción', f: x => fdate(x.fin_remocion) }, { t: 'Vol Hl', num: 1, f: x => fmt(x.volumen_hl, 0) },
+    { t: 'Consist.', num: 1, f: x => fmt(x.consistencia, 3) }, { t: 'Viab %', num: 1, f: x => x.viabilidad == null ? '–' : fmt(x.viabilidad * 100) },
+    { t: 'pH', num: 1, f: x => fmt(x.ph, 2) }, { t: 'T cosecha', num: 1, f: x => fmt(x.temp_cosecha) },
+    { t: 'Máx. resiembra', f: x => fdate(x.max_resiembra) }, { t: 'Resembrada en', f: x => x.cons_resiembra ? `${x.cons_resiembra} (FV ${x.tq_resiembra})` : '–' }], rows.slice(0, 400));
+}
+
+// ---- indicadores ----
+function indicadores() {
+  const d = $('#indDesde').value, h = $('#indHasta').value;
+  const en = f => f && f.slice(0, 10) >= d && f.slice(0, 10) <= h;
+  const fer = DATA.fermentaciones.filter(f => en(f.inicio_llenado)), mad = DATA.maduraciones.filter(m => en(m.inicio_trasiego));
+  const marcas = [...new Set([...fer, ...mad].map(x => x.marca))].sort();
+  const ind = (nombre, unidad, datos, val, ok) => {
+    let n = 0, c = 0; datos.forEach(x => { const v = val(x); if (v == null || v === 0) return; n++; if (ok(v)) c++; });
+    return { nombre, unidad, n, c, p: n ? c * 100 / n : null };
+  };
+  $('#indCont').innerHTML = marcas.length ? '' : '<p class="muted">Sin datos en el rango.</p>';
+  marcas.forEach(m => {
+    const f = fer.filter(x => x.marca === m), ma = mad.filter(x => x.marca === m), eo = spec(m, 'E.O Mosto (°P)');
+    const rows = [
+      ind('Viabilidad levadura sembrada', '%', f, x => x.viabilidad, v => v >= 0.95),
+      ind('Generación de levadura', 'gen', f, x => x.generacion, v => v <= 10),
+      ind('Temperatura de siembra', '°C', f, x => x.temp_siembra, v => v >= 3 && v <= 4),
+      eo && eo.limite_sup != null ? ind('E.O mosto en especificación', '°P', f, x => x.eo_ponderado, v => v >= eo.limite_inf && v <= eo.limite_sup) : { nombre: 'E.O mosto en especificación', unidad: '°P', n: 0, c: 0, p: null },
+      ind('O2 disuelto en maduración', 'ppb', ma, x => x.o2_ppb, v => v <= 15)];
+    const div = document.createElement('div'); div.className = 'ind';
+    div.innerHTML = `<h2>${esc(m)}</h2><div class="scroll"><table></table></div>`; $('#indCont').appendChild(div);
+    table($('table', div), [{ t: 'Indicador', f: x => x.nombre }, { t: 'Unidad', f: x => x.unidad }, { t: 'Medidos', num: 1, f: x => x.n }, { t: 'Cumplen', num: 1, f: x => x.c },
+      { t: '% Cumplimiento', h: x => x.p == null ? '–' : `${fmt(x.p, 0)} %<div class="bar"><i style="width:${x.p}%;background:${x.p >= 90 ? 'var(--ok)' : x.p >= 70 ? 'var(--warn)' : 'var(--crit)'}"></i></div>` }], rows);
+  });
+}
+
+// ---- init ----
+const load = { dashboard, fermentaciones, maduraciones, levaduras, indicadores };
+$('#tabs').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  $$('#tabs button').forEach(x => x.classList.toggle('active', x === b));
+  $$('.tab').forEach(x => x.classList.toggle('active', x.id === b.dataset.tab));
+  load[b.dataset.tab]();
+};
+$('#gen').textContent = '· datos del Excel hasta ' + fdate(DATA.hasta);
+$('#ahora').value = DATA.hasta.slice(0, 16);
+$('#ahora').onchange = dashboard;
+[...new Set(DATA.fermentaciones.map(f => f.marca))].sort().forEach(m => $('#fMarca').innerHTML += `<option>${esc(m)}</option>`);
+$('#fMarca').onchange = $('#fActivas').onchange = fermentaciones;
+$('#levDisp').onchange = levaduras;
+$('#indHasta').value = DATA.hasta.slice(0, 10);
+$('#indDesde').value = new Date(new Date(DATA.hasta) - 90 * 864e5).toISOString().slice(0, 10);
+$('#indDesde').onchange = $('#indHasta').onchange = indicadores;
+dashboard();
+</script>
+</body>
+</html>

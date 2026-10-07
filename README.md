@@ -42,6 +42,20 @@ Los CSV contienen datos de producción y están en `.gitignore`.
 SPRING_PROFILES_ACTIVE=postgres DB_URL=jdbc:postgresql://host:5432/cavas DB_USER=cavas DB_PASSWORD=... java -jar target/control-cavas-0.1.0.jar
 ```
 
+## Opción sin servidor: un solo archivo HTML (Python)
+
+Para ver el estado de la cava **sin instalar Java ni levantar un servidor**:
+
+```bash
+pip install openpyxl
+python3 -I tools/generar_informe.py "CONTROL PROCESO CAVAS 2026.xlsm" informe_cavas.html
+```
+
+Genera un único `informe_cavas.html` (datos, estilos y gráficas incluidos, ~2 MB) que se abre con doble clic en el
+navegador y funciona sin internet. Incluye dashboard con alertas, curvas por fermentación, maduración, levadura e indicadores.
+Es de **solo lectura**: para actualizarlo se vuelve a ejecutar el script con el Excel más reciente. El registro de datos
+(llenado, trasiego, etc.) solo está en la versión Java.
+
 ## API (resumen)
 
 `GET /api/resumen[?ahora=ISO]` · `GET/POST /api/fermentaciones` · `GET /api/fermentaciones/{cons}` ·
