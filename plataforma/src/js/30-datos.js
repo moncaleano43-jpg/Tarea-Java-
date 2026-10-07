@@ -122,7 +122,10 @@
   /* ---------- Normalizadores ---------- */
   function agua() {
     const w = A.OperationsWorkspace && A.OperationsWorkspace.waterData ? A.OperationsWorkspace.waterData() : { rows: [] };
-    return w.rows.map((r) => {
+    // «Mosto frío recibido» trae en el Excel vínculos rotos (−277 600) y cifras imposibles (> 1 000 000): se descartan.
+    const okHl = (v) => (v != null && v >= 0 && v <= 10000 ? v : null);
+    return w.rows.map((r0) => {
+      const r = Object.assign({}, r0, { production: okHl(r0.production), transfer: okHl(r0.transfer) });
       const hl = (r.production || 0) + (r.transfer || 0);
       return {
         id: r.id, t: r.t, day: r.day, shift: r.shift, pisos: r.pisos, cip: r.cip, gea: r.gea, total: r.total,

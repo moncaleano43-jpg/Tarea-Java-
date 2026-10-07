@@ -148,7 +148,7 @@
 
   /* ---------- Vista ---------- */
   let tabActual = 'resumen';
-  const rutaTab = (arg) => { const t = arg && arg[0]; return pestanas.some((p) => p.id === t) ? t : pestanas.length ? pestanas[0].id : 'resumen'; };
+  const rutaTab = (arg) => { const t = String((arg && arg[0]) || '').split('?')[0]; return pestanas.some((p) => p.id === t) ? t : pestanas.length ? pestanas[0].id : 'resumen'; };
 
   function filtrosHtml(ctx) {
     const r = ctx.rango;

@@ -618,11 +618,12 @@
   }
   const DS_KEYS = ['agua', 'aseos', 'merma', 'recuperacion', 'trasiego', 'ferm', 'lev'];
 
+  const DEF_EX = { aseos: /\b(agua|consumo|gast\w*|m3|litros|usad\w*|usamos)\b/, merma: /\b(merma|mermas|perdid\w*|perdimos)\b/, agua: /\b(agua|consumo|gast\w*|consumimos)\b/, recuperacion: /\b(recuper\w*|cerveza)\b/, lev: /\b(viabilidad)\b/ };
   function detectMetric(ds, q) {
     const list = MET[ds] || [];
     for (const m of list) if (!m.def && m.re.test(q)) return { k: m.k, explicit: true };
     const d = list.find((m) => m.def);
-    return { k: d ? d.k : null, explicit: false };
+    return { k: d ? d.k : null, explicit: !!(DEF_EX[ds] && DEF_EX[ds].test(q)) };
   }
 
   function detectBy(q) {
@@ -813,9 +814,13 @@
     const nounCount = /\bcuant[oa]s\b(?: \w+){0,3} (aseos?|lotes?|trasiegos?|actividades|fermentaciones?|cosechas?|recuperaciones|turnos|lecturas|registros|cips?|fv|sv)\b/.test(q);
     if (nounCount || (F.count && !mm.explicit && !F.sum && !/\b(hl|m3|litros)\b/.test(w))) { spec.metric = '__n'; spec.metricExplicit = true; }
     if (/\bturnos?\b/.test(q) && ds === 'agua' && F.count) spec.metric = '__n';
+    if (/\b(mas|menos)\s+(aseos|trasiegos|fermentaciones|cosechas|recuperaciones|lotes|actividades|cips?)\b/.test(q)) { spec.metric = '__n'; spec.metricExplicit = true; }
+    if (ds === 'aseos' && !mm.explicit && spec.metric !== '__n' && (F.chart || /\b(semanal|mensual|diario|por (dia|semana|mes))\b/.test(q)) && !F.sum) { spec.metric = '__n'; spec.metricExplicit = true; }
     if (ds === 'agua' && comps.length >= 2) { spec.cmp = { kind: 'component', items: comps }; }
     // agregación
-    if (F.median) spec.how = 'median'; else if (F.mean && !F.rank) spec.how = 'mean'; else if (F.sum) spec.how = 'sum'; else if (F.max && !F.rank && !topN) spec.how = 'max'; else if (F.min && !F.rank && !topN) spec.how = 'min';
+    const Fw = { max: RXF.max.test(w), min: RXF.min.test(w), rank: RXF.rank.test(w) };
+    const rankish = F.rank || Fw.rank || !!topN;
+    if (F.median) spec.how = 'median'; else if (F.mean && !rankish) spec.how = 'mean'; else if (F.sum) spec.how = 'sum'; else if (Fw.max && !rankish) spec.how = 'max'; else if (Fw.min && !rankish) spec.how = 'min';
     if (/\b(diario|por dia|al dia|cada dia|diaria)\b/.test(q) && F.mean) spec.perDay = true;
     // dimensiones
     const noun = /\b(?:que|cual(?:es)?|cuales|quien(?:es)?)\s+(?:\w+\s+){0,2}?(turno|marca|tanque|unitanque|equipo|operario|utk|causa|generacion|familia|dia|semana|mes|actividad|etapa|fase)s?\b/.exec(q) || /\b(?:top\s*\d*|los\s+\d+|\d+)\s+(turno|marca|tanque|unitanque|equipo|operario|utk|causa|generacion|familia|dia|semana|mes|actividad)(?:s|es)?\b/.exec(q);
@@ -887,9 +892,9 @@
     else if (/\b(que )?(%|porcentaje|proporcion|fraccion)\b.{0,30}\b(de|del|de los|de las)\b/.test(q) && spec.conds.length || /\bque (parte|fraccion) de\b/.test(q)) intent = 'share';
     else if (F.corr) intent = 'corr';
     else if (F.dist && !F.rank) intent = 'dist';
-    else if ((F.rank || topN) && !F.cause) intent = 'rank';
+    else if ((rankish || (noun && /\b(mas|menos|mayor|menor|mejor|peor|lento|rapido|largo|corto)\b/.test(w))) && !F.cause) intent = 'rank';
     else if (F.count && spec.metric === '__n' && !by && (spec.conds.length || X.tanks.length || X.brands.length || X.ops.length || X.eqTerms.length || !F.chart)) intent = 'count';
-    else if (F.list || (rowNoun && !F.sum && !F.mean && !F.count && !F.chart && (spec.conds.length || X.tanks.length || X.eqTerms.length || X.ops.length || X.brands.length || spec.period && !spec.periodDefault) && !spec.metricExplicit && !by && !F.compare)) intent = 'list';
+    else if (F.list || (rowNoun && !F.sum && !F.mean && !F.count && !F.chart && (spec.conds.length || X.tanks.length || X.eqTerms.length || X.ops.length || X.brands.length || spec.period && !spec.periodDefault) && (!spec.metricExplicit || (spec.conds.length && spec.conds.every((c) => c.k === spec.metric))) && !by && !F.compare)) intent = 'list';
     else if (F.chart || (by && TIMEKEYS.includes(by))) intent = 'trend';
     else if (by) intent = 'stat';
     if (intent === 'rank' && !by) {
