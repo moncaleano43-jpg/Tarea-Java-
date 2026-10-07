@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cifra · Componentes</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{padding:56px 20px}
+.wrap{max-width:1080px;margin:auto}
+h1{font-size:34px;font-weight:650;letter-spacing:-.035em}
+.sub{color:var(--muted);margin:6px 0 10px}
+h2{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin:44px 0 14px}
+.g{display:grid;gap:14px}.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;min-width:0}
+.box h3{font-size:15px;letter-spacing:-.01em;margin-bottom:2px}.box .d{font-size:12.5px;color:var(--muted);margin-bottom:14px}
+svg.c{width:100%;height:auto;display:block}
+svg.c text{fill:var(--muted);font:10px var(--font)}
+.gl{stroke:var(--line)}.ink{stroke:var(--text);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.gry{stroke:var(--accent2);fill:none;stroke-width:2.2;stroke-dasharray:5 5;stroke-linecap:round}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.input{font:15px var(--font);color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 12px;width:150px}
+.input.f{border-color:var(--text);box-shadow:0 0 0 3px color-mix(in srgb,var(--text) 10%,transparent)}
+.input.e{border-color:var(--accent3);background:color-mix(in srgb,var(--accent3) 8%,var(--surface))}
+.tag{font-size:12px;border:1px solid var(--line);border-radius:99px;padding:3px 10px;background:var(--soft)}
+.tag.p{color:var(--pos)}.tag.w{color:var(--warn)}
+.empty{text-align:center;padding:10px 0}
+.empty svg{width:120px;height:90px;margin-bottom:8px;stroke:var(--text);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.empty b{display:block;font-size:15px}.empty span{font-size:12.5px;color:var(--muted)}
+.tb{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.tb th{text-align:left;color:var(--muted);font-weight:500;font-size:12px;padding:0 0 8px}
+.tb td{padding:9px 0;border-top:1px solid var(--line)}
+.tb td:last-child,.tb th:last-child{text-align:right}
+.bigkpi small{color:var(--muted);font-size:12px}.bigkpi strong{display:block;font-size:30px;letter-spacing:-.03em;font-weight:650}
+.bigkpi em{font-style:normal;font-size:12px;color:var(--pos)}
+.toast.toastd{position:static;transform:none!important;opacity:1;display:inline-flex}
+@media(max-width:800px){.g3,.g4{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}}
+</style></head><body><div class="wrap">
+<h1>Diseños de Cifra</h1>
+<p class="sub">Los elementos que se presentan en la página: gráficas, tarjetas, controles, tabla, estados y dibujos. Mismo lenguaje: papel cálido, tinta negra y un verde apagado solo para lo positivo.</p>
+
+<h2>Gráficas</h2>
+<div class="g g3">
+ <div class="box"><h3>Línea con proyección</h3><p class="d">Real en tinta, futuro punteado, banda de confianza.</p>
+  <svg class="c" viewBox="0 0 300 150"><line class="gl" x1="0" x2="300" y1="30" y2="30"/><line class="gl" x1="0" x2="300" y1="80" y2="80"/><line class="gl" x1="0" x2="300" y1="130" y2="130"/>
+  <defs><linearGradient id="a" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".16"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>
+  <path d="M10 118 L50 105 L90 110 L130 88 L170 72 L170 130 L10 130Z" fill="url(#a)" style="color:var(--text)"/>
+  <path d="M170 72 L290 38 L290 70 L170 76Z" style="fill:var(--accent2);fill-opacity:.16"/>
+  <path class="ink" d="M10 118 L50 105 L90 110 L130 88 L170 72"/><path class="gry" d="M170 72 L230 56 L290 54"/>
+  <circle cx="170" cy="72" r="4" style="fill:var(--surface);stroke:var(--text);stroke-width:2"/>
+  <text x="10" y="146">Ene</text><text x="150" y="146">Jun</text><text x="268" y="146">Dic</text></svg></div>
+ <div class="box"><h3>Barras</h3><p class="d">Valores reales sólidos, proyectados con trazo punteado.</p>
+  <svg class="c" viewBox="0 0 300 150"><line class="gl" x1="0" x2="300" y1="30" y2="30"/><line class="gl" x1="0" x2="300" y1="80" y2="80"/><line class="gl" x1="0" x2="300" y1="130" y2="130"/>
+  <g style="fill:var(--text)"><rect x="14" y="100" width="26" height="30" rx="3"/><rect x="54" y="88" width="26" height="42" rx="3"/><rect x="94" y="94" width="26" height="36" rx="3"/><rect x="134" y="70" width="26" height="60" rx="3"/></g>
+  <g style="fill:var(--accent2);fill-opacity:.35;stroke:var(--accent2);stroke-dasharray:4 3"><rect x="174" y="56" width="26" height="74" rx="3"/><rect x="214" y="44" width="26" height="86" rx="3"/><rect x="254" y="30" width="26" height="100" rx="3"/></g>
+  <text x="14" y="146">Ene</text><text x="134" y="146">Abr</text><text x="254" y="146">Jul</text></svg></div>
+ <div class="box"><h3>Escenarios</h3><p class="d">Optimista en verde, pesimista en ámbar.</p>
+  <svg class="c" viewBox="0 0 300 150"><line class="gl" x1="0" x2="300" y1="30" y2="30"/><line class="gl" x1="0" x2="300" y1="80" y2="80"/><line class="gl" x1="0" x2="300" y1="130" y2="130"/>
+  <path class="ink" d="M10 115 L60 100 L110 104 L160 80"/>
+  <path d="M160 80 L290 28" fill="none" stroke-width="2.2" stroke-dasharray="5 5" stroke-linecap="round" style="stroke:var(--pos)"/>
+  <path d="M160 80 L290 58" class="gry"/>
+  <path d="M160 80 L290 88" fill="none" stroke-width="2.2" stroke-dasharray="5 5" stroke-linecap="round" style="stroke:var(--warn)"/>
+  <text x="236" y="22" style="fill:var(--pos)">Optimista</text><text x="240" y="108" style="fill:var(--warn)">Pesimista</text></svg></div>
+</div>
+
+<h2>Tarjetas de datos</h2>
+<div class="g g4">
+ <div class="box bigkpi"><small>Ingresos</small><strong>$460K</strong><em>▲ +18% vs. mes anterior</em></div>
+ <div class="box bigkpi"><small>Promedio</small><strong>48,1</strong><em style="color:var(--muted)">8 periodos</em></div>
+ <div class="box bigkpi"><small>Tendencia / periodo</small><strong>+4,7</strong><em>Ajuste R² 0,96</em></div>
+ <div class="box bigkpi" style="background:var(--text);color:var(--bg);border-color:var(--text)"><small style="color:color-mix(in srgb,var(--bg) 70%,transparent)">Proyección · base</small><strong>83,2</strong><em style="color:color-mix(in srgb,var(--bg) 70%,transparent)">Dic</em></div>
+</div>
+
+<h2>Controles</h2>
+<div class="g g3">
+ <div class="box"><h3>Botones</h3><p class="d">Principal, secundario y de texto.</p><div class="row"><a class="btn">Probar ahora</a><a class="btn btn--ghost">Empezar</a><a class="link">Ver más →</a></div></div>
+ <div class="box"><h3>Selector segmentado</h3><p class="d">Para vista, modelo y escenario.</p><div class="seg"><button class="on">Línea</button><button>Barras</button></div> <div class="seg" style="margin-top:8px"><button>Pesimista</button><button class="on">Base</button><button>Optimista</button></div></div>
+ <div class="box"><h3>Campos</h3><p class="d">Normal, enfocado y dato atípico.</p><div class="row"><input class="input" value="45"><input class="input f" value="61"><input class="input e" value="9100"></div></div>
+ <div class="box"><h3>Etiquetas y plantillas</h3><p class="d">Estados y atajos.</p><div class="row"><span class="tag">Ventas</span><span class="tag p">● Proyección lista</span><span class="tag w">● Dato atípico</span><span class="tag">R² 0,96</span></div></div>
+ <div class="box"><h3>Aviso con deshacer</h3><p class="d">Aparece abajo y desaparece solo.</p><div class="toast on toastd">Periodo agregado <button>Deshacer</button></div></div>
+ <div class="box"><h3>Deslizador</h3><p class="d">Periodos a proyectar.</p><label class="range">Proyectar <output>4</output> periodos <input type="range" min="0" max="12" value="4"></label></div>
+</div>
+
+<h2>Tabla y estados vacíos</h2>
+<div class="g g2">
+ <div class="box"><h3>Tabla de datos</h3><p class="d">Números alineados y líneas finas.</p>
+  <table class="tb"><tr><th>Periodo</th><th>Real</th><th>Proyección</th></tr><tr><td>Jun</td><td>55</td><td>—</td></tr><tr><td>Jul</td><td>61</td><td>—</td></tr><tr><td>Ago</td><td>66</td><td>—</td></tr><tr><td>Sep</td><td>—</td><td>70,8</td></tr><tr><td>Oct</td><td>—</td><td>75,5</td></tr></table></div>
+ <div class="box"><h3>Sin datos todavía</h3><p class="d">Dibujo de línea que invita a empezar.</p>
+  <div class="empty"><svg viewBox="0 0 120 90"><rect x="12" y="10" width="96" height="62" rx="8"/><path d="M12 28h96M44 28v44"/><path d="M54 58l12-10 10 6 16-16" stroke-dasharray="3 4"/><circle cx="92" cy="38" r="3"/></svg><b>Aún no hay datos</b><span>Escribe un periodo, pega desde Excel o elige una plantilla.</span><div style="margin-top:12px"><a class="btn btn--sm">+ Agregar periodo</a></div></div></div>
+</div>
+
+<h2>Dibujos minimalistas</h2>
+<div class="g g4">
+ <div class="box empty"><svg viewBox="0 0 120 90"><path d="M14 74h92"/><path d="M26 74V50M46 74V36M66 74V56M86 74V24"/></svg><b>Analítica</b><span>Barras simples</span></div>
+ <div class="box empty"><svg viewBox="0 0 120 90"><path d="M12 70c20-4 28-24 46-30s32-8 50-24"/><path d="M12 70c20 2 30 0 46-6s32-4 50-4" stroke-dasharray="3 4"/><circle cx="58" cy="40" r="3.5"/></svg><b>Proyección</b><span>Curva y rango</span></div>
+ <div class="box empty"><svg viewBox="0 0 120 90"><rect x="22" y="38" width="76" height="40" rx="10"/><path d="M38 38V28a22 22 0 0144 0v10"/><circle cx="60" cy="58" r="4"/></svg><b>Privacidad</b><span>Candado</span></div>
+ <div class="box empty"><svg viewBox="0 0 120 90"><rect x="16" y="14" width="88" height="62" rx="8"/><path d="M16 34h88M16 52h88M46 14v62"/></svg><b>Excel y CSV</b><span>Hoja de cálculo</span></div>
+</div>
+</div></body></html>
