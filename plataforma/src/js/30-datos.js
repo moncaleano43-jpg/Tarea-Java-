@@ -354,7 +354,8 @@
   /* ---------- Catálogo y utilidades ---------- */
   const catalog = () => Object.entries(META).map(([key, m]) => ({ key, label: m.label, desc: m.desc, fields: m.fields, n: get(key).length }));
   function extent(name) {
-    const ts = get(name).map((r) => r.t).filter((t) => t != null);
+    // Las filas de plantilla vacías (p. ej. turnos futuros del Excel de agua) no cuentan como «último dato».
+    const ts = get(name).filter((r) => r.valid !== false).map((r) => r.t).filter((t) => t != null);
     return ts.length ? { from: Math.min(...ts), to: Math.max(...ts), n: ts.length } : null;
   }
   const brands = () => [...new Set(['ferm', 'merma', 'recuperacion', 'trasiego', 'lev'].flatMap((n) => get(n).map((r) => r.brand)).filter(Boolean))].sort();

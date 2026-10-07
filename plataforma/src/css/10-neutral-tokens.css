@@ -59,3 +59,7 @@
 html,body{background:var(--bg)!important;color:var(--ink)!important;font-family:var(--sans)!important}
 :root[data-theme="light"] body{background:var(--bg)!important}
 body{font-feature-settings:"cv11","ss01";letter-spacing:-.005em}
+
+/* Botones primarios: el texto siempre contrasta con el fondo de acento (en oscuro el acento es claro) */
+.btn.pri,.btn.primary,button.pri,a.btn.pri{background:var(--accent)!important;color:var(--accent-ink)!important;border-color:var(--accent)!important}
+.btn.pri:hover{filter:none;opacity:.9}
