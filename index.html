@@ -20,6 +20,7 @@
       <a href="#faq">Ayuda</a>
     </nav>
     <div class="nav__cta">
+      <button class="kbd" id="cmdk" type="button" aria-label="Abrir paleta de comandos">⌘K</button>
       <button class="icon-btn" id="theme" aria-label="Cambiar tema">◐</button>
       <a href="#demo" class="btn btn--sm">Empezar</a>
     </div>
@@ -105,6 +106,7 @@
           </label>
         </div>
         <div class="chart" id="demoChart" role="img" aria-label="Gráfica de datos y proyección"></div>
+        <p class="warn" id="warn" hidden></p>
         <p class="legend"><span class="dot dot--a"></span>Datos reales <span class="dot dot--p"></span>Proyección <span class="dot dot--b"></span>Rango de confianza</p>
       </div>
     </div>
@@ -161,6 +163,15 @@
   <p>© 2026 Cifra. Todos los derechos reservados.</p>
   <p><a href="#">Privacidad</a> · <a href="#">Términos</a> · <a href="#">Contacto</a></p>
 </footer>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Paleta de comandos">
+    <input id="pin" placeholder="Escribe un comando o un dato: «Sep 70»…" aria-label="Comando" autocomplete="off">
+    <ul id="plist" role="listbox"></ul>
+    <div class="palette__foot"><span>↑↓ navegar</span><span>↵ ejecutar</span><span>esc cerrar</span></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="app.js"></script>
 </body>

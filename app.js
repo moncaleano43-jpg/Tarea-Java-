@@ -187,6 +187,7 @@ function update() {
   set('k-slope', reg ? `${reg.m >= 0 ? '+' : ''}${fmt.format(reg.m)}` : '–');
   set('k-proj', reg && state.ahead ? fmt.format(reg.m * (n + state.ahead - 1) + reg.b) : '–');
   drawChart(demo, state.data, { mode: state.mode, ahead: state.ahead });
+  flagOutliers();
 }
 
 rowsEl.addEventListener('input', (e) => {
@@ -248,3 +249,104 @@ document.getElementById('csv').addEventListener('change', async (e) => {
 renderRows();
 update();
 watch(demo);
+
+/* ---------- Validación en vivo: datos atípicos ---------- */
+function flagOutliers() {
+  const vals = state.data.map((d) => d.value), reg = regress(vals);
+  const warn = document.getElementById('warn');
+  const bad = [];
+  if (reg && vals.length >= 5) {
+    vals.forEach((v, i) => { if (Math.abs(v - (reg.m * i + reg.b)) > 2 * reg.se && reg.se > 0) bad.push(i); });
+  }
+  rowsEl.querySelectorAll('tr').forEach((tr, i) => {
+    const on = bad.includes(i);
+    tr.classList.toggle('flag', on);
+    tr.title = on ? 'Fuera de lo esperado según la tendencia' : '';
+  });
+  warn.hidden = !bad.length;
+  warn.textContent = bad.length
+    ? `⚠ ${bad.length === 1 ? 'Dato atípico' : bad.length + ' datos atípicos'}: ${bad.map((i) => state.data[i].label).join(', ')} se aleja de la tendencia. Revísalo antes de proyectar.`
+    : '';
+}
+
+/* ---------- Deshacer ---------- */
+const toastEl = document.getElementById('toast');
+let toastTimer;
+function toast(msg, prev) {
+  clearTimeout(toastTimer);
+  toastEl.innerHTML = `<span>${esc(msg)}</span>${prev ? '<button type="button">Deshacer</button>' : ''}`;
+  toastEl.classList.add('on');
+  if (prev) toastEl.querySelector('button').onclick = () => {
+    state.data = JSON.parse(prev);
+    renderRows(); update();
+    toastEl.classList.remove('on');
+  };
+  toastTimer = setTimeout(() => toastEl.classList.remove('on'), 6000);
+}
+const snap = () => JSON.stringify(state.data);
+// Captura antes de que los manejadores originales modifiquen los datos
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-del]')) toast('Fila eliminada', snap());
+  else if (e.target.closest('#add')) toast('Periodo agregado', snap());
+}, true);
+
+/* ---------- Paleta de comandos (⌘K / Ctrl+K) ---------- */
+const pal = document.getElementById('palette'), pin = document.getElementById('pin'), plist = document.getElementById('plist');
+const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const click = (sel) => () => document.querySelector(sel).click();
+const goTo = (h) => () => { location.hash = h; };
+const setMode = (m) => () => document.querySelector(`.seg button[data-mode=${m}]`).click();
+const COMMANDS = [
+  { t: 'Ir a la demo', hint: 'Navegar', run: goTo('#demo') },
+  { t: 'Ir a funciones', hint: 'Navegar', run: goTo('#funciones') },
+  { t: 'Ir a precios', hint: 'Navegar', run: goTo('#precios') },
+  { t: 'Ir a ayuda', hint: 'Navegar', run: goTo('#faq') },
+  { t: 'Agregar periodo', hint: 'Datos', run: click('#add') },
+  { t: 'Gráfica de línea', hint: 'Vista', run: setMode('line') },
+  { t: 'Gráfica de barras', hint: 'Vista', run: setMode('bar') },
+  { t: 'Exportar datos a CSV', hint: 'Datos', run: click('#export') },
+  { t: 'Cambiar tema claro/oscuro', hint: 'Apariencia', run: click('#theme') },
+];
+let sel = 0, items = [];
+
+function quickEntry(q) {
+  const m = q.trim().match(/^(?:(\S+)\s+)?(-?\d+(?:[.,]\d+)?)$/);
+  if (!m) return null;
+  const labels = state.data.map((d) => d.label);
+  const label = m[1] || (MONTHS.includes(labels[labels.length - 1]) ? nextLabels(labels, 1)[0] : `P${labels.length + 1}`);
+  const value = parseFloat(m[2].replace(',', '.'));
+  return { t: `Agregar «${label} · ${fmt.format(value)}» a los datos`, hint: 'Ingreso rápido', run: () => {
+    const prev = snap();
+    state.data.push({ label, value });
+    renderRows(); update();
+    toast(`Agregado ${label} · ${fmt.format(value)}`, prev);
+  } };
+}
+
+function renderPalette() {
+  const q = norm(pin.value);
+  items = COMMANDS.filter((c) => norm(c.t).includes(q));
+  const qe = quickEntry(pin.value);
+  if (qe) items.unshift(qe);
+  sel = Math.min(sel, Math.max(items.length - 1, 0));
+  plist.innerHTML = items.length
+    ? items.map((c, i) => `<li role="option" data-i="${i}" class="${i === sel ? 'on' : ''}"><span>${esc(c.t)}</span><small>${c.hint}</small></li>`).join('')
+    : '<li class="empty">Sin resultados</li>';
+}
+function openPalette() { pal.hidden = false; pin.value = ''; sel = 0; renderPalette(); pin.focus(); }
+function closePalette() { pal.hidden = true; }
+function runItem(i) { const c = items[i]; if (!c) return; closePalette(); c.run(); }
+
+document.getElementById('cmdk').addEventListener('click', openPalette);
+addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); pal.hidden ? openPalette() : closePalette(); return; }
+  if (pal.hidden) return;
+  if (e.key === 'Escape') closePalette();
+  else if (e.key === 'ArrowDown') { e.preventDefault(); sel = (sel + 1) % Math.max(items.length, 1); renderPalette(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); sel = (sel - 1 + items.length) % Math.max(items.length, 1); renderPalette(); }
+  else if (e.key === 'Enter') { e.preventDefault(); runItem(sel); }
+});
+pin.addEventListener('input', () => { sel = 0; renderPalette(); });
+plist.addEventListener('click', (e) => { const li = e.target.closest('[data-i]'); if (li) runItem(+li.dataset.i); });
+pal.addEventListener('mousedown', (e) => { if (e.target === pal) closePalette(); });
+flagOutliers();
