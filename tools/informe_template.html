@@ -22,6 +22,15 @@
 .tile.warn{border-left-color:var(--warn);background:var(--warn-bg)}
 .tile.crit{border-left-color:var(--crit);background:var(--crit-bg)}
 .tile.click{cursor:pointer}.tile.click:hover{outline:2px solid var(--brand)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:var(--card);color:var(--fg);padding:6px 18px}
+.seg button.on{background:var(--brand);color:var(--brand-fg)}
+.tile.sel{outline:3px solid var(--brand)}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px 18px;margin:8px 0}
+.kv div{border-bottom:1px solid var(--line);padding-bottom:4px}.kv small{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.03em}
+.kv b{font-variant-numeric:tabular-nums}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-top:12px}
+.panel h2{margin-top:4px}
 .leyenda{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
 .leyenda i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 </style>
@@ -32,6 +41,7 @@
   <h1>Informe de Cavas <span class="muted" id="gen" style="font-weight:400;font-size:13px"></span></h1>
   <nav id="tabs">
     <button data-tab="dashboard" class="active">Dashboard</button>
+    <button data-tab="tanques">Tanques</button>
     <button data-tab="fermentaciones">Fermentación</button>
     <button data-tab="maduraciones">Maduración</button>
     <button data-tab="levaduras">Levadura</button>
@@ -51,6 +61,14 @@
     </div>
     <h2>Fermentadores (FV)</h2><div class="scroll"><table id="tblFv"></table></div>
     <h2>Maduradores (SV)</h2><div class="scroll"><table id="tblSv"></table></div>
+  </section>
+  <section id="tanques" class="tab">
+    <div class="toolbar">
+      <div class="seg" id="tqTipo"><button data-t="fv" class="on">Fermentadores (FV)</button><button data-t="sv">Maduradores (SV)</button></div>
+      <span class="muted">Elige un tanque para ver su estado, su lote actual y su historial</span>
+    </div>
+    <div class="mapa-wrap"><div class="mapa" id="tqMapa"></div></div>
+    <div id="tqDetalle"></div>
   </section>
   <section id="fermentaciones" class="tab">
     <div class="toolbar"><label>Marca <select id="fMarca"><option value="">Todas</option></select></label>
@@ -76,7 +94,7 @@
 'use strict';
 const DATA = /*__DATA__*/;
 const $ = (s, el = document) => el.querySelector(s), $$ = (s, el = document) => [...el.querySelectorAll(s)];
-const fmt = (v, d = 1) => v == null ? '–' : Number(v).toLocaleString('es-CO', { maximumFractionDigits: d, minimumFractionDigits: d });
+const fmt = (v, d = 1) => (v == null || isNaN(Number(v))) ? '–' : Number(v).toLocaleString('es-CO', { maximumFractionDigits: d, minimumFractionDigits: d });
 const fdate = v => v ? v.replace('T', ' ').slice(0, 16) : '–';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const hrs = (a, b) => (new Date(b) - new Date(a)) / 36e5;
@@ -173,7 +191,7 @@ function pintarResumen(r) {
   $('#mapaSv').innerHTML = Array.from({ length: nSv }, (_, i) => i + 1).map(n => {
     const x = r.sv.find(f => f.tq === n); return tile(n, x, x ? fmt(x.horas, 0) + ' h' : '', false);
   }).join('');
-  $$('#mapaFv .tile.click').forEach(t => t.onclick = () => verFermentacion(t.dataset.cons));
+  $$('#mapaFv .tile.click').forEach(t => t.onclick = () => { const f = DATA.fermentaciones.find(x => x.cons === t.dataset.cons); tqTipo = 'fv'; tqSel = f.tq; tqLote = null; $$('#tqTipo button').forEach(x => x.classList.toggle('on', x.dataset.t === 'fv')); $('#tabs [data-tab=tanques]').click(); });
 }
 
 // ---- fermentaciones ----
@@ -189,20 +207,24 @@ function fermentaciones() {
     { t: 'Gen', num: 1, f: x => x.generacion ?? '–' }, { t: 'Viab %', num: 1, f: x => x.viabilidad == null ? '–' : fmt(x.viabilidad * 100) },
     { t: 'AF real', f: x => fdate(x.fecha_af_real) }], rows, x => verFermentacion(x.cons));
 }
+function dibujarCurvas(cons, idExt, idTemp) {
+  if (charts[idExt]) charts[idExt].destroy();
+  if (charts[idTemp]) charts[idTemp].destroy();
+  const ms = (DATA.muestras[cons] || []).filter(m => m[1] != null && m[2] != null).map(m => ({ x: m[1], y: m[2] }));
+  charts[idExt] = new Chart($('#'+idExt), { type: 'line', data: { datasets: [{ label: 'Extracto (°P)', data: ms, borderColor: '#b45309', backgroundColor: '#b45309', tension: .25 }] },
+    options: { parsing: false, scales: { x: { type: 'linear', title: { display: true, text: 'Horas de fermentación' } }, y: { title: { display: true, text: '°P' } } }, plugins: { title: { display: true, text: 'Curva de atenuación' } } } });
+  const ts = (DATA.temperaturas[cons] || []).filter(t => t[1] != null);
+  charts[idTemp] = new Chart($('#'+idTemp), { type: 'line', data: { datasets: [
+      { label: 'Temp. M (°C)', data: ts.filter(t => t[2] != null).map(t => ({ x: t[1], y: t[2] })), borderColor: '#1d4ed8', backgroundColor: '#1d4ed8', pointRadius: 2 },
+      { label: 'Temp. I (°C)', data: ts.filter(t => t[3] != null).map(t => ({ x: t[1], y: t[3] })), borderColor: '#15803d', backgroundColor: '#15803d', pointRadius: 2 }] },
+    options: { parsing: false, scales: { x: { type: 'linear', title: { display: true, text: 'Horas' } }, y: { title: { display: true, text: '°C' } } }, plugins: { title: { display: true, text: 'Temperatura' } } } });
+}
 function verFermentacion(cons) {
   $('#tabs [data-tab=fermentaciones]').click();
   const f = DATA.fermentaciones.find(x => x.cons === cons);
   $('#detalleFer').hidden = false;
   $('#detalleTitulo').textContent = `${f.cons} · FV ${f.tq} · ${f.marca} · E.O ${fmt(f.eo_ponderado, 2)} °P`;
-  Object.values(charts).forEach(c => c.destroy());
-  const ms = (DATA.muestras[cons] || []).filter(m => m[1] != null && m[2] != null).map(m => ({ x: m[1], y: m[2] }));
-  charts.e = new Chart($('#chExtracto'), { type: 'line', data: { datasets: [{ label: 'Extracto (°P)', data: ms, borderColor: '#b45309', backgroundColor: '#b45309', tension: .25 }] },
-    options: { parsing: false, scales: { x: { type: 'linear', title: { display: true, text: 'Horas de fermentación' } }, y: { title: { display: true, text: '°P' } } }, plugins: { title: { display: true, text: 'Curva de atenuación' } } } });
-  const ts = (DATA.temperaturas[cons] || []).filter(t => t[1] != null);
-  charts.t = new Chart($('#chTemp'), { type: 'line', data: { datasets: [
-      { label: 'Temp. M (°C)', data: ts.filter(t => t[2] != null).map(t => ({ x: t[1], y: t[2] })), borderColor: '#1d4ed8', backgroundColor: '#1d4ed8', pointRadius: 2 },
-      { label: 'Temp. I (°C)', data: ts.filter(t => t[3] != null).map(t => ({ x: t[1], y: t[3] })), borderColor: '#15803d', backgroundColor: '#15803d', pointRadius: 2 }] },
-    options: { parsing: false, scales: { x: { type: 'linear', title: { display: true, text: 'Horas' } }, y: { title: { display: true, text: '°C' } } }, plugins: { title: { display: true, text: 'Temperatura' } } } });
+  dibujarCurvas(cons, 'chExtracto', 'chTemp');
   $('#detalleFer').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -254,8 +276,89 @@ function indicadores() {
   });
 }
 
+// ---- Tanques (FV y SV) ----
+let tqTipo = 'fv', tqSel = null, tqLote = null;
+const kv = (t, v) => `<div><small>${esc(t)}</small><b>${esc(v == null || v === '' ? '–' : v)}</b></div>`;
+const kvn = (t, v, d = 1, u = '') => kv(t, fmt(v, d) === '–' ? null : fmt(v, d) + u);
+const ocupacionFv = f => {
+  const t0 = f.fin_llenado || f.inicio_llenado; if (!t0) return null;
+  const m = DATA.maduraciones.find(x => x.fv_cons === f.cons || x.fv2_cons === f.cons);
+  const fin = m ? m.inicio_trasiego : (ocupado(f) ? ($('#ahora').value || DATA.hasta) : null);
+  return fin ? hrs(t0, fin) : null;
+};
+
+function tanques() {
+  const r = resumen($('#ahora').value || DATA.hasta);
+  const esFv = tqTipo === 'fv';
+  const n = maxTq(esFv ? DATA.fermentaciones : DATA.maduraciones, []);
+  const activos = esFv ? r.fv : r.sv;
+  if (tqSel == null || tqSel > n) tqSel = (activos[0] || {}).tq || 1;
+  $('#tqMapa').innerHTML = Array.from({ length: n }, (_, i) => i + 1).map(k => {
+    const x = activos.find(f => f.tq === k);
+    const sel = k === tqSel ? ' sel' : '';
+    if (!x) return `<div class="tile vacio click${sel}" data-n="${k}"><div class="n">${k}</div><div>vacío</div></div>`;
+    return `<div class="tile ${estado(x.al)} click${sel}" data-n="${k}" title="${esc(x.cons + ' · ' + x.marca)}"><div class="m"><span class="n">${k}</span><b>${esc(abrev(x.marca))}</b></div><div>${esc(x.etapa)}</div><div>${fmt(x.horas, 0)} h</div></div>`;
+  }).join('');
+  $$('#tqMapa .tile').forEach(t => t.onclick = () => { tqSel = +t.dataset.n; tqLote = null; tanques(); });
+  esFv ? detalleFv(tqSel, activos) : detalleSv(tqSel, activos);
+}
+
+function detalleFv(n, activos) {
+  const lotes = DATA.fermentaciones.filter(f => f.tq === n).sort((a, b) => (b.inicio_llenado || '') < (a.inicio_llenado || '') ? -1 : 1);
+  const act = activos.find(f => f.tq === n);
+  const sel = lotes.find(l => l.cons === tqLote) || lotes[0];
+  let h = `<div class="panel"><h2>FV ${n} · ${act ? 'Ocupado' : 'Vacío'}</h2>`;
+  if (!lotes.length) { $('#tqDetalle').innerHTML = h + '<p class="muted">Este tanque no tiene lotes registrados.</p></div>'; return; }
+  if (act) h += `<div>${alertas(act.al) || '<span class="badge INFO">Sin alertas</span>'}</div>`;
+  h += `<h2 style="font-size:14px">${act && sel.cons === act.cons ? 'Lote actual' : 'Lote seleccionado'}: ${esc(sel.cons)} · ${esc(sel.marca)}</h2><div class="kv">` +
+    kv('Etapa', sel.etapa) + kvn('Volumen (Hl)', sel.volumen_hl, 0) + kvn('E.O ponderado (°P)', sel.eo_ponderado, 2) + kvn('Extracto límite (°P)', sel.e_limite, 2) +
+    kv('Inicio llenado', fdate(sel.inicio_llenado)) + kv('Fin llenado', fdate(sel.fin_llenado)) + kv('AF real', fdate(sel.fecha_af_real)) +
+    kvn('Horas en FV', ocupacionFv(sel), 0, ' h') + kv('Levadura', sel.levadura) + kv('Generación', sel.generacion) +
+    kvn('Viabilidad (%)', sel.viabilidad == null ? null : sel.viabilidad * 100) + kvn('Consistencia', sel.consistencia, 3) +
+    kvn('pH levadura', sel.ph_levadura, 2) + kvn('Temp. siembra (°C)', sel.temp_siembra) + kvn('Recuento 3 h (Mcel/ml)', sel.recuento_3h == null ? null : sel.recuento_3h / 1e6, 1) + '</div>';
+  h += `<div class="charts"><div><canvas id="chTqExt"></canvas></div><div><canvas id="chTqTemp"></canvas></div></div></div>`;
+  h += `<div class="panel"><h2>Historial del FV ${n} (${lotes.length} lotes) <span class="muted" style="font-weight:400">· clic en un lote para ver sus curvas</span></h2><div class="scroll"><table id="tqHist"></table></div></div>`;
+  $('#tqDetalle').innerHTML = h;
+  dibujarCurvas(sel.cons, 'chTqExt', 'chTqTemp');
+  table($('#tqHist'), [
+    { t: 'Cons', f: x => x.cons }, { t: 'Marca', f: x => x.marca }, { t: 'Etapa', f: x => x.etapa }, { t: 'Inicio llenado', f: x => fdate(x.inicio_llenado) },
+    { t: 'Horas en FV', num: 1, f: x => fmt(ocupacionFv(x), 0) }, { t: 'Vol Hl', num: 1, f: x => fmt(x.volumen_hl, 0) },
+    { t: 'E.O °P', num: 1, f: x => fmt(x.eo_ponderado, 2) }, { t: 'Levadura', f: x => x.levadura ?? '–' }, { t: 'Gen', num: 1, f: x => x.generacion ?? '–' },
+    { t: 'Viab %', num: 1, f: x => x.viabilidad == null ? '–' : fmt(x.viabilidad * 100) }, { t: 'AF real', f: x => fdate(x.fecha_af_real) }],
+    lotes.slice(0, 100), x => { tqLote = x.cons; tanques(); });
+}
+
+function detalleSv(n, activos) {
+  const lotes = DATA.maduraciones.filter(m => m.tq === n).sort((a, b) => (b.inicio_trasiego || '') < (a.inicio_trasiego || '') ? -1 : 1);
+  const act = activos.find(m => m.tq === n);
+  const sel = lotes.find(l => l.cons === tqLote) || lotes[0];
+  let h = `<div class="panel"><h2>SV ${n} · ${act ? 'Ocupado' : 'Vacío'}</h2>`;
+  if (!lotes.length) { $('#tqDetalle').innerHTML = h + '<p class="muted">Este tanque no tiene lotes registrados.</p></div>'; return; }
+  if (act) h += `<div>${alertas(act.al) || '<span class="badge INFO">Sin alertas</span>'}</div>`;
+  const t0 = sel.fin_trasiego || sel.inicio_trasiego;
+  const horas = t0 ? hrs(t0, ocupado(sel) ? ($('#ahora').value || DATA.hasta) : (sel.fecha_muestreo_final || t0)) : null;
+  const fvs = [sel.fv_cons && `${sel.fv_cons} (FV ${sel.fv_origen ?? '–'})`, sel.fv2_cons && `${sel.fv2_cons} (FV ${sel.fv2_tq ?? '–'})`].filter(Boolean).join(' + ');
+  h += `<h2 style="font-size:14px">${act && sel.cons === act.cons ? 'Lote actual' : 'Lote seleccionado'}: ${esc(sel.cons)} · ${esc(sel.marca)}</h2><h3 style="font-size:12px;color:var(--muted);margin:6px 0 0">TRASIEGO</h3><div class="kv">` +
+    kv('Etapa', sel.etapa) + kv('Origen (FV)', fvs) + kvn('Volumen (Hl)', sel.vol_total_hl, 0) + kv('Inicio trasiego', fdate(sel.inicio_trasiego)) +
+    kv('Fin trasiego', fdate(sel.fin_trasiego)) + kvn('Horas en SV', horas, 0, ' h') + kv('Lote sílica/PVPP', sel.lote_silica) + kvn('Bultos sílica', sel.silica_kg, 0) + kv('Responsable', sel.responsable) +
+    `</div><h3 style="font-size:12px;color:var(--muted);margin:10px 0 0">FISICOQUÍMICO FINAL · ${esc(fdate(sel.fecha_muestreo_final))}</h3><div class="kv">` +
+    kvn('E.O (°P)', sel.extracto_original, 2) + kvn('E. App (°P)', sel.e_app, 2) + kvn('E. Real (°P)', sel.extracto_real, 2) + kvn('Alcohol (%p/p)', sel.alcohol_p, 2) +
+    kvn('Alcohol (%v/v)', sel.alcohol_v, 2) + kvn('RDF (%)', sel.rdf) + kvn('Color (EBC)', sel.color) + kvn('pH', sel.ph, 2) + kvn('Amargo (BU)', sel.amargo) +
+    kvn('O2 disuelto (ppb)', sel.o2_ppb) + kvn('CO2', sel.co2, 2) + kvn('Turbidez', sel.turbidez) + '</div></div>';
+  h += `<div class="panel"><h2>Historial del SV ${n} (${lotes.length} lotes) <span class="muted" style="font-weight:400">· clic en un lote para ver su detalle</span></h2><div class="scroll"><table id="tqHist"></table></div></div>`;
+  $('#tqDetalle').innerHTML = h;
+  table($('#tqHist'), [
+    { t: 'Cons', f: x => x.cons }, { t: 'Marca', f: x => x.marca }, { t: 'Etapa', f: x => x.etapa },
+    { t: 'Origen', f: x => [x.fv_cons, x.fv2_cons].filter(Boolean).join(' + ') || '–' }, { t: 'Inicio trasiego', f: x => fdate(x.inicio_trasiego) },
+    { t: 'Vol Hl', num: 1, f: x => fmt(x.vol_total_hl, 0) }, { t: 'E.O °P', num: 1, f: x => fmt(x.extracto_original, 2) },
+    { t: 'Alcohol %v/v', num: 1, f: x => fmt(x.alcohol_v, 2) }, { t: 'RDF %', num: 1, f: x => fmt(x.rdf) }, { t: 'pH', num: 1, f: x => fmt(x.ph, 2) },
+    { t: 'O2 ppb', num: 1, f: x => fmt(x.o2_ppb) }], lotes.slice(0, 100), x => { tqLote = x.cons; tanques(); });
+}
+$('#tqTipo').onclick = e => { const b = e.target.closest('button'); if (!b) return;
+  tqTipo = b.dataset.t; tqSel = null; tqLote = null; $$('#tqTipo button').forEach(x => x.classList.toggle('on', x === b)); tanques(); };
+
 // ---- init ----
-const load = { dashboard, fermentaciones, maduraciones, levaduras, indicadores };
+const load = { dashboard, tanques, fermentaciones, maduraciones, levaduras, indicadores };
 $('#tabs').onclick = e => {
   const b = e.target.closest('button'); if (!b) return;
   $$('#tabs button').forEach(x => x.classList.toggle('active', x === b));
