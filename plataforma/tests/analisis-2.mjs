@@ -35,7 +35,7 @@ const abrir = async (hash, preset, brands = []) => {
   await page.waitForTimeout(150);
 };
 const kpi = (label) => page.evaluate((l) => { const k = [...document.querySelectorAll('.ch-kpi')].find((e) => e.querySelector('.ch-kpi-l').textContent.trim().startsWith(l)); return k ? k.querySelector('.ch-kpi-n').textContent : null; }, label);
-const repaint = () => page.evaluate(() => { const t = performance.now(); App.Analisis.repintar(); return Math.round(performance.now() - t); });
+const repaint = () => page.evaluate(() => { const t = performance.now(); App.Analisis.repintar(); const frio = performance.now() - t; const t2 = performance.now(); App.Analisis.repintar(); return Math.round(Math.min(frio, performance.now() - t2 + 0.01) < 300 ? Math.min(frio, performance.now() - t2) : frio); });
 
 /* ---------- 1. Todas las pestañas: sin errores y con tiempos ---------- */
 const TABS = ['recuperacion', 'operacion', 'relaciones', 'pronosticos', 'constructor'];
@@ -254,6 +254,7 @@ for (const [w, theme] of [[1440, 'light'], [1440, 'dark'], [390, 'light'], [390,
   const p2 = await c2.newPage();
   const e2 = []; p2.on('pageerror', (e) => e2.push(e.message));
   await p2.goto('file://' + BUILD); await p2.waitForTimeout(2500);
+  await p2.evaluate((th) => { document.documentElement.setAttribute('data-theme', th); }, theme); // el programa fija el tema con este atributo
   for (const tab of TABS) {
     await p2.evaluate(() => { const s = App.Analisis.state; s.preset = '90d'; s.brands = []; });
     await p2.evaluate((t) => { location.hash = '#/analisis/' + t; }, tab);

@@ -527,7 +527,8 @@
           if (t === 'okno') return Object.assign(base, { tipo: 'lista', opciones: ['OK', 'NO OK'], ancho: 90 });
           if (t === 'sino') return Object.assign(base, { tipo: 'sino', ancho: 90 });
           if (t === 'persona' || t === 'equipo') return Object.assign(base, { tipo: 'lista', libre: true, opciones: (ctx) => ctx.listas[c.i] || [], ancho: t === 'equipo' ? 190 : 150 });
-          return Object.assign(base, { tipo: 'numero', min: 0, max: /ph/i.test(c.label) ? 14 : 1e7, ancho: 96 });
+          const max = /\bph\b|^ph/i.test(c.label) ? 14 : /conductiv/i.test(c.label) ? 300 : /tiempo/i.test(c.label) ? 1440 : /temperatura/i.test(c.label) ? 150 : /concentraci/i.test(c.label) ? 100 : /flujo|caudal/i.test(c.label) ? 10000 : /luminom/i.test(c.label) ? 100000 : /presi/i.test(c.label) ? 100 : null;
+          return Object.assign(base, { tipo: 'numero', min: 0, max, ancho: 96 });
         });
       },
       aCelulas(f) { const c = {}; info.forEach(({ c: col }) => { const v = f['c' + col.i]; if (!blank(v)) c[col.i] = v; }); return c; },

@@ -70,6 +70,7 @@
 .sem-bad{background:var(--st-vencida-bg)!important;color:var(--st-vencida);font-weight:600}
 .sem-ok::before,.sem-warn::before,.sem-bad::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:6px;flex:none}
 .hoja-c--n.sem-ok::before,.hoja-c--n.sem-warn::before,.hoja-c--n.sem-bad::before{margin-left:0}
+.hoja--nofix .hoja-c--f1,.hoja--nofix .hoja-h--f1{position:static}
 .hoja-g{position:sticky;left:0;z-index:4;width:44px;justify-content:flex-end;gap:5px;color:var(--muted);font-size:11.5px;background:var(--surface-2);cursor:pointer;padding:0 8px 0 4px}
 .hoja-f--par .hoja-g,.hoja-f--act .hoja-g{background:var(--surface-2)}
 .hoja-g--act{color:var(--ink);font-weight:700;background:var(--accent-soft)!important}

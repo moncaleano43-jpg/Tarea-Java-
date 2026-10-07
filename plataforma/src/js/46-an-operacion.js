@@ -246,7 +246,6 @@
   function estadoPrograma(ctx) {
     const out = [];
     const SRC = A.OperationSources;
-    const now = Math.min(Date.now(), ctx.rango.to + DAY);
     for (const sheet of ['2. Semanal', '3. Mensual']) {
       let recs = [];
       try { recs = SRC.records('aseos', sheet); } catch (e) { continue; }
@@ -255,11 +254,13 @@
         if (c[1] == null || !c[4]) continue;
         const prog = A.DL.time(c[1]);
         if (prog == null || prog < ctx.rango.from || prog > ctx.rango.to) continue;
-        let s = null;
-        try { s = SRC.status('aseos', sheet, r); } catch (e) { s = null; }
-        const label = s ? s.label : '';
-        const k = /pendiente|vencido/i.test(label) ? 'pend' : /registrado/i.test(label) ? 'hecho' : /programado/i.test(label) ? 'prog' : /curso/i.test(label) ? 'curso' : 'otro';
-        out.push({ sheet: SHEETS[sheet], equipo: X.tc(String(c[4]).trim()), prog, estado: label, k, atraso: k === 'pend' ? Math.max(0, (now - prog) / DAY) : null, source: sheet + ' · fila ' + r.row });
+        // Misma regla que la pantalla de Aseos (hojas semanal y mensual: col. 1 programada, 2 inicio, 3 fin), sin recalcular el esquema por fila.
+        const ini = A.DL.time(c[2]), fin = A.DL.time(c[3]);
+        let label;
+        if (ini) label = fin && fin < ini ? 'Revisar fechas' : c[3] != null && !fin ? 'En curso' : 'Aseo registrado';
+        else label = prog < Date.now() ? 'Aseo pendiente / vencido' : 'Aseo programado';
+        const k = /pendiente/i.test(label) ? 'pend' : /registrado/i.test(label) ? 'hecho' : /programado/i.test(label) ? 'prog' : /curso/i.test(label) ? 'curso' : 'otro';
+        out.push({ sheet: SHEETS[sheet], equipo: X.tc(String(c[4]).trim()), prog, estado: label, k, atraso: k === 'pend' ? Math.max(0, (Date.now() - prog) / DAY) : null, source: sheet + ' · fila ' + r.row });
       }
     }
     return out;

@@ -531,6 +531,7 @@
     }
     function renderWin(force) {
       if (destroyed) return;
+      el.classList.toggle('hoja--nofix', cols[0].ancho > (vp.clientWidth || 1200) * 0.45);   // en pantallas estrechas la primera columna no se fija
       const top = vp.scrollTop, hgt = vp.clientHeight || 600;
       const a = Math.max(0, Math.floor(top / RH) - 8), b = Math.min(rows.length - 1, Math.ceil((top + hgt) / RH) + 8);
       for (const [i, d] of rowEls) {
@@ -593,7 +594,7 @@
       const y = r * RH;
       if (y < vp.scrollTop) vp.scrollTop = y;
       else if (y + RH + cabH > vp.scrollTop + vh) vp.scrollTop = y + RH + cabH - vh;
-      const x = colX[c], w = colW[c], fix = c === 0 ? 0 : GUT + cols[0].ancho;
+      const x = colX[c], w = colW[c], fix = c === 0 ? 0 : GUT + (el.classList.contains('hoja--nofix') ? 0 : cols[0].ancho);
       if (c > 0 && x - fix < vp.scrollLeft) vp.scrollLeft = x - fix;
       else if (x + w > vp.scrollLeft + vw) vp.scrollLeft = x + w - vw;
     }
@@ -683,6 +684,7 @@
         } else { msg(res.msg, 5000); input.classList.add('hoja-ed--bad'); return false; }
       }
       cerrarEditor();
+      if (pieMsg.dataset.fijo) msg('');
       const prev = valorDe(row, col);
       if (res.val !== prev && !(blank(res.val) && blank(prev))) escribir([{ r, c, val: res.val }]);
       else { const d = rowEls.get(r); if (d) d.innerHTML = filaHTML(r); }
@@ -709,6 +711,7 @@
       const col = cols[ed.c];
       e.stopPropagation();
       if (e.key === 'Escape') { e.preventDefault(); cancelarEdicion(); return; }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); guardar(); return; }
       if ((e.ctrlKey || e.metaKey) && e.key === ';' && TIPOS_FECHA.includes(col.base)) { e.preventDefault(); ed.input.value = fmtFecha(ahora(col.base), col.base); return; }
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -979,6 +982,8 @@
         iniciarEdicion(act.r, act.c, { texto: k });
       }
     });
+    // Ctrl+S también desde la barra de herramientas (evita el «Guardar página» del navegador)
+    el.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's' && !e.defaultPrevented) { e.preventDefault(); guardar(); } });
     vp.addEventListener('copy', (e) => { if (ed) return; copiar(e, false); });
     vp.addEventListener('cut', (e) => { if (ed) return; copiar(e, true); });
     vp.addEventListener('paste', (e) => {
@@ -988,7 +993,7 @@
     });
 
     /* ---------- Ratón y táctil ---------- */
-    let wasAct = false;
+    let wasAct = false, selUsuario = false;
     vp.addEventListener('pointerdown', (e) => {
       const b = e.target.closest('.hoja-c__btn');
       if (b) {
@@ -1011,7 +1016,8 @@
       if (cell.dataset.g) { act = { r, c: 0 }; ext = { r, c: cols.length - 1 }; renderWin(false); vp.focus({ preventScroll: true }); return; }
       const c = +cell.dataset.c;
       if (Number.isNaN(c) || stubs.has(c)) return;
-      wasAct = act.r === r && act.c === c && e.pointerType !== 'mouse';
+      wasAct = selUsuario && act.r === r && act.c === c && e.pointerType !== 'mouse';
+      selUsuario = true;
       if (e.shiftKey) ir(r, c, true, true); else { act = { r, c }; ext = { r, c }; renderWin(false); pieInfo(); }
       selecting = e.pointerType === 'mouse';
       if (document.activeElement !== vp) { e.preventDefault(); vp.focus({ preventScroll: true }); }
@@ -1175,7 +1181,7 @@
       undoS.length = 0; redoS.length = 0; tx = null;
       asegurarFinal(); recalc(null);
       let n = 0;
-      if (conBorrador) n = recuperarBorrador();
+      if (conBorrador && !ro) n = recuperarBorrador();
       asegurarFinal(); defectos(); recalc(null);
       act = { r: Math.min(act.r, rows.length - 1), c: act.c }; ext = { ...act };
       rowEls.forEach((d) => d.remove()); rowEls.clear();
@@ -1215,13 +1221,15 @@
       get filasN() { return rows.length; },
       descartarBorrador() { try { localStorage.removeItem(dkey); } catch (e) { /* */ } aviso.hidden = true; },
       destruir() {
-        destroyed = true; cerrarEditor(); cerrarPop(); clearTimeout(draftTimer);
+        destroyed = true; cerrarEditor(); cerrarPop(); clearTimeout(draftTimer); if (ro2) ro2.disconnect();
         document.removeEventListener('pointerup', onUp);
         const a = document.querySelector('.hoja-ayuda'); if (a) a.remove();
         el.remove();
       },
     };
 
+    let ro2 = null;
+    if (typeof ResizeObserver !== 'undefined') { ro2 = new ResizeObserver(() => { if (!destroyed) renderWin(false); }); ro2.observe(vp); }
     cabeceraHTML();
     cargar(opts.filas, true);
     ir(0, primeraEditable(), false, true);

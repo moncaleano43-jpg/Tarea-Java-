@@ -416,6 +416,14 @@ test('App.Hoja: atajos tipo Excel, fechas flexibles, listas, rango, deshacer y b
   assert.equal(await g((h) => h.getCelda(2, 'n')), null);
   await k.press('Control+z');
   assert.equal(await g((h) => h.getCelda(2, 'n')), 10, 'deshacer el borrado del rango');
+  // Ctrl+Enter inserta una fila debajo; arrastrar con el ratón selecciona un rango
+  const n0 = await g((h) => h.filasN);
+  await g((h) => h.enfocar(0, 'f')); await k.press('Control+Enter');
+  assert.equal(await g((h) => h.filasN), n0 + 1); assert.deepEqual(await g((h) => h.activa), { fila: 1, columna: 'f' });
+  await k.press('Control+z'); assert.equal(await g((h) => h.filasN), n0, 'deshacer la fila insertada');
+  const a = await p.locator('#demo .hoja-f[data-r="0"] .hoja-c[data-c="0"]').boundingBox(), z = await p.locator('#demo .hoja-f[data-r="1"] .hoja-c[data-c="2"]').boundingBox();
+  await p.mouse.move(a.x + 10, a.y + 10); await p.mouse.down(); await p.mouse.move(z.x + 10, z.y + 10, { steps: 6 }); await p.mouse.up();
+  assert.equal(await p.locator('#demo .hoja-c--sel').count(), 6, 'rango 2×3 seleccionado con el ratón');
   // lista con teclado: flecha abajo abre las opciones, Enter elige
   const ult = await g((h) => h.filasN - 1);
   await g((h) => h.enfocar(h.filasN - 1, 'l')); await k.press('F2'); await k.press('ArrowDown'); await k.press('ArrowDown'); await k.press('Enter');
@@ -481,5 +489,69 @@ test('Solo lectura y vista móvil', { skip }, async () => {
   assert.ok(sinScrollPagina, 'sin scroll horizontal de la página');
   await cerrarPanel();
   await p.setViewportSize({ width: 1500, height: 900 });
+  sinErrores();
+});
+
+test('Eliminar capturas guardadas (con confirmación y Deshacer) y solo lectura sin permiso', { skip }, async () => {
+  const antes = (await registros('agua')).length;
+  assert.ok(antes >= 3, 'hay capturas de la prueba de agua');
+  await abrir('agua');
+  assert.ok(R0 >= 3, 'la hoja muestra las capturas guardadas antes de la fila vacía');
+  // corregir una captura guardada: queda una revisión nueva y se conservan las demás celdas
+  const ultima = (await registros('agua')).slice(-1)[0];
+  await hoja((h, i) => h.enfocar(i, 'mosto'), R0 - 1);
+  await kb().type('999'); await kb().press('Tab');
+  assert.match(await estado(), /1 sin guardar/);
+  await guardar();
+  const corr = (await registros('agua')).find((r) => r.id === ultima.id);
+  assert.equal(corr.cells[18], 999); assert.equal(corr.cells[4], ultima.cells[4]); assert.equal(corr.revisions.length, ultima.revisions.length + 1);
+  assert.equal(corr.revisions.slice(-1)[0].before[18], ultima.cells[18]);
+  assert.equal((await registros('agua')).length, antes, 'corregir no crea otra captura');
+  await hoja((h, i) => h.enfocar(i, 'fecha'), R0 - 1);
+  await p.click('.cap-panel [data-a="del"]');
+  await p.waitForTimeout(500);
+  await foto('eliminar-confirmacion');
+  // confirmación de la plataforma (modal) sobre el panel
+  const ok = await p.evaluate(() => { const b = [...document.querySelectorAll('dialog button, .modal button, .bd button, button')].filter((x) => /^Eliminar$/.test(x.textContent.trim()) && !x.closest('.hoja-bar')); const t = b[b.length - 1]; if (!t) return false; t.click(); return true; });
+  assert.ok(ok, 'aparece el botón de confirmación');
+  await p.waitForTimeout(600);
+  assert.equal((await registros('agua')).length, antes - 1);
+  await p.click('.cap-toast button'); await p.waitForTimeout(500);
+  assert.equal((await registros('agua')).length, antes, 'Deshacer recupera la captura eliminada');
+  await cerrarPanel();
+  // sin permiso de escritura: la hoja queda de solo lectura y avisa
+  await p.evaluate(() => Object.defineProperty(App.Store, 'canWrite', { get: () => false, configurable: true }));
+  await abrir('recuperacion');
+  assert.ok(await p.$('.cap-aviso'), 'aviso de solo lectura');
+  const antesUtk = await hoja((h) => h.getCelda(0, 'utk'));
+  await hoja((h) => h.enfocar(0, 'utk'));
+  await kb().type('UTK 19'); await kb().press('Tab'); await kb().press('Delete');
+  assert.equal(await hoja((h) => h.getCelda(0, 'utk')), antesUtk, 'no se puede escribir ni borrar');
+  assert.ok(await p.locator('.cap-panel [data-a="save"]').isDisabled());
+  await p.evaluate(() => Object.defineProperty(App.Store, 'canWrite', { get: () => true, configurable: true }));
+  sinErrores();
+});
+
+test('Táctil: un toque selecciona, el segundo edita; lista y «Ahora» con botón', { skip }, async () => {
+  const tctx = await browser.newContext({ viewport: { width: 390, height: 780 }, hasTouch: true, isMobile: true });
+  const tp = await tctx.newPage();
+  await tp.goto('file://' + out);
+  await tp.waitForFunction(() => window.App && App.S && App.S.ready && App.Captura, null, { timeout: 30000 });
+  await tp.waitForTimeout(800);
+  await tp.evaluate(() => {
+    document.body.insertAdjacentHTML('beforeend', '<div id="tdemo" style="position:fixed;inset:0;z-index:99999;background:var(--bg)"></div>');
+    window.__t = App.Hoja.crear(document.getElementById('tdemo'), { alto: 320, columnas: [{ key: 'f', titulo: 'Fecha y hora', tipo: 'fechahora' }, { key: 'l', titulo: 'Estado', tipo: 'lista', opciones: ['L', 'NL'] }, { key: 'n', titulo: 'Valor', tipo: 'numero' }], filas: [] });
+  });
+  const cel = (c) => tp.locator('#tdemo .hoja-f[data-r="0"] .hoja-c[data-c="' + c + '"]');
+  await cel(0).tap();
+  assert.equal(await tp.locator('#tdemo .hoja-ed').count(), 0, 'el primer toque solo selecciona');
+  await tp.locator('#tdemo .hoja-c__btn').tap();                       // botón «Ahora»
+  assert.match(await tp.evaluate(() => __t.getCelda(0, 'f')), /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+  await cel(1).tap(); await cel(1).tap();                              // segundo toque: abre la edición con la lista
+  assert.equal(await tp.locator('#tdemo .hoja-ed').count(), 1);
+  assert.ok(await tp.locator('.hoja-pop').count() >= 1, 'se muestran las opciones');
+  await tp.locator('.hoja-op').nth(1).tap();
+  assert.equal(await tp.evaluate(() => __t.getCelda(0, 'l')), 'NL');
+  await tctx.close();
   sinErrores();
 });
