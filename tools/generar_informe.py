@@ -45,13 +45,20 @@ def main(xlsm, salida):
             "fermentaciones": leer(tmp, "fermentaciones.csv"),
             "maduraciones": leer(tmp, "maduraciones.csv"),
             "levaduras": leer(tmp, "levaduras.csv"),
+            "retiros": leer(tmp, "retiros_levadura.csv"),
+            "colectores": leer(tmp, "colectores.csv"),
             "muestras": agrupar(leer(tmp, "muestras_fermentacion.csv"), ["horas", "extracto", "ph"]),
             "temperaturas": agrupar(leer(tmp, "temperaturas.csv"), ["horas", "temp_m", "temp_i"]),
         }
+        with open(os.path.join(tmp, "inventario_actualizacion.txt")) as f:
+            datos["_act"] = f.read().strip().replace(" ", "T")
     for e in datos["especificaciones"]:
         e["marca"] = str(e["marca"]).upper()
     fechas = [m[0] for v in datos["muestras"].values() for m in v] + [m[0] for v in datos["temperaturas"].values() for m in v]
     fechas += [f["inicio_llenado"] for f in datos["fermentaciones"] if f["inicio_llenado"]]
+    act = datos.pop("_act")
+    if act:
+        fechas.append(act)
     datos["hasta"] = max(f for f in fechas if isinstance(f, str) and len(f) >= 16 and f[4] == "-")
 
     def leer_txt(p):

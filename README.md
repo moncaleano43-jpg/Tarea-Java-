@@ -52,7 +52,7 @@ python3 -I tools/generar_informe.py "CONTROL PROCESO CAVAS 2026.xlsm" informe_ca
 ```
 
 Genera un único `informe_cavas.html` (datos, estilos y gráficas incluidos, ~2 MB) que se abre con doble clic en el
-navegador y funciona sin internet. Incluye dashboard con alertas, curvas por fermentación, maduración, levadura e indicadores.
+navegador y funciona sin internet. Incluye dashboard con alertas, mapa de la cava, apartado Tanques (FV/SV), curvas por fermentación, maduración, indicadores y el apartado Levadura (T0 de retiro por fermentador, estados de la ventana y colectores), cuya lógica se tomó del proyecto *Inventario de Levadura*.
 Es de **solo lectura**: para actualizarlo se vuelve a ejecutar el script con el Excel más reciente. El registro de datos
 (llenado, trasiego, etc.) solo está en la versión Java.
 

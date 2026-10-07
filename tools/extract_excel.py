@@ -62,7 +62,8 @@ def main(xlsm, out):
         ferm.append([cons, tq, marca, clean(col(r, 53)), clean(col(r, 54)), clean(col(r, 56)),
                      clean(col(r, 57)), clean(col(r, 58)), clean(col(r, 59)), clean(col(r, 60)),
                      clean(col(r, 61)), clean(col(r, 62)), clean(col(r, 66)), clean(col(r, 68)),
-                     clean(col(r, 69)), clean(col(r, 78)), clean(col(r, 239)), clean(col(r, 673))])
+                     clean(col(r, 69)), clean(col(r, 78)), clean(col(r, 239)), clean(col(r, 673)),
+                     clean(col(r, 229)), clean(col(r, 230))])
         for base in range(82, 172, 5):  # fecha, tiempo, extracto, atenuación, pH
             if col(r, base) in (None, ""):
                 continue
@@ -76,7 +77,7 @@ def main(xlsm, out):
     write(os.path.join(out, "fermentaciones.csv"),
           ["cons", "tq", "marca", "levadura", "utq_origen", "generacion", "consistencia", "viabilidad",
            "ph_levadura", "temp_siembra", "inicio_llenado", "fin_llenado", "volumen_hl", "eo_ponderado",
-           "e_limite", "recuento_3h", "fecha_af_real", "etapa"], ferm)
+           "e_limite", "recuento_3h", "fecha_af_real", "etapa", "h15_excel", "h75_excel"], ferm)
     write(os.path.join(out, "muestras_fermentacion.csv"),
           ["cons", "fecha", "horas", "extracto", "atenuacion", "ph"], muestras)
     write(os.path.join(out, "temperaturas.csv"),
@@ -140,6 +141,30 @@ def main(xlsm, out):
         if i > 60:
             break
     write(os.path.join(out, "especificaciones.csv"), ["marca", "parametro", "limite_sup", "limite_inf"], esp)
+    inventario_levadura(wb, out)
+
+
+def inventario_levadura(wb, out):
+    """Hoja INVENTARIO LEVADURA: FV pendientes de retiro (cols B-H, T0 según Excel) y colectores (cols J-Q)."""
+    ws = wb["INVENTARIO LEVADURA"]
+    filas = list(ws.iter_rows(min_row=1, max_row=40, max_col=20, values_only=True))
+    pend, cols, vistos = [], [], {}
+    for r in filas[9:21]:  # filas 10..21
+        if col(r, 2) not in (None, ""):
+            pend.append([clean(col(r, 2)), clean(col(r, 3)), clean(col(r, 4)), clean(col(r, 6)),
+                         clean(col(r, 7)), clean(col(r, 8)), clean(col(r, 10))])
+        c = clean(col(r, 10))
+        if c:
+            vistos[c] = vistos.get(c, 0) + 1
+            if clean(col(r, 11)):
+                cols.append([c, vistos[c], clean(col(r, 11)), clean(col(r, 12)), clean(col(r, 13)),
+                             clean(col(r, 14)), clean(col(r, 15)), clean(col(r, 16)), clean(col(r, 17))])
+    write(os.path.join(out, "retiros_levadura.csv"),
+          ["tq", "marca", "t0_excel", "max_retiro", "viab_sembrada", "levadura_sembrada", "colector"], pend)
+    write(os.path.join(out, "colectores.csv"),
+          ["colector", "posicion", "levadura", "vol_hl", "viabilidad", "consistencia", "ph", "max_resiembra", "fv_destino"], cols)
+    with open(os.path.join(out, "inventario_actualizacion.txt"), "w") as f:
+        f.write(clean(filas[6][4]) if len(filas) > 6 else "")
 
 
 if __name__ == "__main__":

@@ -22,6 +22,14 @@
 .tile.warn{border-left-color:var(--warn);background:var(--warn-bg)}
 .tile.crit{border-left-color:var(--crit);background:var(--crit-bg)}
 .tile.click{cursor:pointer}.tile.click:hover{outline:2px solid var(--brand)}
+.OKB{background:color-mix(in srgb,var(--ok) 16%,var(--card));color:var(--ok);border-color:transparent}
+.NONE{background:var(--bg);color:var(--muted)}
+.cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.col-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.col-card h3{margin:0 0 6px;font-size:14px}
+.pos{border-left:4px solid var(--line);padding:4px 8px;margin:6px 0;background:var(--bg);border-radius:0 6px 6px 0;font-size:12px;line-height:1.45}
+.pos.ok{border-left-color:var(--ok)}.pos.att{border-left-color:var(--warn)}.pos.crit{border-left-color:var(--crit)}.pos.libre{opacity:.5;border-style:dashed}
+.pasos{display:grid;grid-template-columns:minmax(180px,1fr) 2fr;gap:4px 14px;font-size:13px}.pasos dt{color:var(--muted)}.pasos dd{margin:0}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{border:0;border-radius:0;background:var(--card);color:var(--fg);padding:6px 18px}
 .seg button.on{background:var(--brand);color:var(--brand-fg)}
@@ -82,6 +90,14 @@
   </section>
   <section id="maduraciones" class="tab"><div class="scroll"><table id="tblMad"></table></div></section>
   <section id="levaduras" class="tab">
+    <p class="muted" style="margin:6px 0">El T0 es la hora estimada en que el fermentador alcanza su extracto límite y se puede retirar la levadura. La ventana de retiro es de T0 a T0 + 24 h.</p>
+    <div class="cards" id="levCards"></div>
+    <h2>Retiro de levadura por fermentador</h2>
+    <div class="scroll"><table id="tblRetiros"></table></div>
+    <div class="panel" id="levPasos" hidden></div>
+    <h2>Colectores (6 colectores · 12 posiciones)</h2>
+    <div class="cols" id="levCols"></div>
+    <h2>Banco histórico de levaduras</h2>
     <div class="toolbar"><label><input type="checkbox" id="levDisp"> Solo disponibles para resiembra</label></div>
     <div class="scroll"><table id="tblLev"></table></div>
   </section>
@@ -239,7 +255,7 @@ function maduraciones() {
     { t: 'RDF %', num: 1, f: x => fmt(x.rdf) }, { t: 'pH', num: 1, f: x => fmt(x.ph, 2) }, { t: 'Color EBC', num: 1, f: x => fmt(x.color) },
     { t: 'Amargo', num: 1, f: x => fmt(x.amargo) }, { t: 'O2 ppb', num: 1, f: x => fmt(x.o2_ppb) }, { t: 'CO2', num: 1, f: x => fmt(x.co2, 2) }], rows);
 }
-function levaduras() {
+function bancoLevaduras() {
   let rows = [...DATA.levaduras].sort((a, b) => (b.fin_remocion || '') < (a.fin_remocion || '') ? -1 : 1);
   if ($('#levDisp').checked) rows = rows.filter(l => l.tq_resiembra == null);
   table($('#tblLev'), [
@@ -248,6 +264,116 @@ function levaduras() {
     { t: 'Consist.', num: 1, f: x => fmt(x.consistencia, 3) }, { t: 'Viab %', num: 1, f: x => x.viabilidad == null ? '–' : fmt(x.viabilidad * 100) },
     { t: 'pH', num: 1, f: x => fmt(x.ph, 2) }, { t: 'T cosecha', num: 1, f: x => fmt(x.temp_cosecha) },
     { t: 'Máx. resiembra', f: x => fdate(x.max_resiembra) }, { t: 'Resembrada en', f: x => x.cons_resiembra ? `${x.cons_resiembra} (FV ${x.tq_resiembra})` : '–' }], rows.slice(0, 400));
+}
+
+// ---- Levadura: T0 de retiro, ventanas y colectores (lógica del proyecto Inventario de Levadura) ----
+const HORA = 36e5, DIAS_MARCA = { LIGHT: 4.5 };
+const A15 = 0.15, A75 = 0.75, TOL = 0.5;
+function regresion(xs, ys) {
+  const n = xs.length; if (n < 2) return null;
+  const mx = xs.reduce((a, b) => a + b, 0) / n, my = ys.reduce((a, b) => a + b, 0) / n; let sxy = 0, sxx = 0, syy = 0;
+  for (let i = 0; i < n; i++) { sxy += (xs[i] - mx) * (ys[i] - my); sxx += (xs[i] - mx) ** 2; syy += (ys[i] - my) ** 2; }
+  if (!sxx) return null; const b = sxy / sxx; return { a: my - b * mx, b, r2: syy === 0 ? 1 : sxy * sxy / (sxx * syy) };
+}
+function cruce(pts, objetivo) {
+  for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1];
+    if (a.e >= objetivo && b.e <= objetivo && a.e !== b.e) return a.h + (a.e - objetivo) * (b.h - a.h) / (a.e - b.e); }
+  return null;
+}
+/** Calcula el T0 de un fermentador a partir de su curva de extracto (misma lógica del proyecto de levadura). */
+function calcularT0(f, ahora, propagada) {
+  const r = { pasos: [] }, fin = f.fin_llenado ? new Date(f.fin_llenado) : null;
+  const eo = f.eo_ponderado, sp = spec(f.marca, 'E.Lim (°P)');
+  let el = f.e_limite; let elTipo = 'del Excel';
+  if (el == null && sp && sp.limite_sup != null) { el = (sp.limite_sup + (sp.limite_inf ?? sp.limite_sup)) / 2; elTipo = 'promedio de la especificación de la marca'; }
+  r.el = el; r.eo = eo;
+  const pts = (DATA.muestras[f.cons] || []).filter(m => m[2] != null && fin).map(m => ({ e: m[2], h: (new Date(m[0]) - fin) / HORA })).sort((a, b) => a.h - b.h);
+  const ult = pts[pts.length - 1]; r.ext = ult ? ult.e : null;
+  r.atenuacion = (eo != null && el != null && r.ext != null && eo !== el) ? Math.max(0, Math.min(1, (eo - r.ext) / (eo - el))) : null;
+  r.pasos.push(['Fin de llenado (hora 0)', fin ? fdate(f.fin_llenado) : 'falta'], ['Extracto original (E.O)', eo != null ? fmt(eo, 2) + ' °P' : 'falta'], ['Extracto límite', el != null ? fmt(el, 2) + ' °P (' + elTipo + ')' : 'falta']);
+  let horas = null, metodo = null;
+  if (!propagada && eo != null && el != null && fin) {
+    const e15 = eo - (eo - el) * A15, e75 = eo - (eo - el) * A75;
+    r.pasos.push(['Extracto al 15 % y al 75 %', `${fmt(e15, 3)} °P y ${fmt(e75, 3)} °P (E.O − (E.O − E.lím) × %)`]);
+    const curva = [{ h: 0, e: eo }].concat(pts.filter(p => p.h > 0));
+    const h15x = f.h15_excel > 0 ? f.h15_excel : null, h75x = f.h75_excel > 0 ? f.h75_excel : null;   // horas registradas en el Excel (tienen prioridad)
+    const h15 = h15x ?? cruce(curva, e15), h75 = h75x ?? cruce(curva, e75);
+    if (h15x != null || h75x != null) r.pasos.push(['Horas tomadas del Excel', `15 %: ${h15x != null ? fmt(h15x, 1) + ' h' : 'automática'} · 75 %: ${h75x != null ? fmt(h75x, 1) + ' h' : 'automática'}`]);
+    if (h15 != null && h75 != null && h75 !== h15) {
+      horas = h15 + (el - e15) * (h75 - h15) / (e75 - e15); metodo = 'Curva';
+      r.pasos.push(['Hora del 15 % y del 75 %', `${fmt(h15, 1)} h y ${fmt(h75, 1)} h`], ['Método', 'Recta entre el 15 % y el 75 % prolongada hasta el extracto límite']);
+    } else {
+      const w = pts.filter(p => p.e <= e15 + TOL && p.e >= e75 - TOL), g = w.length >= 2 ? regresion(w.map(p => p.e), w.map(p => p.h)) : null;
+      if (g) { horas = g.a + g.b * el; metodo = 'Regresión'; r.pasos.push(['Método', `Aún no llega al 75 %: regresión de horas vs extracto con ${w.length} muestras, proyectada al extracto límite (R² ${fmt(g.r2, 3)})`]); }
+      else if (h15 != null && ult && ult.e < e15) {
+        const vel = (e15 - ult.e) / (ult.h - h15);
+        if (vel > 0) { horas = h15 + (e15 - el) / vel; metodo = 'Tendencia'; r.pasos.push(['Método', `Aún no llega al 75 %: velocidad desde el 15 % hasta la última muestra (${fmt(vel, 3)} °P/h) prolongada hasta el extracto límite`]); }
+      }
+    }
+  }
+  if ((horas == null || !(horas >= 0) || !isFinite(horas)) && fin) {
+    horas = (DIAS_MARCA[(f.marca || '').toUpperCase()] ?? 5) * 24; metodo = 'Marca';
+    r.pasos.push(['Método', (propagada ? 'Levadura propagada (P): ' : 'Sin datos suficientes: ') + `fin de llenado + ${fmt(horas / 24, 1)} días según la marca (igual que la macro del Excel)`]);
+  }
+  r.metodo = metodo; r.t0 = metodo && fin ? new Date(+fin + horas * HORA) : null;
+  if (r.t0) { r.pasos.push(['Horas hasta T0', fmt(horas, 1) + ' h'], ['T0 estimado', fdate(toLocalInput(r.t0))]); }
+  r.mas12 = r.t0 && new Date(+r.t0 + 12 * HORA); r.venc = r.t0 && new Date(+r.t0 + 24 * HORA);
+  const now = new Date(ahora);
+  r.estado = !r.t0 ? { txt: 'SIN T0', cls: 'NONE', ord: 5 } : now > r.venc ? { txt: 'VENCIDA', cls: 'CRITICA', ord: 0 }
+    : now >= r.mas12 ? { txt: 'POR VENCER', cls: 'AVISO', ord: 1 } : now >= r.t0 ? { txt: 'LISTA PARA SACAR', cls: 'OKB', ord: 2 }
+    : now >= new Date(+r.t0 - 12 * HORA) ? { txt: 'T0 PRÓXIMO', cls: 'INFO', ord: 3 } : { txt: 'EN ESPERA', cls: 'NONE', ord: 4 };
+  return r;
+}
+const relHoras = (d, ahora) => { const h = (new Date(d) - new Date(ahora)) / HORA; return h >= 0 ? `en ${fmt(h, 0)} h` : `hace ${fmt(-h, 0)} h`; };
+
+function levaduras() {
+  const ahora = $('#ahora').value || DATA.hasta;
+  const filas = DATA.retiros.map(rt => {
+    const f = DATA.fermentaciones.find(x => x.tq === rt.tq && ocupado(x));
+    const c = f ? calcularT0(f, ahora, /^\(P\)/.test(rt.levadura_sembrada || '')) : null;
+    const dif = c && c.t0 && rt.t0_excel ? (c.t0 - new Date(rt.t0_excel)) / HORA : null;
+    return { rt, f, c, dif };
+  }).sort((a, b) => (a.c ? a.c.estado.ord : 9) - (b.c ? b.c.estado.ord : 9) || (a.c?.t0 || 0) - (b.c?.t0 || 0));
+  const cnt = k => filas.filter(x => x.c && x.c.estado.txt === k).length;
+  const card = (v, t, c = '') => `<div class="card ${c}"><b>${v}</b><span>${t}</span></div>`;
+  const ocup = DATA.colectores.length, vencidos = DATA.colectores.filter(c => estadoColector(c, ahora).cls === 'crit').length;
+  $('#levCards').innerHTML = card(cnt('VENCIDA'), 'Retiros vencidos', cnt('VENCIDA') ? 'crit' : '') + card(cnt('POR VENCER'), 'Por vencer', cnt('POR VENCER') ? 'warn' : '') +
+    card(cnt('LISTA PARA SACAR'), 'Listos para sacar') + card(cnt('T0 PRÓXIMO'), 'T0 en las próximas 12 h') + card(cnt('EN ESPERA'), 'En espera') +
+    card(`${ocup}<small style="font-size:14px;color:var(--muted)"> / 12</small>`, 'Posiciones de colector ocupadas', vencidos ? 'crit' : '');
+  table($('#tblRetiros'), [
+    { t: 'FV', f: x => x.rt.tq }, { t: 'Cons', f: x => x.f ? x.f.cons : '–' }, { t: 'Marca', f: x => x.rt.marca }, { t: 'Levadura sembrada', f: x => x.rt.levadura_sembrada },
+    { t: 'Extracto °P', num: 1, f: x => fmt(x.c?.ext, 2) }, { t: 'Atenuación %', num: 1, f: x => x.c?.atenuacion == null ? '–' : fmt(x.c.atenuacion * 100, 0) },
+    { t: 'T0 estimado', f: x => x.c?.t0 ? fdate(toLocalInput(x.c.t0)) : '–' }, { t: 'Método', f: x => x.c?.metodo || '–' },
+    { t: 'T0 del Excel', f: x => fdate(x.rt.t0_excel) }, { t: 'Dif. (h)', num: 1, f: x => x.dif == null ? '–' : (x.dif > 0 ? '+' : '') + fmt(x.dif, 1) },
+    { t: 'Máx. retiro', f: x => x.c?.venc ? fdate(toLocalInput(x.c.venc)) : '–' },
+    { t: 'Estado', h: x => x.c ? `<span class="badge ${x.c.estado.cls}">${x.c.estado.txt}</span> <small class="muted">${x.c.t0 ? relHoras(x.c.t0, ahora) : ''}</small>` : '–' },
+    { t: 'Colector', f: x => x.rt.colector ?? '–' }], filas, x => {
+      const P = $('#levPasos'); P.hidden = false;
+      P.innerHTML = `<h2>Cómo se calculó el T0 · FV ${x.rt.tq} (${esc(x.rt.marca)})</h2><dl class="pasos">` + (x.c ? x.c.pasos.map(p => `<dt>${esc(p[0])}</dt><dd>${esc(p[1])}</dd>`).join('') : '<dt>Sin lote activo</dt><dd>–</dd>') + '</dl>';
+      P.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  // colectores: 6 colectores x 2 posiciones
+  let h = '';
+  for (let n = 1; n <= 6; n++) {
+    h += `<div class="col-card"><h3>Colector ${n}</h3>`;
+    for (let p = 1; p <= 2; p++) {
+      const c = DATA.colectores.find(x => x.colector === n && x.posicion === p);
+      if (!c) { h += `<div class="pos libre">Posición ${p} · libre</div>`; continue; }
+      const e = estadoColector(c, ahora);
+      h += `<div class="pos ${e.cls}"><b>${esc(c.levadura)}</b> <span class="badge ${e.badge}">${e.txt}</span><br>` +
+        `${fmt(c.vol_hl, 0)} Hl · viab ${c.viabilidad == null ? '–' : fmt(c.viabilidad * 100)} % · cons ${fmt(c.consistencia, 3)} · pH ${fmt(c.ph, 2)}<br>` +
+        `Máx. resiembra: ${fdate(c.max_resiembra)}${c.fv_destino ? ' · destino FV ' + esc(c.fv_destino) : ''}</div>`;
+    }
+    h += '</div>';
+  }
+  $('#levCols').innerHTML = h;
+  bancoLevaduras();
+}
+function estadoColector(c, ahora) {
+  if (!c.max_resiembra) return { txt: 'SIN FECHA', cls: '', badge: 'NONE' };
+  const mr = new Date(c.max_resiembra), now = new Date(ahora);
+  return now > mr ? { txt: 'VENCIDA PARA RESIEMBRA', cls: 'crit', badge: 'CRITICA' }
+    : now >= new Date(+mr - 12 * HORA) ? { txt: 'VENCE PRONTO', cls: 'att', badge: 'AVISO' } : { txt: 'DISPONIBLE', cls: 'ok', badge: 'OKB' };
 }
 
 // ---- indicadores ----
@@ -370,7 +496,7 @@ $('#ahora').value = DATA.hasta.slice(0, 16);
 $('#ahora').onchange = dashboard;
 [...new Set(DATA.fermentaciones.map(f => f.marca))].sort().forEach(m => $('#fMarca').innerHTML += `<option>${esc(m)}</option>`);
 $('#fMarca').onchange = $('#fActivas').onchange = fermentaciones;
-$('#levDisp').onchange = levaduras;
+$('#levDisp').onchange = bancoLevaduras;
 $('#indHasta').value = DATA.hasta.slice(0, 10);
 $('#indDesde').value = new Date(new Date(DATA.hasta) - 90 * 864e5).toISOString().slice(0, 10);
 $('#indDesde').onchange = $('#indHasta').onchange = indicadores;
