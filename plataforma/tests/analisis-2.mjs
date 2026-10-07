@@ -31,6 +31,8 @@ const abrir = async (hash, preset, brands = []) => {
   await page.evaluate((h) => { location.hash = h; }, hash);
   await page.waitForSelector('.an-card, .an-empty', { timeout: 15000 });
   await page.waitForTimeout(350);
+  await page.evaluate(() => App.Analisis.repintar()); // si el enlace no cambió, el marco no repinta solo
+  await page.waitForTimeout(150);
 };
 const kpi = (label) => page.evaluate((l) => { const k = [...document.querySelectorAll('.ch-kpi')].find((e) => e.querySelector('.ch-kpi-l').textContent.trim().startsWith(l)); return k ? k.querySelector('.ch-kpi-n').textContent : null; }, label);
 const repaint = () => page.evaluate(() => { const t = performance.now(); App.Analisis.repintar(); return Math.round(performance.now() - t); });
@@ -149,7 +151,7 @@ await abrir('#/analisis/relaciones', '90d');
   const m = /Correlación de Pearson (-?[\d,]+)/.exec(txt), mn = /n = (\d+) semanas/.exec(txt);
   check(`relaciones: Pearson mosto–agua = ${ref.r.toFixed(2)} (n = ${ref.n})`, m && Math.abs(parseEs(m[1]) - ref.r) < 0.006 && mn && +mn[1] === ref.n, m ? `${m[1]} / n=${mn && mn[1]}` : 'sin texto');
   const t2 = await page.evaluate(() => document.querySelector('#rl-grupos')?.textContent || '');
-  const f = /F\((\d+), (\d+)\) = ([\d,]+)/.exec(t2);
+  const f = /F\((\d+), (\d+)\) = (\d+,\d+)/.exec(t2);
   check(`relaciones: ANOVA atenuación por marca F = ${ref.F.toFixed(2)}`, f && Math.abs(parseEs(f[3]) - ref.F) < 0.02 && +f[1] === ref.k - 1 && +f[2] === ref.N - ref.k, f ? f[0] : 'sin F');
   const matriz = await page.evaluate(() => !!document.querySelector('#rl-matriz svg'));
   check('relaciones: hay matriz de correlación y ranking', matriz && (await page.$$('.an-corr')).length > 0);

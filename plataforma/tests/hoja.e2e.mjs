@@ -78,11 +78,11 @@ const registros = (tipo) => p.evaluate((t) => ((App.S.config['opCaptures_' + t] 
 async function guardar() { await kb().press('Control+s'); await p.waitForSelector('.cap-toast', { timeout: 5000 }); await p.waitForTimeout(300); }
 async function foto(nombre) {
   for (const esquema of ['light', 'dark']) {
-    await p.emulateMedia({ colorScheme: esquema });
+    await p.evaluate((e) => { document.documentElement.setAttribute('data-theme', e); }, esquema);
     await p.waitForTimeout(250);
     await p.screenshot({ path: path.join(shots, nombre + '-' + esquema + '.png') });
   }
-  await p.emulateMedia({ colorScheme: 'light' });
+  await p.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
 }
 async function pegar(texto) {
   await p.evaluate(async (t) => { try { await navigator.clipboard.writeText(t); } catch (e) { window.__tsv = t; } }, texto);

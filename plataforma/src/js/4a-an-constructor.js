@@ -333,7 +333,9 @@
   function leerVistas() {
     let v = (A.S && A.S.config && A.S.config.cifraVistas) || {};
     try { const ls = JSON.parse(localStorage.getItem(VIEWS_LS) || '{}'); v = Object.assign({}, ls, v); } catch (e) { /* sin almacenamiento */ }
-    return v && typeof v === 'object' ? v : {};
+    const out = {};
+    if (v && typeof v === 'object') for (const [id, x] of Object.entries(v)) if (x && typeof x === 'object' && x.cfg) out[id] = x; // el programa añade «actualizado»
+    return out;
   }
   async function guardarVistas(obj) {
     let guardado = false;

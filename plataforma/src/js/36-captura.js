@@ -188,12 +188,12 @@
             if (!isNum(f.consumoCip)) return null;
             if (f.consumoCip === 0) return 'SIN CONSUMO';
             return n > 0 ? r2(f.consumoCip / n) : 'CONSUMO SIN ASEOS';
-          }, { decimales: 1, ancho: 118, semaforo: (v) => (isNum(v) ? (v < M('agua.aseoM3', 10) ? ['ok', 'Por debajo de ' + M('agua.aseoM3', 10) + ' m³ por aseo'] : ['bad', 'Igual o mayor que ' + M('agua.aseoM3', 10) + ' m³ por aseo: justifica']) : v === 'CONSUMO SIN ASEOS' ? ['warn', 'Hay consumo de CIP pero no registraste aseos'] : null) }),
+          }, { decimales: 1, ancho: 150, semaforo: (v) => (isNum(v) ? (v < M('agua.aseoM3', 10) ? ['ok', 'Por debajo de ' + M('agua.aseoM3', 10) + ' m³ por aseo'] : ['bad', 'Igual o mayor que ' + M('agua.aseoM3', 10) + ' m³ por aseo: justifica']) : v === 'CONSUMO SIN ASEOS' ? ['warn', 'Hay consumo de CIP pero no registraste aseos'] : null) }),
           calcN('hlAseoGea', 'Hl / aseo GEA', 'Resultado', 'Hl', (f) => {
             if (!isNum(f.consumoGea)) return null;
             if (f.consumoGea === 0) return 'SIN CONSUMO';
             return isNum(f.gea) && f.gea > 0 ? r2(f.consumoGea / f.gea) : 'CONSUMO SIN ASEOS';
-          }, { decimales: 0, ancho: 110 }),
+          }, { decimales: 0, ancho: 140 }),
           calcN('eficiencia', 'Hl agua / Hl producido', 'Resultado', 'Hl/Hl', (f) => {
             const den = (isNum(f.mosto) ? f.mosto : 0) + (isNum(f.trasegados) ? f.trasegados : 0);
             return isNum(f.total) && den > 0 ? r3(f.total / den) : null;

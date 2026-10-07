@@ -266,7 +266,7 @@
     }
     function texto(row, col) {
       const v = valorDe(row, col);
-      if (blank(v)) return '';
+      if (blank(v) || (col.tipo === 'calc' && vacia(row))) return '';
       const b = col.base;
       if (b === 'numero') {
         if (!isNum(v)) return String(v);
@@ -353,7 +353,7 @@
       return row.st;
     }
     function semaforoDe(row, col) {
-      if (typeof col.semaforo !== 'function') return null;
+      if (typeof col.semaforo !== 'function' || (col.tipo === 'calc' && vacia(row))) return null;
       const v = valorDe(row, col);
       if (blank(v)) return null;
       try { const s = col.semaforo(v, row.v, getCtx()); return Array.isArray(s) ? { n: s[0], msg: s[1] } : s ? { n: s, msg: '' } : null; } catch (e) { return null; }
@@ -500,7 +500,7 @@
         const g = stubs.get(c), tiene = cols.some((k, j) => k.grupo === g && !blank(valorDe(row, k)));
         return `<div class="hoja-c hoja-c--stub" role="gridcell" aria-hidden="true" style="width:${colW[c]}px">${tiene ? '•' : ''}</div>`;
       }
-      let cls = 'hoja-c' + (col.base === 'numero' ? ' hoja-c--n' : '') + (c === 0 ? ' hoja-c--f1' : '');
+      let cls = 'hoja-c' + (col.base === 'numero' && (isNum(valorDe(row, col)) || blank(valorDe(row, col))) ? ' hoja-c--n' : '') + (c === 0 ? ' hoja-c--f1' : '');
       const calcRO = col.tipo === 'calc' && !col.anulable;
       if (calcRO) cls += ' hoja-c--calc';
       if (col.tipo === 'calc' && col.anulable && row.ov[col.key] != null) cls += ' hoja-c--ov';
