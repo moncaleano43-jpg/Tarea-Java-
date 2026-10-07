@@ -73,20 +73,52 @@ function niceStep(range) {
   return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * pow;
 }
 
-function drawChart(el, data, { mode = 'line', ahead = 4 } = {}) {
-  el._args = [data, { mode, ahead }];
+// Modelos de proyección: devuelve base, límite superior (optimista) e inferior (pesimista)
+function forecast(vals, ahead, model) {
+  const n = vals.length;
+  const none = { proj: [], up: [], lo: [], r2: null, name: 'Lineal', note: '' };
+  if (n < 2 || !ahead) return none;
+  const mean = vals.reduce((s, v) => s + v, 0) / n;
+  const sst = vals.reduce((s, v) => s + (v - mean) ** 2, 0);
+  const r2 = (pred) => (sst ? 1 - vals.reduce((s, v, i) => s + (v - pred(i)) ** 2, 0) / sst : 1);
+  const build = (f, lo, hi, name, note = '') => {
+    const proj = Array.from({ length: ahead }, (_, j) => f(n + j));
+    return { proj, up: proj.map((v, j) => hi(v, j)), lo: proj.map((v, j) => lo(v, j)), r2: r2(f), name, note };
+  };
+  if (model === 'exp' && vals.every((v) => v > 0)) {
+    const r = regress(vals.map(Math.log)), k = Math.exp(1.5 * r.se);
+    return build((i) => Math.exp(r.m * i + r.b), (v) => v / k, (v) => v * k, 'Exponencial');
+  }
+  if (model === 'media') {
+    const w = Math.min(3, n), last = vals.slice(-w), level = last.reduce((s, v) => s + v, 0) / w;
+    let sse = 0, cnt = 0, sr = 0;
+    for (let i = w; i < n; i++) {
+      const p = vals.slice(i - w, i).reduce((s, v) => s + v, 0) / w;
+      sse += (vals[i] - p) ** 2; sr += (vals[i] - p) ** 2; cnt++;
+    }
+    const se = cnt ? Math.sqrt(sse / cnt) : Math.sqrt(last.reduce((s, v) => s + (v - level) ** 2, 0) / w);
+    const out = build(() => level, (v) => v - 1.5 * se, (v) => v + 1.5 * se, `Media móvil (${w})`);
+    out.r2 = cnt && sst ? 1 - sr / sst : null;
+    return out;
+  }
+  const r = regress(vals), band = 1.5 * r.se;
+  const note = model === 'exp' ? 'El modelo exponencial requiere valores mayores que 0; se usó el lineal.' : '';
+  return build((i) => r.m * i + r.b, (v) => v - band, (v) => v + band, 'Lineal', note);
+}
+
+function drawChart(el, data, { mode = 'line', ahead = 4, model = 'lineal', scen = false, focus = 'base' } = {}) {
+  el._args = [data, { mode, ahead, model, scen, focus }];
   const W = el.clientWidth || 640, H = W < 500 ? 260 : 320;
   const P = { l: 44, r: 14, t: 14, b: 28 };
   const vals = data.map((d) => d.value);
-  const reg = regress(vals);
-  const k = reg ? ahead : 0;
+  const F = forecast(vals, ahead, model);
+  const { proj, up, lo } = F;
+  const k = proj.length;
   const labels = [...data.map((d) => d.label), ...nextLabels(data.map((d) => d.label), k)];
-  const proj = Array.from({ length: k }, (_, j) => reg.m * (vals.length + j) + reg.b);
-  const band = reg ? reg.se * 1.5 : 0;
   const N = labels.length;
 
-  let max = Math.max(0, ...vals, ...proj.map((v) => v + band));
-  let min = Math.min(0, ...vals, ...proj.map((v) => v - band));
+  let max = Math.max(0, ...vals, ...up);
+  let min = Math.min(0, ...vals, ...lo);
   if (max === min) max = min + 1;
   const step = niceStep((max - min) / 4);
   min = Math.floor(min / step) * step;
@@ -122,9 +154,13 @@ function drawChart(el, data, { mode = 'line', ahead = 4 } = {}) {
       g += `<defs><linearGradient id="ag${el.id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.3"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs>`;
       g += `<polygon fill="url(#ag${el.id})" points="${x(0)},${y(0)} ${pts.join(' ')} ${x(n - 1)},${y(0)}"/>`;
       if (k) {
-        const up = proj.map((v, j) => `${x(n + j)},${y(v + band)}`);
-        const lo = proj.map((v, j) => `${x(n + j)},${y(v - band)}`).reverse();
-        g += `<polygon class="band" points="${x(n - 1)},${y(vals[n - 1])} ${up.join(' ')} ${lo.join(' ')}"/>`;
+        const upP = up.map((v, j) => `${x(n + j)},${y(v)}`);
+        const loP = lo.map((v, j) => `${x(n + j)},${y(v)}`).reverse();
+        g += `<polygon class="band" points="${x(n - 1)},${y(vals[n - 1])} ${upP.join(' ')} ${loP.join(' ')}"/>`;
+        if (scen) {
+          const line = (arr, cls) => `<polyline class="ln-s ${cls}" points="${x(n - 1)},${y(vals[n - 1])} ${arr.map((v, j) => `${x(n + j)},${y(v)}`).join(' ')}"/>`;
+          g += line(up, 'ln-opt' + (focus === 'opt' ? ' hot' : '')) + line(lo, 'ln-pes' + (focus === 'pes' ? ' hot' : ''));
+        }
         g += `<polyline class="ln-p" points="${x(n - 1)},${y(vals[n - 1])} ${proj.map((v, j) => `${x(n + j)},${y(v)}`).join(' ')}"/>`;
       }
       g += `<polyline class="ln" points="${pts.join(' ')}"/>`;
@@ -139,7 +175,7 @@ function drawChart(el, data, { mode = 'line', ahead = 4 } = {}) {
   el.querySelectorAll('.hit').forEach((r) => {
     const i = +r.dataset.i, real = i < n, v = real ? vals[i] : proj[i - n];
     r.addEventListener('mouseenter', () => {
-      tip.innerHTML = `${esc(labels[i])}${real ? '' : ' · proyección'}<b>${fmt.format(v)}</b>${real ? '' : `<span>±${fmt.format(band)}</span>`}`;
+      tip.innerHTML = `${esc(labels[i])}${real ? '' : ' · proyección'}<b>${fmt.format(v)}</b>${real ? '' : `<span>Rango ${fmt.format(lo[i - n])} – ${fmt.format(up[i - n])}</span>`}`;
       tip.style.left = `${x(i)}px`;
       tip.style.top = `${y(v)}px`;
       tip.classList.add('on');
@@ -164,10 +200,13 @@ watch(heroChart);
 /* ---------- Demo interactiva ---------- */
 const demo = document.getElementById('demoChart');
 const rowsEl = document.getElementById('rows');
+function defaultData() { return [32, 38, 41, 47, 45, 55, 61, 66].map((value, i) => ({ label: MONTHS[i], value })); }
 const state = {
-  data: [32, 38, 41, 47, 45, 55, 61, 66].map((value, i) => ({ label: MONTHS[i], value })),
+  data: defaultData(),
   mode: 'line',
   ahead: 4,
+  model: 'lineal',
+  scen: 'base',
 };
 
 function renderRows() {
@@ -185,9 +224,14 @@ function update() {
   set('k-total', n ? fmt.format(total) : '–');
   set('k-avg', n ? fmt.format(total / n) : '–');
   set('k-slope', reg ? `${reg.m >= 0 ? '+' : ''}${fmt.format(reg.m)}` : '–');
-  set('k-proj', reg && state.ahead ? fmt.format(reg.m * (n + state.ahead - 1) + reg.b) : '–');
-  drawChart(demo, state.data, { mode: state.mode, ahead: state.ahead });
+  const F = forecast(vals, state.ahead, state.model);
+  const key = { pes: 'lo', base: 'proj', opt: 'up' }[state.scen], arr = F[key];
+  set('k-proj', arr.length ? fmt.format(arr[arr.length - 1]) : '–');
+  set('k-proj-l', `Proyección · ${{ pes: 'pesimista', base: 'base', opt: 'optimista' }[state.scen]}`);
+  set('fit', F.note || (F.proj.length ? `Modelo ${F.name}${F.r2 == null ? '' : ` · ajuste R² ${F.r2.toFixed(2).replace('.', ',')}`}` : ''));
+  drawChart(demo, state.data, { mode: state.mode, ahead: state.ahead, model: state.model, scen: true, focus: state.scen });
   flagOutliers();
+  saveSession();
 }
 
 rowsEl.addEventListener('input', (e) => {
@@ -212,14 +256,15 @@ document.getElementById('add').addEventListener('click', () => {
   update();
   rowsEl.scrollTop = rowsEl.scrollHeight;
 });
-document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => {
-  state.mode = b.dataset.mode;
-  document.querySelectorAll('.seg button').forEach((o) => o.classList.toggle('on', o === b));
+document.querySelectorAll('.seg[data-g] button').forEach((b) => b.addEventListener('click', () => {
+  const g = b.closest('.seg').dataset.g;
+  state[g] = b.dataset[g];
+  syncControls();
   update();
 }));
 document.getElementById('ahead').addEventListener('input', (e) => {
   state.ahead = +e.target.value;
-  document.getElementById('ahead-out').textContent = state.ahead;
+  syncControls();
   update();
 });
 
@@ -246,17 +291,35 @@ document.getElementById('csv').addEventListener('change', async (e) => {
   e.target.value = '';
 });
 
+loadSession();
 renderRows();
+syncControls();
 update();
 watch(demo);
 
 /* ---------- Validación en vivo: datos atípicos ---------- */
+function fitXY(xs, ys) {
+  const n = xs.length;
+  let sx = 0, sy = 0, sxy = 0, sxx = 0;
+  xs.forEach((x, i) => { sx += x; sy += ys[i]; sxy += x * ys[i]; sxx += x * x; });
+  const m = (n * sxy - sx * sy) / (n * sxx - sx * sx), b = (sy - m * sx) / n;
+  const se = Math.sqrt(xs.reduce((s, x, i) => s + (ys[i] - (m * x + b)) ** 2, 0) / Math.max(n - 2, 1));
+  return { m, b, se };
+}
 function flagOutliers() {
   const vals = state.data.map((d) => d.value), reg = regress(vals);
   const warn = document.getElementById('warn');
   const bad = [];
-  if (reg && vals.length >= 5) {
-    vals.forEach((v, i) => { if (Math.abs(v - (reg.m * i + reg.b)) > 2 * reg.se && reg.se > 0) bad.push(i); });
+  const span = Math.max(...vals) - Math.min(...vals);
+  if (vals.length >= 5) {
+    // Cada punto se compara con la tendencia calculada SIN él, para que un valor extremo no se "esconda"
+    vals.forEach((v, i) => {
+      const xs = [], ys = [];
+      vals.forEach((w, k) => { if (k !== i) { xs.push(k); ys.push(w); } });
+      const r = fitXY(xs, ys);
+      const dev = Math.abs(v - (r.m * i + r.b));
+      if (r.se > 0 && dev > 3 * r.se && dev > 0.25 * span) bad.push(i);   // estadísticamente raro Y relevante a la escala
+    });
   }
   rowsEl.querySelectorAll('tr').forEach((tr, i) => {
     const on = bad.includes(i);
@@ -305,6 +368,12 @@ const COMMANDS = [
   { t: 'Gráfica de línea', hint: 'Vista', run: setMode('line') },
   { t: 'Gráfica de barras', hint: 'Vista', run: setMode('bar') },
   { t: 'Exportar datos a CSV', hint: 'Datos', run: click('#export') },
+  { t: 'Modelo exponencial', hint: 'Proyección', run: click('.seg button[data-model=exp]') },
+  { t: 'Modelo lineal', hint: 'Proyección', run: click('.seg button[data-model=lineal]') },
+  { t: 'Escenario optimista', hint: 'Proyección', run: click('.seg button[data-scen=opt]') },
+  { t: 'Escenario pesimista', hint: 'Proyección', run: click('.seg button[data-scen=pes]') },
+  { t: 'Descargar gráfica (PNG)', hint: 'Exportar', run: click('#png') },
+  { t: 'Restablecer datos de ejemplo', hint: 'Datos', run: click('#reset') },
   { t: 'Cambiar tema claro/oscuro', hint: 'Apariencia', run: click('#theme') },
 ];
 let sel = 0, items = [];
@@ -350,3 +419,109 @@ pin.addEventListener('input', () => { sel = 0; renderPalette(); });
 plist.addEventListener('click', (e) => { const li = e.target.closest('[data-i]'); if (li) runItem(+li.dataset.i); });
 pal.addEventListener('mousedown', (e) => { if (e.target === pal) closePalette(); });
 flagOutliers();
+
+/* ---------- Controles sincronizados ---------- */
+function syncControls() {
+  document.querySelectorAll('.seg[data-g]').forEach((seg) => {
+    const g = seg.dataset.g;
+    seg.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset[g] === state[g]));
+  });
+  document.getElementById('ahead').value = state.ahead;
+  document.getElementById('ahead-out').textContent = state.ahead;
+}
+
+/* ---------- Guardado automático en el navegador ---------- */
+function saveSession() {
+  try { localStorage.setItem('cifra:v1', JSON.stringify({ data: state.data, mode: state.mode, ahead: state.ahead, model: state.model, scen: state.scen })); } catch (_) {}
+}
+function loadSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('cifra:v1') || 'null');
+    if (!s || !Array.isArray(s.data) || !s.data.length) return;
+    state.data = s.data.slice(0, 200).map((d) => ({ label: String(d.label), value: Number(d.value) || 0 }));
+    if (['line', 'bar'].includes(s.mode)) state.mode = s.mode;
+    if (['lineal', 'exp', 'media'].includes(s.model)) state.model = s.model;
+    if (['pes', 'base', 'opt'].includes(s.scen)) state.scen = s.scen;
+    if (Number.isInteger(s.ahead) && s.ahead >= 0 && s.ahead <= 12) state.ahead = s.ahead;
+  } catch (_) {}
+}
+document.getElementById('reset').addEventListener('click', () => {
+  const prev = snap();
+  Object.assign(state, { data: defaultData(), mode: 'line', ahead: 4, model: 'lineal', scen: 'base' });
+  renderRows(); syncControls(); update();
+  toast('Datos de ejemplo restablecidos', prev);
+});
+
+/* ---------- Pegar desde Excel ---------- */
+function parseNum(s) {
+  s = String(s).trim().replace(/\s/g, '');
+  s = /^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s) ? s.replace(/\./g, '').replace(',', '.') : s.replace(',', '.');
+  const v = parseFloat(s);
+  return Number.isNaN(v) ? null : v;
+}
+document.querySelector('.studio__side').addEventListener('paste', (e) => {
+  const t = (e.clipboardData || window.clipboardData).getData('text');
+  if (!/[\t\n]/.test(t.trim())) return;               // un solo valor: pegado normal
+  const out = [];
+  t.trim().split(/\r?\n/).forEach((line) => {
+    const c = line.split(/\t|;/).map((x) => x.trim());
+    const v = parseNum(c.length >= 2 ? c[1] : c[0]);
+    if (v !== null) out.push({ label: c.length >= 2 ? c[0] : '', value: v });
+  });
+  if (!out.length) return;
+  e.preventDefault();
+  const prev = snap();
+  state.data = out.slice(0, 200).map((o, i) => ({ label: o.label || MONTHS[i] || `P${i + 1}`, value: o.value }));
+  renderRows(); update();
+  toast(`Se pegaron ${state.data.length} filas`, prev);
+});
+
+/* ---------- Descargar la gráfica (SVG / PNG) ---------- */
+const STYLE_PROPS = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-linecap', 'stroke-linejoin', 'stroke-opacity', 'opacity', 'font-family', 'font-size', 'font-weight', 'text-anchor', 'stop-color', 'stop-opacity'];
+function chartSvg() {
+  const src = demo.querySelector('svg');
+  if (!src) return null;
+  const clone = src.cloneNode(true);
+  clone.querySelectorAll('.hit').forEach((n) => n.remove());
+  const a = [src, ...src.querySelectorAll('*')].filter((n) => !n.classList.contains('hit'));
+  const b = [clone, ...clone.querySelectorAll('*')];
+  a.forEach((n, i) => {                               // fija los colores resueltos para que el archivo sea autónomo
+    const cs = getComputedStyle(n);
+    b[i].setAttribute('style', STYLE_PROPS.map((p) => `${p}:${cs.getPropertyValue(p)}`).join(';'));
+  });
+  const w = +src.getAttribute('width'), h = +src.getAttribute('height');
+  const bg = getComputedStyle(document.querySelector('.studio__main')).backgroundColor;
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  clone.insertAdjacentHTML('afterbegin', `<rect width="${w}" height="${h}" style="fill:${bg}"/>`);
+  return { text: new XMLSerializer().serializeToString(clone), w, h };
+}
+function download(href, name) {
+  const a = document.createElement('a');
+  a.href = href; a.download = name; a.click();
+}
+document.getElementById('svg').addEventListener('click', () => {
+  const s = chartSvg();
+  if (!s) return;
+  const u = URL.createObjectURL(new Blob([s.text], { type: 'image/svg+xml' }));
+  download(u, 'cifra-grafica.svg');
+  setTimeout(() => URL.revokeObjectURL(u), 1000);
+  toast('Gráfica descargada (SVG)');
+});
+document.getElementById('png').addEventListener('click', () => {
+  const s = chartSvg();
+  if (!s) return;
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = s.w * 2; c.height = s.h * 2;
+    const x = c.getContext('2d');
+    x.scale(2, 2); x.drawImage(img, 0, 0);
+    c.toBlob((bl) => {
+      const u = URL.createObjectURL(bl);
+      download(u, 'cifra-grafica.png');
+      setTimeout(() => URL.revokeObjectURL(u), 1000);
+      toast('Gráfica descargada (PNG)');
+    });
+  };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s.text);
+});

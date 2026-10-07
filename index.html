@@ -87,6 +87,7 @@
           <tbody id="rows"></tbody>
         </table>
         <button class="btn btn--ghost btn--block" id="add" type="button">+ Agregar periodo</button>
+        <p class="hint">Pega una tabla de Excel aquí. Se guarda solo en este navegador. <button class="tool" id="reset" type="button">Restablecer</button></p>
       </div>
 
       <div class="studio__main">
@@ -94,20 +95,34 @@
           <div class="kpi"><small>Total</small><strong id="k-total">–</strong></div>
           <div class="kpi"><small>Promedio</small><strong id="k-avg">–</strong></div>
           <div class="kpi"><small>Tendencia / periodo</small><strong id="k-slope">–</strong></div>
-          <div class="kpi kpi--hl"><small>Proyección final</small><strong id="k-proj">–</strong></div>
+          <div class="kpi kpi--hl"><small id="k-proj-l">Proyección final</small><strong id="k-proj">–</strong></div>
         </div>
         <div class="controls">
-          <div class="seg" role="group" aria-label="Tipo de gráfica">
+          <div class="seg" data-g="mode" role="group" aria-label="Tipo de gráfica">
             <button type="button" data-mode="line" class="on">Línea</button>
             <button type="button" data-mode="bar">Barras</button>
+          </div>
+          <div class="seg" data-g="model" role="group" aria-label="Modelo de proyección">
+            <button type="button" data-model="lineal" class="on">Lineal</button>
+            <button type="button" data-model="exp">Exponencial</button>
+            <button type="button" data-model="media">Media móvil</button>
+          </div>
+        </div>
+        <div class="controls controls--2">
+          <div class="seg" data-g="scen" role="group" aria-label="Escenario">
+            <button type="button" data-scen="pes">Pesimista</button>
+            <button type="button" data-scen="base" class="on">Base</button>
+            <button type="button" data-scen="opt">Optimista</button>
           </div>
           <label class="range">Proyectar <output id="ahead-out">4</output> periodos
             <input type="range" id="ahead" min="0" max="12" value="4">
           </label>
+          <div class="exports"><span>Descargar gráfica</span><button class="tool" id="png" type="button">PNG</button><button class="tool" id="svg" type="button">SVG</button></div>
         </div>
         <div class="chart" id="demoChart" role="img" aria-label="Gráfica de datos y proyección"></div>
+        <p class="fitnote" id="fit"></p>
         <p class="warn" id="warn" hidden></p>
-        <p class="legend"><span class="dot dot--a"></span>Datos reales <span class="dot dot--p"></span>Proyección <span class="dot dot--b"></span>Rango de confianza</p>
+        <p class="legend"><span class="dot dot--a"></span>Datos reales <span class="dot dot--p"></span>Proyección <span class="dot dot--o"></span>Optimista <span class="dot dot--w"></span>Pesimista <span class="dot dot--b"></span>Rango de confianza</p>
       </div>
     </div>
   </section>
