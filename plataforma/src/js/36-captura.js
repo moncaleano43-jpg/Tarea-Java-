@@ -641,7 +641,8 @@
     const sel = fondo.querySelector('select');
     if (sel) { sel.innerHTML = hojas.map((h) => `<option value="${esc(h)}"${h === hoja ? ' selected' : ''}>${esc(h.trim())}</option>`).join(''); sel.addEventListener('change', () => abrir(tipo, sel.value)); }
     fondo.querySelector('[data-cerrar]').addEventListener('click', cerrar);
-    fondo.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !e.target.closest('.hoja') && !e.defaultPrevented) cerrar(); });
+    // Esc cierra el panel cuando no se está editando una celda; al cambiar de pantalla también se cierra (el borrador se conserva).
+    fondo.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !e.defaultPrevented && !e.target.closest('input, textarea, select, [contenteditable="true"]')) cerrar(); });
     montar(p);
   }
   const DEFS_OK = (t) => !!ruta[t];
@@ -728,5 +729,6 @@
     });
   }
 
+  window.addEventListener('hashchange', () => { if (panel) cerrar(); });
   A.Captura = { abrir, cerrar, hoja: () => (panel ? panel.h : null), defs: DEFS, guardarFilas, util: { frecuentes, isoWeek, serialDe, fh } };
 })();
