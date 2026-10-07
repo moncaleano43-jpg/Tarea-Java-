@@ -1,0 +1,54 @@
+/* Configuración ampliada y preferencias de interfaz */
+.cf-wrap{display:grid;gap:16px;margin:16px 0}
+.cf-ic{display:grid;place-items:center;color:var(--ink)}
+.cf-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.cf-file{cursor:pointer}
+.cf-check{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--ink-2);margin-top:14px}
+.cf-check input{accent-color:var(--ink)}
+.cf-stats{margin-bottom:6px}
+.cf-grupo{border:1px solid var(--line);border-radius:12px;padding:0 14px;margin-top:10px;background:var(--surface)}
+.cf-grupo>summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 0;cursor:pointer;list-style:none;font-size:15px}
+.cf-grupo>summary::-webkit-details-marker{display:none}
+.cf-grupo>summary small{color:var(--muted)}
+.cf-grupo[open]>summary{border-bottom:1px solid var(--line)}
+.cf-grupo .fg{margin-top:14px}
+.cf-grupo .cf-row{margin-bottom:14px}
+.cf-grupo label span em{font-style:normal;color:var(--muted)}
+.cf-tabla{overflow-x:auto;border:1px solid var(--line);border-radius:12px;margin-top:10px}
+.cf-tabla table{width:100%;border-collapse:collapse;font-size:14px}
+.cf-tabla th{text-align:left;font-size:12px;color:var(--muted);font-weight:550;padding:9px 12px;background:var(--surface-2)}
+.cf-tabla td{padding:7px 12px;border-top:1px solid var(--line-2,var(--line))}
+.cf-tabla .n{text-align:right;font-variant-numeric:tabular-nums}
+.cf-alias{min-width:180px}
+.cf-fila{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--line-2,var(--line))}
+.cf-fila:first-of-type{border-top:0}
+.cf-fila b{display:block;font-size:14.5px}.cf-fila small{color:var(--muted);font-size:13px}
+.cf-seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.cf-seg button{font:500 13.5px var(--sans);color:var(--muted);background:none;border:0;border-radius:8px;padding:6px 14px;cursor:pointer}
+.cf-seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(23,23,23,.12),0 0 0 1px var(--line)}
+.cf-atajos{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:8px 24px}
+.cf-atajos div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line-2,var(--line));font-size:14px;align-items:center}
+.cf-atajos b{font-weight:450;color:var(--muted);text-align:right}
+.cf-atajos kbd,.cf-wrap kbd{font:600 11.5px var(--sans);background:var(--surface-2);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:2px 7px;color:var(--ink-2)}
+.cf-lista{margin:0;padding-left:18px;display:grid;gap:8px;font-size:14.5px;color:var(--ink-2);line-height:1.5}
+.cf-lista li::marker{color:var(--muted)}
+.cf-guia{display:grid;gap:14px}
+.cf-guia div{padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.cf-guia b{font-size:15px}.cf-guia p{margin:4px 0 0;color:var(--muted);font-size:14px;line-height:1.5}
+.cf-guia em{font-style:normal;font-weight:600;color:var(--ink)}
+
+/* Preferencias de interfaz */
+html.ui-compacta .card-p,html.ui-compacta .config-section{padding-top:14px;padding-bottom:14px}
+html.ui-compacta .an-card{padding:12px 14px}
+html.ui-compacta .an-tabla td,html.ui-compacta .an-tabla th{padding-top:5px;padding-bottom:5px}
+html.ui-compacta .hoja-celda,html.ui-compacta .hoja td{padding-top:3px;padding-bottom:3px}
+html.ui-grande body{zoom:1.1}
+html.ui-muy-grande body{zoom:1.22}
+html.ui-sin-mov *,html.ui-sin-mov *::before,html.ui-sin-mov *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+.cf-wrap .fg{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px 16px}
+.cf-wrap .f{display:flex;flex-direction:column;gap:5px;min-width:0}
+.cf-wrap .f span{font-size:12.5px;color:var(--muted)}
+.cf-wrap .inp{width:100%;box-sizing:border-box;min-height:40px;font:14.5px var(--sans);color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:8px 11px}
+.cf-wrap .inp:focus{outline:0;border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 10%,transparent)}
+.cf-tabla td,.cf-tabla th{text-transform:none!important}
+.cf-tabla td::first-letter{text-transform:none!important}

@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Demo de gráficas</title>
+<link rel="stylesheet" href="../src/css/10-neutral-tokens.css">
+<link rel="stylesheet" href="../src/css/26-charts.css">
+<style>
+  body{margin:0;background:var(--bg,#fafaf9);color:var(--ink,#171717);font:14px/1.45 var(--sans,system-ui,sans-serif)}
+  main{max-width:1240px;margin:0 auto;padding:24px 16px 48px}
+  header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px}
+  h1{font-size:18px;margin:0;font-weight:600}
+  button#theme{font:inherit;font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--line,#e6e6e1);background:var(--surface,#fff);color:var(--ink,#171717);cursor:pointer}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:16px}
+  .card{background:var(--surface,#fff);border:1px solid var(--line,#e6e6e1);border-radius:12px;padding:16px;min-width:0}
+  .card.wide{grid-column:1/-1}
+  .row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+  .row .card{flex:1 1 240px}
+</style>
+</head>
+<body>
+<main>
+  <header class="top"><h1>Planta cervecera · demo de gráficas</h1><button id="theme" type="button">Tema: claro</button></header>
+  <div class="kpis" id="kpis"></div>
+  <div class="grid" id="grid"></div>
+</main>
+<script src="../src/js/25-charts.js"></script>
+<script>
+(function(){
+  var C = window.App.Charts, grid = document.getElementById('grid');
+  var seed = 7; function rnd(){ seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+  function gauss(m, s){ var u = rnd() || .5, v = rnd(); return m + s * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  function card(name, html, cls){ var s = document.createElement('section'); s.className = 'card' + (cls ? ' ' + cls : ''); s.setAttribute('data-chart', name); s.innerHTML = html; grid.appendChild(s); }
+  var D = 864e5, t0 = new Date(2026, 0, 5).getTime();
+
+  // KPIs
+  var k = document.getElementById('kpis');
+  k.innerHTML = C.kpi({label:'Volumen cocido', value:1284.5, unit:'hL', delta:4.2, deltaGood:'up', spark:[12,14,13,17,16,19,18,22], help:'Últimos 8 lotes'})
+    + C.kpi({label:'Merma total', value:3.8, unit:'%', delta:-0.6, deltaGood:'down', spark:[5,4.6,4.8,4.1,4.3,3.9,3.8], help:'Meta menor a 4 %'})
+    + C.kpi({label:'Eficiencia de llenado', value:92.1, unit:'%', delta:-1.4, deltaGood:'up', spark:[94,93,95,93,92,93,92.1]})
+    + C.kpi({label:'Desviaciones abiertas', value:7, delta:'+2', deltaGood:'down', spark:[3,4,4,5,5,6,7]});
+
+  // 1 line
+  var temp = [], proj = [], lo = [], hi = [];
+  for (var i = 0; i < 14; i++) { var v = 12 + Math.sin(i / 2) * 1.2 + gauss(0, .25); temp.push(i === 6 ? null : +v.toFixed(2)); }
+  var hist = [], fut = [];
+  for (i = 0; i < 18; i++) {
+    var base = 12 + i * 0.15;
+    if (i < 12) hist.push({x: t0 + i * 7 * D, y: +(base + gauss(0, .3)).toFixed(2)});
+    else fut.push({x: t0 + i * 7 * D, y: +(base).toFixed(2)});
+    if (i >= 11) { lo.push(null); }
+  }
+  fut.unshift({x: hist[11].x, y: hist[11].y});
+  var allp = hist.concat(fut.slice(1)), blo = [], bhi = [];
+  allp.forEach(function(p, j){ if (j < 11) { blo.push(null); bhi.push(null); } else { var w = .25 + (j - 11) * .12; blo.push(+(p.y - w).toFixed(2)); bhi.push(+(p.y + w).toFixed(2)); } });
+  card('line', C.line({title:'Temperatura de fermentación', subtitle:'Tanque FV-03, °C por día (hueco = sin lectura)', unit:'°C', w:600, h:300, toolbar:true, id:'c-line',
+    xLabels:['1 mar','2 mar','3 mar','4 mar','5 mar','6 mar','7 mar','8 mar','9 mar','10 mar','11 mar','12 mar','13 mar','14 mar'],
+    series:[{name:'FV-03', data:temp, area:true}, {name:'FV-04', data:temp.map(function(x,j){return x==null?null:+(x+0.8+Math.cos(j)*.3).toFixed(2);}), color:'var(--est,#5d6f8c)'}],
+    refs:[{y:14, label:'Máx. 14 °C', color:'var(--neg,#b0442e)', dashed:true}], annotations:[{x:8, text:'Dry hop'}]}));
+  card('line-time', C.line({title:'Extracto real y pronóstico', subtitle:'Eje de tiempo con banda de confianza', xType:'time', w:600, h:300, unit:'°P',
+    series:[{name:'Observado', points:hist}, {name:'Pronóstico', points:fut, dashed:true, color:'var(--warn,#a26a14)'}],
+    band:{lo:blo, hi:bhi, name:'IC 90 %'}, yFmt:function(v){return v.toFixed(1).replace('.',',');}}));
+
+  // 2 bars
+  card('bars', C.bars({title:'Producción por estilo', subtitle:'hL en el mes', unit:'hL', w:600, data:[{label:'Lager',value:420},{label:'Pale Ale',value:310},{label:'IPA',value:265,note:'Lote especial'},{label:'Stout',value:140},{label:'Weissbier',value:95},{label:'Sour',value:60}], refs:[{y:250,label:'Meta 250'}]}));
+  card('barsH', C.barsH({title:'Ranking de paros por causa', subtitle:'Minutos acumulados', w:600, sort:'desc', unit:'min', data:[{label:'Cambio de formato en línea de envasado',value:312},{label:'Falta de CO₂',value:190},{label:'Atasco de etiquetadora',value:148},{label:'Limpieza CIP no programada',value:96},{label:'Calibración de sensores',value:61},{label:'Otros',value:34}]}));
+  card('stacked', C.stacked({title:'Pérdidas por área y semana', subtitle:'hL apilados', w:600, categories:['S1','S2','S3','S4','S5','S6'], series:[{name:'Cocina',values:[12,10,14,9,11,8]},{name:'Fermentación',values:[8,9,7,10,6,7]},{name:'Envasado',values:[15,13,16,12,14,10]}]}));
+  card('bars-grouped', C.bars({title:'Real vs. plan', subtitle:'Barras agrupadas con valores negativos', w:600, data:[{label:'Ene'},{label:'Feb'},{label:'Mar'},{label:'Abr'}], series:[{name:'Plan',values:[100,120,110,130]},{name:'Real',values:[92,125,-15,138]}]}));
+
+  // 3 hist
+  var vals = []; for (i = 0; i < 160; i++) vals.push(+gauss(10.2, .35).toFixed(2));
+  card('histogram', C.histogram({title:'Volumen de llenado (cL)', subtitle:'Botellas de 33 cL · n = 160', values:vals.map(function(x){return x*3.3/1;}), lsl:32, usl:35, w:600}));
+
+  // 4 scatter
+  var pts = []; for (i = 0; i < 50; i++) { var x = 8 + rnd() * 6, g = i % 3; pts.push({x:+x.toFixed(2), y:+(2.1 * x + 4 + g * 3 + gauss(0, 2.2)).toFixed(2), group:['Lager','Ale','Stout'][g]}); }
+  card('scatter', C.scatter({title:'Extracto inicial vs. grado alcohólico', points:pts, xLabel:'Extracto inicial (°P)', yLabel:'Alcohol (‰ vol.)', w:600, h:320, regression:true}));
+
+  // 5 box
+  function grp(m, s, n){ var a=[]; for (var j=0;j<n;j++) a.push(+gauss(m,s).toFixed(2)); return a; }
+  var b1 = grp(4.6, .15, 40); b1.push(5.3, 3.9);
+  card('box', C.box({title:'pH del mosto por turno', w:600, groups:[{label:'Turno A',values:b1},{label:'Turno B',values:grp(4.7,.2,40)},{label:'Turno C',values:grp(4.55,.1,40).concat([4.95])},{label:'Fin de semana',values:grp(4.8,.25,25)}], refs:[{y:5.0,label:'Límite 5,0'}]}));
+  card('box-h', C.box({title:'Tiempo de trasiego (min)', horizontal:true, w:600, stats:[{label:'Línea 1',q1:32,med:38,q3:45,lo:25,hi:58,outliers:[75]},{label:'Línea 2',q1:40,med:46,q3:55,lo:30,hi:66,outliers:[]},{label:'Línea 3',q1:28,med:33,q3:37,lo:22,hi:44,outliers:[12,60,64]}]}));
+
+  // 6 heatmap
+  var names = ['Temp. FV','Extracto','pH','Alcohol','Turbidez','Color'];
+  var Mx = [[1,-.62,.18,.74,.05,-.3],[-.62,1,-.35,-.81,.1,.22],[.18,-.35,1,.12,-.4,.0],[.74,-.81,.12,1,-.22,.15],[.05,.1,-.4,-.22,1,.58],[-.3,.22,0,.15,.58,1]];
+  card('heatmap', C.heatmap({title:'Correlación entre variables', rows:names, cols:names, matrix:Mx, domain:[-1,1], diverging:true, w:600}));
+
+  // 7 control
+  var cp = [], viol = []; for (i = 1; i <= 30; i++) { var y = gauss(50, 1.4); if (i === 17) y = 55.2; if (i === 25) y = 45.1; if (i >= 9 && i <= 15) y = 50.9 + rnd()*.6; cp.push({i:i, y:+y.toFixed(2)}); }
+  card('control', C.control({title:'Carta X individual · Grado Plato', name:'°P', points:cp, cl:50, ucl:54.2, lcl:45.8, zones:true, lsl:44, usl:56, w:600, h:320, violations:[{i:17,text:'Regla 1: fuera de 3σ'},{i:25,text:'Regla 1: bajo LIC'},{i:15,text:'Regla 2: 7 puntos seguidos sobre la media'}]}));
+
+  // 8 pareto
+  card('pareto', C.pareto({title:'Pareto de defectos de envasado', w:600, items:[{label:'Etiqueta torcida',value:120},{label:'Nivel de llenado bajo',value:86},{label:'Tapa floja',value:48},{label:'Botella rayada',value:30},{label:'Código ilegible',value:22},{label:'Otros',value:14}]}));
+
+  // 9 sparks
+  card('spark', '<div class="row">'
+    + '<div>Línea: ' + C.spark({values:[3,5,4,7,6,8,9,7,10], area:true}) + '</div>'
+    + '<div>Estable: ' + C.spark({values:[5,5,5,5]}) + '</div>'
+    + '<div>Barras: ' + C.sparkBars({values:[4,7,3,8,6,9,5]}) + '</div>'
+    + '</div>');
+  card('empty-spark', '<div>Sin datos: ' + C.spark({values:[]}) + '</div>');
+
+  // 10 donut / gauge
+  card('donut', C.donut({title:'Mezcla de formatos', w:420, data:[{label:'Botella 330 mL',value:5200},{label:'Lata 355 mL',value:3400},{label:'Barril 30 L',value:1100},{label:'Botella 750 mL',value:420}], center:{text:'10.120', sub:'unidades'}}));
+  card('gauge', '<div class="row">' + '<div style="flex:0 0 260px">'+C.gauge({title:'Eficiencia (OEE)', value:76.4, min:0, max:100, unit:'%', label:'Línea 2', zones:[{to:60,color:'var(--neg,#b0442e)'},{to:80,color:'var(--warn,#a26a14)'},{to:100,color:'var(--pos,#3b7a59)'}]})+'</div><div style="flex:0 0 260px">' +
+    C.gauge({title:'Oxígeno disuelto', value:18, min:0, max:60, unit:'ppb', label:'Envasado'}) + '</div></div>');
+
+  // 11 waterfall
+  card('waterfall', C.waterfall({title:'Balance de volumen del lote 2043', subtitle:'hL', w:600, steps:[{label:'Entrada mosto',value:520,total:true},{label:'Purga de trub',value:-14},{label:'Merma fermentación',value:-9.5},{label:'Merma filtración',value:-11},{label:'Ajuste dilución',value:6},{label:'Salida a envasado',total:true}]}));
+
+  // 12 gantt
+  var h0 = new Date(2026, 2, 12, 6, 0).getTime(), H = 36e5;
+  card('gantt', C.gantt({title:'Trasiegos y aseos', subtitle:'Turno del 12 de marzo', w:600, now:h0 + 9.5 * H, rows:[
+    {label:'Trasiego FV-01 → BBT-02', start:h0, end:h0 + 3 * H, status:'completado'},
+    {label:'Aseo CIP BBT-01', start:h0 + 2 * H, end:h0 + 4.5 * H, status:'completado'},
+    {label:'Trasiego FV-03 → BBT-01', start:h0 + 5 * H, end:h0 + 10 * H, status:'en curso'},
+    {label:'Aseo de línea de envasado 2', start:h0 + 8 * H, end:h0 + 13 * H, status:'retraso'},
+    {label:'Carbonatación BBT-02', start:h0 + 11 * H, end:h0 + 18 * H, status:'pendiente'}]}));
+
+  // 13 calendar
+  var days = [], d0 = new Date(2026, 2, 20).getTime();
+  for (i = 0; i < 180; i++) { var dt = new Date(d0 - i * D); if (rnd() < .12) continue; days.push({date: dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0'), value: Math.round(Math.max(0, gauss(60, 30)) * (dt.getDay() === 0 ? .2 : 1))}); }
+  card('calendar', C.calendar({title:'Cocimientos por día', subtitle:'Últimas 26 semanas', days:days, unit:'hL', weeks:26, w:1100}), 'wide');
+
+  // vacíos
+  card('empty-line', C.line({title:'Sin datos (línea)', series:[], w:600, h:200}));
+  card('empty-bars', C.bars({title:'Sin datos (barras)', data:[], w:600, h:200, empty:'Aún no hay producción registrada'}));
+
+  var btn = document.getElementById('theme');
+  btn.addEventListener('click', function(){
+    var d = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = d; btn.textContent = 'Tema: ' + (d === 'dark' ? 'oscuro' : 'claro');
+  });
+  document.documentElement.dataset.theme = 'light';
+})();
+</script>
+</body>
+</html>

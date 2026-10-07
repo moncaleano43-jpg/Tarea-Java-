@@ -23,9 +23,11 @@
     let b = String(v == null ? '' : v);
     try { b = String(A.PlatformRules.brand(v) || b); } catch (e) { /* sin reglas de plataforma */ }
     b = b.replace(/\s+/g, ' ').trim().toUpperCase();
+    if (b) SEEN.set(b, (SEEN.get(b) || 0) + 1);
     const custom = (A.S && A.S.config && A.S.config.brandAliases) || {};
     return custom[b] || ALIAS[b] || b;
   };
+  const SEEN = new Map();
   // Fechas imposibles (celdas con 0, 2, etc. leídas como fecha) se descartan.
   const T_MIN = Date.UTC(2015, 0, 1), T_MAX = Date.UTC(2040, 0, 1);
   const okT = (t) => t != null && Number.isFinite(t) && t >= T_MIN && t <= T_MAX;
@@ -278,6 +280,13 @@
     return rows;
   }
   const invalidate = () => cache.clear();
+  /** Variantes de marca tal como llegan en los datos → marca unificada (para la pantalla de equivalencias). */
+  function marcasVistas() {
+    SEEN.clear(); cache.clear();
+    Object.keys(BUILDERS).forEach((n) => get(n));
+    const custom = (A.S && A.S.config && A.S.config.brandAliases) || {};
+    return [...SEEN.entries()].map(([raw, n]) => ({ raw, n, canon: custom[raw] || ALIAS[raw] || raw, manual: !!custom[raw] })).sort((a, b) => b.n - a.n);
+  }
   window.addEventListener('hashchange', invalidate);
 
   /* ---------- Consulta genérica ---------- */
@@ -353,7 +362,7 @@
   const numericFields = (dataset) => (META[dataset] ? META[dataset].fields.filter((f) => f.kind === 'num') : []);
 
   A.DL = {
-    META, get, invalidate, query, catalog, extent, brands, fieldOf, numericFields, filterRows, periodKey, N, sum, time, brandOf, MONTHS,
+    META, get, invalidate, marcasVistas, query, catalog, extent, brands, fieldOf, numericFields, filterRows, periodKey, N, sum, time, brandOf, MONTHS,
     agua: () => get('agua'), aseos: () => get('aseos'), merma: () => get('merma'), recuperacion: () => get('recuperacion'),
     trasiego: () => get('trasiego'), ferm: () => get('ferm'), lev: () => get('lev'),
   };
