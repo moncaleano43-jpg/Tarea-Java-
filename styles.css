@@ -56,18 +56,11 @@ ul{list-style:none}
 .device__bar i{width:12px;height:12px;border-radius:50%;background:#ff5f57}
 .device__bar i:nth-child(2){background:#febc2e}.device__bar i:nth-child(3){background:#28c840}
 .device__bar span{margin:auto;font-size:12px;color:var(--muted);transform:translateX(-24px)}
-.device__body{display:grid;grid-template-columns:170px 1fr;min-height:300px}
-.device__body aside{padding:20px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
-.device__body aside b{color:var(--text);margin-bottom:8px}
-.device__body aside span{padding:7px 10px;border-radius:8px}
-.device__body aside .on{background:var(--soft);color:var(--text)}
 .device__main{padding:20px;display:flex;flex-direction:column;gap:16px}
 .card-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .mini{background:var(--soft);border-radius:14px;padding:14px}
 .mini small{color:var(--muted);font-size:12px;display:block}
 .mini strong{font-size:22px;letter-spacing:-.02em}
-.code{background:#0b0b0d;color:#e5e5ea;border-radius:14px;padding:16px;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;overflow:auto}
-.code .k{color:#ff7ab2}.code .s{color:#fc6a5d}
 
 /* Stats */
 .stats{max-width:1080px;margin:80px auto;padding:0 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:20px;text-align:center}
@@ -143,7 +136,72 @@ summary::-webkit-details-marker{display:none}
 @media (max-width:640px){
   .nav__links{display:none}
   .features{grid-template-columns:1fr}
-  .device__body{grid-template-columns:1fr}
-  .device__body aside{display:none}
   .section{padding:70px 20px}
+}
+
+/* Tarjetas del hero */
+.mini strong.up{color:#1fa971}
+.device__main{padding:20px;display:flex;flex-direction:column;gap:16px}
+.stats strong span{font:inherit}
+
+/* Gráficas */
+.chart{position:relative;width:100%}
+.chart svg{display:block;max-width:100%;overflow:visible}
+.chart text{fill:var(--muted);font:11px var(--font)}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .axis{stroke:var(--muted);stroke-opacity:.4}
+.chart .ln{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.chart .ln-p{fill:none;stroke:var(--accent2);stroke-width:3;stroke-dasharray:7 7;stroke-linecap:round}
+.chart .pt{fill:var(--surface);stroke:var(--accent);stroke-width:2.5}
+.chart .pt-p{fill:var(--surface);stroke:var(--accent2);stroke-width:2.5}
+.chart .band{fill:var(--accent2);fill-opacity:.14}
+.chart .bar{fill:var(--accent)}
+.chart .bar-p{fill:var(--accent2);fill-opacity:.55;stroke:var(--accent2);stroke-dasharray:4 3}
+.chart .hit{fill:transparent;cursor:crosshair}
+.chart .hit:hover{fill:var(--accent);fill-opacity:.06}
+.tip{position:absolute;pointer-events:none;opacity:0;transform:translate(-50%,-110%);background:var(--text);color:var(--bg);font-size:12px;padding:6px 10px;border-radius:10px;white-space:nowrap;transition:opacity .15s;z-index:2}
+.tip.on{opacity:1}
+.tip b{display:block;font-size:14px}
+
+/* Demo interactiva */
+.studio{display:grid;grid-template-columns:330px 1fr;gap:16px;background:var(--soft);border-radius:var(--r);padding:16px}
+.studio__side,.studio__main{background:var(--surface);border-radius:20px;padding:22px;border:1px solid var(--line);min-width:0}
+.studio__head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.studio__head h3{font-size:19px;letter-spacing:-.02em}
+.studio__tools{display:flex;gap:6px}
+.tool{font:500 13px var(--font);color:var(--accent);background:none;border:0;padding:6px 10px;border-radius:99px;cursor:pointer}
+.tool:hover{background:var(--soft)}
+.grid-table{width:100%;border-collapse:collapse;margin-bottom:14px}
+.grid-table th{text-align:left;font-size:12px;color:var(--muted);font-weight:500;padding:0 4px 6px}
+.grid-table td{padding:3px 2px}
+.grid-table input{width:100%;font:15px var(--font);color:var(--text);background:var(--soft);border:1.5px solid transparent;border-radius:10px;padding:8px 10px;outline:0;transition:border-color .2s,background .2s}
+.grid-table input:focus{border-color:var(--accent);background:var(--surface)}
+.grid-table td:last-child{width:28px}
+.x{background:none;border:0;color:var(--muted);font-size:20px;cursor:pointer;border-radius:50%;width:26px;height:26px;line-height:1}
+.x:hover{background:var(--soft);color:var(--accent3)}
+#rows{display:block;max-height:340px;overflow:auto}
+.grid-table thead,.grid-table tbody tr{display:table;width:100%;table-layout:fixed}
+.btn--block{display:block;width:100%;text-align:center;padding:10px;font-size:15px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.kpi{background:var(--soft);border-radius:16px;padding:14px;min-width:0}
+.kpi small{display:block;color:var(--muted);font-size:12px}
+.kpi strong{font-size:clamp(18px,2.4vw,26px);letter-spacing:-.03em;font-weight:700;white-space:nowrap}
+.kpi--hl{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.kpi--hl small{color:rgba(255,255,255,.8)}
+.controls{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.seg{display:inline-flex;background:var(--soft);padding:3px;border-radius:99px}
+.seg button{font:500 14px var(--font);color:var(--muted);background:none;border:0;padding:6px 16px;border-radius:99px;cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.range{font-size:14px;color:var(--muted);display:flex;align-items:center;gap:10px}
+.range input{accent-color:var(--accent);width:130px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;font-size:12px;color:var(--muted);margin-top:10px}
+.dot{display:inline-block;vertical-align:middle;margin-top:-2px;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.dot--a{background:var(--accent)}.dot--p{background:var(--accent2)}.dot--b{background:var(--accent2);opacity:.25}
+
+/* Bento: svg */
+.tile__svg{position:absolute;inset:auto 0 0 0;width:100%;height:55%}
+
+@media (max-width:900px){
+  .studio{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,1fr)}
 }

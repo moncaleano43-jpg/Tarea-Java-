@@ -3,24 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nova — Aprende, crea, despliega</title>
-<meta name="description" content="Plataforma para aprender y construir software, con un diseño claro, rápido y minimalista.">
+<title>Cifra — Ingresa, analiza, proyecta</title>
+<meta name="description" content="Plataforma para ingresar datos, analizarlos y proyectar el futuro con gráficas claras.">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <header class="nav" id="nav">
   <div class="nav__inner">
-    <a href="#" class="logo" aria-label="Nova"><span class="logo__dot"></span>Nova</a>
+    <a href="#" class="logo" aria-label="Cifra"><span class="logo__dot"></span>Cifra</a>
     <nav class="nav__links" aria-label="Principal">
       <a href="#funciones">Funciones</a>
+      <a href="#demo">Pruébalo</a>
       <a href="#bento">Plataforma</a>
       <a href="#precios">Precios</a>
       <a href="#faq">Ayuda</a>
     </nav>
     <div class="nav__cta">
       <button class="icon-btn" id="theme" aria-label="Cambiar tema">◐</button>
-      <a href="#precios" class="btn btn--sm">Empezar</a>
+      <a href="#demo" class="btn btn--sm">Empezar</a>
     </div>
   </div>
 </header>
@@ -28,63 +29,105 @@
 <main>
   <!-- HERO -->
   <section class="hero">
-    <p class="eyebrow reveal">Nuevo · Nova 2.0</p>
-    <h1 class="display reveal">Crear nunca<br>fue tan <span class="grad">simple.</span></h1>
-    <p class="lead reveal">Una sola plataforma para aprender, practicar y publicar tus proyectos. Rápida, bella y pensada para ti.</p>
+    <p class="eyebrow reveal">Nuevo · Cifra Proyecciones</p>
+    <h1 class="display reveal">Tus datos,<br>con <span class="grad">visión de futuro.</span></h1>
+    <p class="lead reveal">Ingresa tus números, analízalos y proyecta lo que viene. Gráficas claras para decidir con seguridad.</p>
     <div class="hero__actions reveal">
-      <a href="#precios" class="btn">Empieza gratis</a>
+      <a href="#demo" class="btn">Probar ahora</a>
       <a href="#funciones" class="link">Ver cómo funciona ›</a>
     </div>
 
     <div class="device reveal" aria-hidden="true">
-      <div class="device__bar"><i></i><i></i><i></i><span>nova.app/proyecto</span></div>
-      <div class="device__body">
-        <aside>
-          <b>Proyectos</b><span class="on">Inicio</span><span>Cursos</span><span>Tareas</span><span>Equipo</span>
-        </aside>
-        <div class="device__main">
-          <div class="card-row">
-            <div class="mini"><small>Progreso</small><strong>84%</strong></div>
-            <div class="mini"><small>Tareas</small><strong>12</strong></div>
-            <div class="mini"><small>Racha</small><strong>21 días</strong></div>
-          </div>
-          <pre class="code"><span class="k">public class</span> Hola {
-  <span class="k">public static void</span> main(String[] a) {
-    System.out.println(<span class="s">"Hola, mundo"</span>);
-  }
-}</pre>
+      <div class="device__bar"><i></i><i></i><i></i><span>cifra.app/ventas-2026</span></div>
+      <div class="device__main">
+        <div class="card-row">
+          <div class="mini"><small>Ingresos</small><strong>$460K</strong></div>
+          <div class="mini"><small>Crecimiento</small><strong class="up">+86%</strong></div>
+          <div class="mini"><small>Proyección Dic</small><strong>$95K</strong></div>
         </div>
+        <div class="chart" id="heroChart"></div>
       </div>
     </div>
   </section>
 
   <!-- MÉTRICAS -->
   <section class="stats">
-    <div class="reveal"><strong data-count="250">0</strong><span>mil usuarios</span></div>
-    <div class="reveal"><strong data-count="99">0</strong><span>% disponibilidad</span></div>
-    <div class="reveal"><strong data-count="40">0</strong><span>países</span></div>
-    <div class="reveal"><strong>4.9★</strong><span>valoración</span></div>
+    <div class="reveal"><strong><span data-count="10">0</span>M+</strong><span>registros analizados</span></div>
+    <div class="reveal"><strong>99,9%</strong><span>disponibilidad</span></div>
+    <div class="reveal"><strong>&lt;1s</strong><span>en generar una gráfica</span></div>
+    <div class="reveal"><strong><span data-count="40">0</span></strong><span>países</span></div>
   </section>
 
   <!-- FUNCIONES -->
   <section class="section" id="funciones">
-    <h2 class="title reveal">Todo lo que necesitas.<br><span class="muted">Nada que no.</span></h2>
+    <h2 class="title reveal">De los datos a la decisión.<br><span class="muted">En cuatro pasos.</span></h2>
     <div class="features">
-      <article class="feature reveal"><div class="ico">⚡</div><h3>Velocidad extrema</h3><p>Carga en milisegundos en cualquier dispositivo.</p></article>
-      <article class="feature reveal"><div class="ico">🔒</div><h3>Seguro por diseño</h3><p>Cifrado de extremo a extremo y privacidad real.</p></article>
-      <article class="feature reveal"><div class="ico">🤝</div><h3>Colabora en vivo</h3><p>Trabaja con tu equipo en tiempo real, sin fricción.</p></article>
-      <article class="feature reveal"><div class="ico">✨</div><h3>IA integrada</h3><p>Sugerencias inteligentes que te ahorran horas.</p></article>
+      <article class="feature reveal"><div class="ico">📥</div><h3>Ingreso ágil</h3><p>Escribe en la tabla, pega desde Excel o importa un CSV.</p></article>
+      <article class="feature reveal"><div class="ico">🔍</div><h3>Análisis al instante</h3><p>Totales, promedios y tendencias calculados mientras escribes.</p></article>
+      <article class="feature reveal"><div class="ico">📈</div><h3>Proyecciones</h3><p>Estima los próximos periodos con su rango de confianza.</p></article>
+      <article class="feature reveal"><div class="ico">📊</div><h3>Gráficas hermosas</h3><p>Líneas y barras listas para presentar o exportar.</p></article>
+    </div>
+  </section>
+
+  <!-- DEMO INTERACTIVA -->
+  <section class="section" id="demo">
+    <h2 class="title reveal">Ingresa datos.<br><span class="muted">Mira el futuro.</span></h2>
+    <div class="studio reveal">
+      <div class="studio__side">
+        <div class="studio__head">
+          <h3>Datos</h3>
+          <div class="studio__tools">
+            <label class="tool" title="Importar CSV">Importar<input type="file" id="csv" accept=".csv,.txt" hidden></label>
+            <button class="tool" id="export" type="button">Exportar</button>
+          </div>
+        </div>
+        <table class="grid-table">
+          <thead><tr><th>Periodo</th><th>Valor</th><th></th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <button class="btn btn--ghost btn--block" id="add" type="button">+ Agregar periodo</button>
+      </div>
+
+      <div class="studio__main">
+        <div class="kpis">
+          <div class="kpi"><small>Total</small><strong id="k-total">–</strong></div>
+          <div class="kpi"><small>Promedio</small><strong id="k-avg">–</strong></div>
+          <div class="kpi"><small>Tendencia / periodo</small><strong id="k-slope">–</strong></div>
+          <div class="kpi kpi--hl"><small>Proyección final</small><strong id="k-proj">–</strong></div>
+        </div>
+        <div class="controls">
+          <div class="seg" role="group" aria-label="Tipo de gráfica">
+            <button type="button" data-mode="line" class="on">Línea</button>
+            <button type="button" data-mode="bar">Barras</button>
+          </div>
+          <label class="range">Proyectar <output id="ahead-out">4</output> periodos
+            <input type="range" id="ahead" min="0" max="12" value="4">
+          </label>
+        </div>
+        <div class="chart" id="demoChart" role="img" aria-label="Gráfica de datos y proyección"></div>
+        <p class="legend"><span class="dot dot--a"></span>Datos reales <span class="dot dot--p"></span>Proyección <span class="dot dot--b"></span>Rango de confianza</p>
+      </div>
     </div>
   </section>
 
   <!-- BENTO -->
   <section class="section" id="bento">
-    <h2 class="title reveal">Una plataforma.<br><span class="muted">Infinitas posibilidades.</span></h2>
+    <h2 class="title reveal">Una plataforma.<br><span class="muted">Todo tu análisis.</span></h2>
     <div class="bento">
-      <div class="tile tile--wide reveal"><h3>Editor inteligente</h3><p>Escribe, ejecuta y depura desde el navegador.</p><div class="tile__art art1"></div></div>
-      <div class="tile reveal"><h3>Analítica</h3><p>Entiende tu avance de un vistazo.</p><div class="bars"><i style="--h:40%"></i><i style="--h:65%"></i><i style="--h:50%"></i><i style="--h:85%"></i><i style="--h:70%"></i><i style="--h:95%"></i></div></div>
-      <div class="tile reveal"><h3>Modo oscuro</h3><p>Se adapta a tu sistema, de día y de noche.</p><div class="tile__art art2"></div></div>
-      <div class="tile tile--wide tile--dark reveal"><h3>Despliega con un clic</h3><p>De tu idea a producción en segundos.</p><div class="tile__art art3"></div></div>
+      <div class="tile tile--wide reveal">
+        <h3>Proyecciones inteligentes</h3>
+        <p>Modelos de tendencia que se recalculan con cada dato nuevo.</p>
+        <svg class="tile__svg" viewBox="0 0 400 140" preserveAspectRatio="none" aria-hidden="true">
+          <defs><linearGradient id="bg1" x1="0" x2="0" y1="0" y2="1"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.35"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs>
+          <path d="M0 120 C40 110 60 100 100 95 S160 70 200 60 L200 140 L0 140Z" fill="url(#bg1)"/>
+          <path d="M0 120 C40 110 60 100 100 95 S160 70 200 60" fill="none" style="stroke:var(--accent)" stroke-width="3" stroke-linecap="round"/>
+          <path d="M200 60 C240 48 290 35 400 12" fill="none" style="stroke:var(--accent2)" stroke-width="3" stroke-dasharray="7 7" stroke-linecap="round"/>
+          <path d="M200 60 C250 55 300 55 400 50 L400 4 C300 22 250 36 200 60Z" style="fill:var(--accent2);fill-opacity:.14"/>
+        </svg>
+      </div>
+      <div class="tile reveal"><h3>Analítica</h3><p>Entiende tu negocio de un vistazo.</p><div class="bars"><i style="--h:40%"></i><i style="--h:65%"></i><i style="--h:50%"></i><i style="--h:85%"></i><i style="--h:70%"></i><i style="--h:95%"></i></div></div>
+      <div class="tile reveal"><h3>Excel y CSV</h3><p>Importa y exporta tus tablas sin fricción.</p><div class="tile__art art2"></div></div>
+      <div class="tile tile--wide tile--dark reveal"><h3>Seguro y privado</h3><p>Cifrado de extremo a extremo. Tus datos son solo tuyos.</p><div class="tile__art art3"></div></div>
     </div>
   </section>
 
@@ -92,30 +135,30 @@
   <section class="section" id="precios">
     <h2 class="title reveal">Elige tu plan.</h2>
     <div class="pricing">
-      <div class="plan reveal"><h3>Gratis</h3><div class="price">$0</div><ul><li>3 proyectos</li><li>Editor básico</li><li>Comunidad</li></ul><a class="btn btn--ghost" href="#">Empezar</a></div>
-      <div class="plan plan--pro reveal"><span class="badge">Popular</span><h3>Pro</h3><div class="price">$12<small>/mes</small></div><ul><li>Proyectos ilimitados</li><li>IA integrada</li><li>Soporte prioritario</li></ul><a class="btn" href="#">Probar 14 días</a></div>
-      <div class="plan reveal"><h3>Equipos</h3><div class="price">$29<small>/mes</small></div><ul><li>Todo en Pro</li><li>Colaboración</li><li>Panel de admin</li></ul><a class="btn btn--ghost" href="#">Contactar</a></div>
+      <div class="plan reveal"><h3>Gratis</h3><div class="price">$0</div><ul><li>3 tableros</li><li>1.000 registros</li><li>Gráficas básicas</li></ul><a class="btn btn--ghost" href="#demo">Empezar</a></div>
+      <div class="plan plan--pro reveal"><span class="badge">Popular</span><h3>Pro</h3><div class="price">$15<small>/mes</small></div><ul><li>Tableros ilimitados</li><li>Proyecciones</li><li>Importar y exportar</li></ul><a class="btn" href="#demo">Probar 14 días</a></div>
+      <div class="plan reveal"><h3>Empresas</h3><div class="price">$39<small>/mes</small></div><ul><li>Todo en Pro</li><li>Colaboración en equipo</li><li>API y roles</li></ul><a class="btn btn--ghost" href="#demo">Contactar</a></div>
     </div>
   </section>
 
   <!-- FAQ -->
   <section class="section section--narrow" id="faq">
     <h2 class="title reveal">Preguntas frecuentes</h2>
-    <details class="reveal"><summary>¿Necesito tarjeta para empezar?</summary><p>No. El plan Gratis no requiere ningún método de pago.</p></details>
-    <details class="reveal"><summary>¿Puedo cancelar cuando quiera?</summary><p>Sí, sin permanencia ni letra pequeña.</p></details>
-    <details class="reveal"><summary>¿Funciona en el móvil?</summary><p>Sí. Todo el diseño es adaptable a cualquier pantalla.</p></details>
+    <details class="reveal"><summary>¿Cómo se calcula la proyección?</summary><p>Con una regresión lineal sobre tus datos. La banda sombreada muestra el rango probable según qué tanto varían tus valores.</p></details>
+    <details class="reveal"><summary>¿Puedo importar mis datos de Excel?</summary><p>Sí. Guarda la hoja como CSV (periodo, valor) e impórtala con un clic.</p></details>
+    <details class="reveal"><summary>¿Mis datos están seguros?</summary><p>Se procesan en tu navegador en esta demo y no se envían a ningún servidor.</p></details>
   </section>
 
   <!-- CTA FINAL -->
   <section class="cta reveal">
-    <h2>Empieza hoy.</h2>
-    <p>Únete a miles de personas que ya crean con Nova.</p>
-    <a href="#precios" class="btn btn--light">Crear cuenta gratis</a>
+    <h2>Anticípate.</h2>
+    <p>Convierte tus datos en decisiones con Cifra.</p>
+    <a href="#demo" class="btn btn--light">Crear mi primera gráfica</a>
   </section>
 </main>
 
 <footer class="footer">
-  <p>© 2026 Nova. Todos los derechos reservados.</p>
+  <p>© 2026 Cifra. Todos los derechos reservados.</p>
   <p><a href="#">Privacidad</a> · <a href="#">Términos</a> · <a href="#">Contacto</a></p>
 </footer>
 
