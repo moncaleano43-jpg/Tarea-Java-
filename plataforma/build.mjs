@@ -1,5 +1,5 @@
 // Construye la plataforma nueva a partir del HTML original del usuario (con sus datos) y las capas de src/.
-// Uso: node plataforma/build.mjs <Control_Cavas_v36.html> [salida.html]
+// Uso: node plataforma/build.mjs <Control_Cavas_v36.html> [salida.html] [--only=archivo1,archivo2]
 // Los datos de producción NO viven en este repositorio: se leen del archivo original en cada compilación.
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -7,7 +7,10 @@ import { fileURLToPath } from 'node:url';
 import { PATCHES } from './patches.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const [, , input, output = join(here, 'dist', 'Control_Cavas_v42.html')] = process.argv;
+const flags = Object.fromEntries(process.argv.slice(2).filter((a) => a.startsWith('--')).map((a) => { const [k, v = '1'] = a.slice(2).split('='); return [k, v]; }));
+const [input, output = join(here, 'dist', 'Control_Cavas_v42.html')] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+// --only=a.js,b.css  → incluye solo esos archivos de src/ (para probar un módulo aislado sin que otros a medio hacer lo rompan)
+const only = flags.only ? new Set(flags.only.split(',')) : null;
 if (!input) { console.error('Uso: node plataforma/build.mjs <Control_Cavas_v36.html> [salida.html]'); process.exit(1); }
 
 let html = readFileSync(input, 'utf8');
@@ -19,7 +22,7 @@ for (const p of PATCHES) {
 }
 
 const list = (dir, ext) => existsSync(join(here, 'src', dir))
-  ? readdirSync(join(here, 'src', dir)).filter((f) => f.endsWith(ext)).sort() : [];
+  ? readdirSync(join(here, 'src', dir)).filter((f) => f.endsWith(ext) && (!only || only.has(f))).sort() : [];
 const css = list('css', '.css').map((f) => `<style id="v42-${f.replace(/\W/g, '-')}">\n${readFileSync(join(here, 'src/css', f), 'utf8')}\n</style>`).join('\n');
 const js = list('js', '.js').map((f) => `<script id="v42-${f.replace(/\W/g, '-')}">\n${readFileSync(join(here, 'src/js', f), 'utf8')}\n</script>`).join('\n');
 
