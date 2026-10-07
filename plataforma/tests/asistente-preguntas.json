@@ -962,6 +962,148 @@
      ]
     }
    ]
+  },
+  {
+   "name": "libre: agua septiembre, agosto, julio, turno",
+   "steps": [
+    {
+     "q": "cuanta agua gastamos en septiembre",
+     "ok": [
+      "stat"
+     ]
+    },
+    {
+     "q": "y en agosto?",
+     "ok": [
+      "stat"
+     ],
+     "periodo": "agosto"
+    },
+    {
+     "q": "compara con julio",
+     "ok": [
+      "compare"
+     ]
+    },
+    {
+     "q": "por turno",
+     "ok": [
+      "stat",
+      "compare",
+      "rank"
+     ]
+    },
+    {
+     "q": "grafica",
+     "ok": [
+      "trend",
+      "stat",
+      "compare",
+      "rank"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "libre: merma Light, Club, Estándar",
+   "steps": [
+    {
+     "q": "merma de light",
+     "ok": [
+      "stat"
+     ]
+    },
+    {
+     "q": "y club?",
+     "ok": [
+      "stat"
+     ]
+    },
+    {
+     "q": "y estandar",
+     "ok": [
+      "stat"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "libre: aseos y SV 12",
+   "steps": [
+    {
+     "q": "aseos en septiembre",
+     "ok": [
+      "list",
+      "count",
+      "stat"
+     ]
+    },
+    {
+     "q": "solo los de sv 12",
+     "ok": [
+      "list",
+      "count",
+      "stat"
+     ]
+    },
+    {
+     "q": "exporta",
+     "ok": [
+      "exportar"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "libre: recuperación mes y UTK",
+   "steps": [
+    {
+     "q": "recuperacion este año",
+     "ok": [
+      "stat"
+     ]
+    },
+    {
+     "q": "por mes",
+     "ok": [
+      "trend",
+      "stat"
+     ]
+    },
+    {
+     "q": "y por utk",
+     "ok": [
+      "stat",
+      "rank"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "libre: trasiegos Light con desvío",
+   "steps": [
+    {
+     "q": "trasiegos de light",
+     "ok": [
+      "list"
+     ]
+    },
+    {
+     "q": "con desvio mayor a 2 horas",
+     "ok": [
+      "list",
+      "count",
+      "stat"
+     ]
+    },
+    {
+     "q": "por causa",
+     "ok": [
+      "stat",
+      "rank"
+     ]
+    }
+   ]
   }
  ],
  "numericas": [
@@ -1314,5 +1456,509 @@
     "state": "descartada"
    }
   }
- ]
+ ],
+ "libres": {
+  "libres: agua": [
+   {
+    "q": "cuantos m3 de agua llevamos en octubre",
+    "ds": "agua"
+   },
+   {
+    "q": "gasto de agua semana pasada",
+    "ds": "agua"
+   },
+   {
+    "q": "aguaa de hoy",
+    "ds": "agua"
+   },
+   {
+    "q": "como va el consumo de agua en el mes",
+    "ds": "agua"
+   },
+   {
+    "q": "que turno es el mas gastador de agua este año",
+    "ds": "agua"
+   },
+   {
+    "q": "agua por turno en la ultima semana",
+    "ds": "agua"
+   },
+   {
+    "q": "mostrame el consumo de agua de los ultimos 15 dias",
+    "ds": "agua"
+   },
+   {
+    "q": "necesito saber cuanta agua se uso el lunes",
+    "ds": "agua"
+   },
+   {
+    "q": "consumo de agua q1 2026",
+    "ds": "agua"
+   },
+   {
+    "q": "cuanto es el promedio diario de consumo de agua",
+    "ds": "agua"
+   },
+   {
+    "q": "agua gea del mes pasado",
+    "ds": "agua"
+   },
+   {
+    "q": "pisos vs cip en septiembre",
+    "ds": "agua"
+   },
+   {
+    "q": "dia con menos consumo de agua en agosto",
+    "ds": "agua"
+   },
+   {
+    "q": "variabilidad del consumo de agua",
+    "ds": "agua"
+   },
+   {
+    "q": "como se comporta el consumo de agua por semana",
+    "ds": "agua"
+   },
+   {
+    "q": "m3 de cip este año",
+    "ds": "agua"
+   },
+   {
+    "q": "esta semana vs la anterior consumo de agua",
+    "ds": "agua"
+   },
+   {
+    "q": "proyección del agua para el mes",
+    "ds": "agua"
+   },
+   {
+    "q": "si recortamos 5% el agua cuanto es",
+    "ds": "agua"
+   }
+  ],
+  "libres: aseos": [
+   {
+    "q": "cuántos aseos se hicieron la semana pasada",
+    "ds": "aseos"
+   },
+   {
+    "q": "aseos de colector 1 en agosto",
+    "ds": "aseos"
+   },
+   {
+    "q": "aseos fv 10",
+    "ds": "aseos"
+   },
+   {
+    "q": "cuales son los aseos mas largos",
+    "ds": "aseos"
+   },
+   {
+    "q": "aseos por operario",
+    "ds": "aseos"
+   },
+   {
+    "q": "limpieza de la centrifuga cuantas veces",
+    "ds": "aseos"
+   },
+   {
+    "q": "cip de sv 5",
+    "ds": "aseos"
+   },
+   {
+    "q": "aseos con ph malo",
+    "ds": "aseos"
+   },
+   {
+    "q": "aseos de jean en septiembre",
+    "ds": "aseos"
+   },
+   {
+    "q": "agua por aseo de la red de siembra",
+    "ds": "aseos"
+   },
+   {
+    "q": "aseos que duraron mas de 3 horas",
+    "ds": "aseos"
+   },
+   {
+    "q": "consumo por aseo promedio por equipo",
+    "ds": "aseos"
+   },
+   {
+    "q": "limpiezas de la semana",
+    "ds": "aseos"
+   },
+   {
+    "q": "lavados de tanques en agosto",
+    "ds": "aseos"
+   }
+  ],
+  "libres: merma": [
+   {
+    "q": "que marca tiene mas perdida",
+    "ds": "merma"
+   },
+   {
+    "q": "perdida de volumen en agosto por marca",
+    "ds": "merma"
+   },
+   {
+    "q": "mermas mayores al 5 %",
+    "ds": "merma"
+   },
+   {
+    "q": "merma de fv 12",
+    "ds": "merma"
+   },
+   {
+    "q": "la merma subio o bajo este mes",
+    "ds": "merma"
+   },
+   {
+    "q": "como esta la merma frente al mes pasado",
+    "ds": "merma"
+   },
+   {
+    "q": "merma de sv",
+    "ds": "merma"
+   },
+   {
+    "q": "merma azteca vs light",
+    "ds": "merma"
+   },
+   {
+    "q": "hl perdidos este año",
+    "ds": "merma"
+   },
+   {
+    "q": "merma por mes",
+    "ds": "merma"
+   },
+   {
+    "q": "kge perdido",
+    "ds": "merma"
+   },
+   {
+    "q": "lotes de merma en el ultimo trimestre",
+    "ds": "merma"
+   },
+   {
+    "q": "promedio de merma del trimestre pasado",
+    "ds": "merma"
+   },
+   {
+    "q": "cual lote perdio mas",
+    "ds": "merma"
+   }
+  ],
+  "libres: recuperación": [
+   {
+    "q": "cuanta cerveza recuperamos la semana pasada",
+    "ds": "recuperacion"
+   },
+   {
+    "q": "recuperadas por mes",
+    "ds": "recuperacion"
+   },
+   {
+    "q": "tiempo de recuperacion del utk 19",
+    "ds": "recuperacion"
+   },
+   {
+    "q": "recuperaciones mayores a 90 horas",
+    "ds": "recuperacion"
+   },
+   {
+    "q": "cuantas recuperaciones hicimos este año",
+    "ds": "recuperacion"
+   },
+   {
+    "q": "rendimiento por utk",
+    "ds": "recuperacion"
+   },
+   {
+    "q": "ph de las recuperaciones",
+    "ds": "recuperacion"
+   },
+   {
+    "q": "agua añadida en recuperaciones",
+    "ds": "recuperacion"
+   },
+   {
+    "q": "que tan rapido recuperamos",
+    "ds": "recuperacion"
+   },
+   {
+    "q": "utk 20 vs utk 19",
+    "ds": "recuperacion"
+   }
+  ],
+  "libres: trasiego": [
+   {
+    "q": "trasiegos de hoy",
+    "ds": "trasiego"
+   },
+   {
+    "q": "cuantos cips se hicieron en agosto",
+    "ds": "trasiego"
+   },
+   {
+    "q": "retraso por causa",
+    "ds": "trasiego"
+   },
+   {
+    "q": "mayor desvío del año",
+    "ds": "trasiego"
+   },
+   {
+    "q": "trasiegos de azteca",
+    "ds": "trasiego"
+   },
+   {
+    "q": "cuantas horas duran los trasiegos de light",
+    "ds": "trasiego"
+   },
+   {
+    "q": "trasiegos sin causa de desvío",
+    "ds": "trasiego"
+   },
+   {
+    "q": "desvios de septiembre",
+    "ds": "trasiego"
+   },
+   {
+    "q": "causas de retraso en agosto",
+    "ds": "trasiego"
+   },
+   {
+    "q": "trasiegos de la utq 25",
+    "ds": "trasiego"
+   },
+   {
+    "q": "duración de los cip",
+    "ds": "trasiego"
+   }
+  ],
+  "libres: fermentación": [
+   {
+    "q": "cuantos lotes fermentaron en septiembre",
+    "ds": "ferm"
+   },
+   {
+    "q": "h75 por marca",
+    "ds": "ferm"
+   },
+   {
+    "q": "atenuacion de club colombia",
+    "ds": "ferm"
+   },
+   {
+    "q": "e72 promedio",
+    "ds": "ferm"
+   },
+   {
+    "q": "que fermentador tarda mas",
+    "ds": "ferm"
+   },
+   {
+    "q": "fermentaciones de estandar en agosto",
+    "ds": "ferm"
+   },
+   {
+    "q": "extracto original de light",
+    "ds": "ferm"
+   },
+   {
+    "q": "rata de caida promedio",
+    "ds": "ferm"
+   },
+   {
+    "q": "cuanto dura el llenado de un fermentador",
+    "ds": "ferm"
+   },
+   {
+    "q": "fv 27 h75",
+    "ds": "ferm"
+   },
+   {
+    "q": "marcas por velocidad de fermentacion",
+    "ds": "ferm"
+   }
+  ],
+  "libres: levadura": [
+   {
+    "q": "viabilidad media del mes pasado",
+    "ds": "lev"
+   },
+   {
+    "q": "generacion con mas viabilidad",
+    "ds": "lev"
+   },
+   {
+    "q": "cosechas por marca",
+    "ds": "lev"
+   },
+   {
+    "q": "consistencia de la levadura en septiembre",
+    "ds": "lev"
+   },
+   {
+    "q": "ph de levadura por mes",
+    "ds": "lev"
+   },
+   {
+    "q": "cuantas cosechas hay vaciadas",
+    "ds": "lev"
+   },
+   {
+    "q": "levadura con viabilidad por debajo de 94",
+    "ds": "lev"
+   },
+   {
+    "q": "viabilidad y consistencia de la levadura por familia",
+    "ds": "lev"
+   }
+  ],
+  "libres: calidad": [
+   {
+    "q": "hay datos malos?"
+   },
+   {
+    "q": "que tan completa esta la informacion de aseos"
+   },
+   {
+    "q": "datos faltantes en recuperacion"
+   },
+   {
+    "q": "ultima fecha de datos de merma"
+   },
+   {
+    "q": "problemas en los datos de trasiego"
+   }
+  ],
+  "libres: análisis": [
+   {
+    "q": "que esta raro hoy"
+   },
+   {
+    "q": "alguna cosa fuera de rango en aseos"
+   },
+   {
+    "q": "donde esta el desperdicio"
+   },
+   {
+    "q": "como cerramos el mes en aseos"
+   },
+   {
+    "q": "por que esta alto el consumo"
+   },
+   {
+    "q": "que explica el aumento de merma"
+   },
+   {
+    "q": "prioridades para esta semana"
+   },
+   {
+    "q": "recomiendame algo para ahorrar agua"
+   }
+  ],
+  "libres: plataforma": [
+   {
+    "q": "como subo el excel de aseos"
+   },
+   {
+    "q": "donde cargo el programa de trasiego"
+   },
+   {
+    "q": "como edito las metas"
+   },
+   {
+    "q": "que hace esta plataforma"
+   },
+   {
+    "q": "para que sirve el constructor"
+   },
+   {
+    "q": "como imprimo un informe"
+   },
+   {
+    "q": "donde veo las alertas"
+   },
+   {
+    "q": "que significa kge"
+   },
+   {
+    "q": "que es el cpk"
+   },
+   {
+    "q": "explicame que es el pareto"
+   },
+   {
+    "q": "tienes inteligencia artificial"
+   },
+   {
+    "q": "como funciona la proyeccion"
+   }
+  ],
+  "libres: reportes": [
+   {
+    "q": "resumen de ayer"
+   },
+   {
+    "q": "resumen de hoy"
+   },
+   {
+    "q": "como nos fue la semana pasada"
+   },
+   {
+    "q": "resumen de septiembre"
+   },
+   {
+    "q": "dame el informe del mes"
+   },
+   {
+    "q": "mandame al analisis de merma"
+   },
+   {
+    "q": "reporte semanal"
+   }
+  ],
+  "libres: ruido": [
+   {
+    "q": "jajaja",
+    "ok": [
+     "gracias",
+     "saludo",
+     "aclarar",
+     "legacy"
+    ],
+    "ruido": true
+   },
+   {
+    "q": "no entendi",
+    "ok": [
+     "aclarar",
+     "legacy"
+    ],
+    "ruido": true
+   },
+   {
+    "q": "xyz abc 123",
+    "ok": [
+     "aclarar",
+     "legacy"
+    ],
+    "ruido": true
+   },
+   {
+    "q": "asdfgh",
+    "ok": [
+     "aclarar",
+     "legacy"
+    ],
+    "ruido": true
+   }
+  ]
+ }
 }

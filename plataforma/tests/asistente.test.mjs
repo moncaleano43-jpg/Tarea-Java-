@@ -29,11 +29,11 @@ const results = [];
 const ask = (q, reset) => page.evaluate(async ({ q, reset }) => {
   if (reset) App.Cifra.olvidar();
   const r = await App.Cifra.preguntar(q);
-  return { intent: r.intent, conf: r.confianza, ms: r.ms, chart: !!r.hasChart, table: !!r.hasTable, valor: r.valor, texto: r.texto.slice(0, 220), per: r.spec && r.spec.period ? r.spec.period.label : null, chips: (r.opts || []).length };
+  return { intent: r.intent, ds: r.spec ? r.spec.ds : null, conf: r.confianza, ms: r.ms, chart: !!r.hasChart, table: !!r.hasTable, valor: r.valor, texto: r.texto.slice(0, 220), per: r.spec && r.spec.period ? r.spec.period.label : null, chips: (r.opts || []).length };
 }, { q, reset });
 
 // 1) Preguntas independientes por categoría
-for (const [cat, list] of Object.entries(bank.categorias)) {
+for (const [cat, list] of [...Object.entries(bank.categorias), ...Object.entries(bank.libres || {})]) {
   for (const it of list) {
     const r = await ask(it.q, true);
     let good, why = '';
@@ -43,6 +43,8 @@ for (const [cat, list] of Object.entries(bank.categorias)) {
       if (!good) why = 'sin respuesta útil (' + r.intent + ')';
       if (good && it.ok && !it.ok.includes(r.intent)) { good = false; why = 'intención ' + r.intent + ' no esperada (' + it.ok.join('/') + ')'; }
       if (good && it.chart && !r.chart) { good = false; why = 'faltó el gráfico'; }
+      if (good && it.ds && r.ds && r.ds !== it.ds) { good = false; why = 'tema ' + r.ds + ' en vez de ' + it.ds; }
+      if (it.ruido) { good = it.ok.includes(r.intent); why = good ? '' : 'el ruido no debía responderse como ' + r.intent; }
     }
     results.push({ tipo: 'pregunta', cat, q: it.q, good, why, ...r });
   }
