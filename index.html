@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nova — Aprende, crea, despliega</title>
+<meta name="description" content="Plataforma para aprender y construir software, con un diseño claro, rápido y minimalista.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="nav__inner">
+    <a href="#" class="logo" aria-label="Nova"><span class="logo__dot"></span>Nova</a>
+    <nav class="nav__links" aria-label="Principal">
+      <a href="#funciones">Funciones</a>
+      <a href="#bento">Plataforma</a>
+      <a href="#precios">Precios</a>
+      <a href="#faq">Ayuda</a>
+    </nav>
+    <div class="nav__cta">
+      <button class="icon-btn" id="theme" aria-label="Cambiar tema">◐</button>
+      <a href="#precios" class="btn btn--sm">Empezar</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero">
+    <p class="eyebrow reveal">Nuevo · Nova 2.0</p>
+    <h1 class="display reveal">Crear nunca<br>fue tan <span class="grad">simple.</span></h1>
+    <p class="lead reveal">Una sola plataforma para aprender, practicar y publicar tus proyectos. Rápida, bella y pensada para ti.</p>
+    <div class="hero__actions reveal">
+      <a href="#precios" class="btn">Empieza gratis</a>
+      <a href="#funciones" class="link">Ver cómo funciona ›</a>
+    </div>
+
+    <div class="device reveal" aria-hidden="true">
+      <div class="device__bar"><i></i><i></i><i></i><span>nova.app/proyecto</span></div>
+      <div class="device__body">
+        <aside>
+          <b>Proyectos</b><span class="on">Inicio</span><span>Cursos</span><span>Tareas</span><span>Equipo</span>
+        </aside>
+        <div class="device__main">
+          <div class="card-row">
+            <div class="mini"><small>Progreso</small><strong>84%</strong></div>
+            <div class="mini"><small>Tareas</small><strong>12</strong></div>
+            <div class="mini"><small>Racha</small><strong>21 días</strong></div>
+          </div>
+          <pre class="code"><span class="k">public class</span> Hola {
+  <span class="k">public static void</span> main(String[] a) {
+    System.out.println(<span class="s">"Hola, mundo"</span>);
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MÉTRICAS -->
+  <section class="stats">
+    <div class="reveal"><strong data-count="250">0</strong><span>mil usuarios</span></div>
+    <div class="reveal"><strong data-count="99">0</strong><span>% disponibilidad</span></div>
+    <div class="reveal"><strong data-count="40">0</strong><span>países</span></div>
+    <div class="reveal"><strong>4.9★</strong><span>valoración</span></div>
+  </section>
+
+  <!-- FUNCIONES -->
+  <section class="section" id="funciones">
+    <h2 class="title reveal">Todo lo que necesitas.<br><span class="muted">Nada que no.</span></h2>
+    <div class="features">
+      <article class="feature reveal"><div class="ico">⚡</div><h3>Velocidad extrema</h3><p>Carga en milisegundos en cualquier dispositivo.</p></article>
+      <article class="feature reveal"><div class="ico">🔒</div><h3>Seguro por diseño</h3><p>Cifrado de extremo a extremo y privacidad real.</p></article>
+      <article class="feature reveal"><div class="ico">🤝</div><h3>Colabora en vivo</h3><p>Trabaja con tu equipo en tiempo real, sin fricción.</p></article>
+      <article class="feature reveal"><div class="ico">✨</div><h3>IA integrada</h3><p>Sugerencias inteligentes que te ahorran horas.</p></article>
+    </div>
+  </section>
+
+  <!-- BENTO -->
+  <section class="section" id="bento">
+    <h2 class="title reveal">Una plataforma.<br><span class="muted">Infinitas posibilidades.</span></h2>
+    <div class="bento">
+      <div class="tile tile--wide reveal"><h3>Editor inteligente</h3><p>Escribe, ejecuta y depura desde el navegador.</p><div class="tile__art art1"></div></div>
+      <div class="tile reveal"><h3>Analítica</h3><p>Entiende tu avance de un vistazo.</p><div class="bars"><i style="--h:40%"></i><i style="--h:65%"></i><i style="--h:50%"></i><i style="--h:85%"></i><i style="--h:70%"></i><i style="--h:95%"></i></div></div>
+      <div class="tile reveal"><h3>Modo oscuro</h3><p>Se adapta a tu sistema, de día y de noche.</p><div class="tile__art art2"></div></div>
+      <div class="tile tile--wide tile--dark reveal"><h3>Despliega con un clic</h3><p>De tu idea a producción en segundos.</p><div class="tile__art art3"></div></div>
+    </div>
+  </section>
+
+  <!-- PRECIOS -->
+  <section class="section" id="precios">
+    <h2 class="title reveal">Elige tu plan.</h2>
+    <div class="pricing">
+      <div class="plan reveal"><h3>Gratis</h3><div class="price">$0</div><ul><li>3 proyectos</li><li>Editor básico</li><li>Comunidad</li></ul><a class="btn btn--ghost" href="#">Empezar</a></div>
+      <div class="plan plan--pro reveal"><span class="badge">Popular</span><h3>Pro</h3><div class="price">$12<small>/mes</small></div><ul><li>Proyectos ilimitados</li><li>IA integrada</li><li>Soporte prioritario</li></ul><a class="btn" href="#">Probar 14 días</a></div>
+      <div class="plan reveal"><h3>Equipos</h3><div class="price">$29<small>/mes</small></div><ul><li>Todo en Pro</li><li>Colaboración</li><li>Panel de admin</li></ul><a class="btn btn--ghost" href="#">Contactar</a></div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section section--narrow" id="faq">
+    <h2 class="title reveal">Preguntas frecuentes</h2>
+    <details class="reveal"><summary>¿Necesito tarjeta para empezar?</summary><p>No. El plan Gratis no requiere ningún método de pago.</p></details>
+    <details class="reveal"><summary>¿Puedo cancelar cuando quiera?</summary><p>Sí, sin permanencia ni letra pequeña.</p></details>
+    <details class="reveal"><summary>¿Funciona en el móvil?</summary><p>Sí. Todo el diseño es adaptable a cualquier pantalla.</p></details>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="cta reveal">
+    <h2>Empieza hoy.</h2>
+    <p>Únete a miles de personas que ya crean con Nova.</p>
+    <a href="#precios" class="btn btn--light">Crear cuenta gratis</a>
+  </section>
+</main>
+
+<footer class="footer">
+  <p>© 2026 Nova. Todos los derechos reservados.</p>
+  <p><a href="#">Privacidad</a> · <a href="#">Términos</a> · <a href="#">Contacto</a></p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
