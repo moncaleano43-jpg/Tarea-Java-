@@ -711,6 +711,7 @@
       const second = bestDs[1][1];
       if (second > 0 && bestDs[0][1] - second < 1) plan.ambig = [bestDs[0][0], bestDs[1][0]];
     }
+    if (F.corr && /\b(viabilidad|consistencia)\b/.test(q) && /\b(h ?75|h ?15|e ?72|atenuacion|rapid\w+|lent\w+|velocidad)\b/.test(q)) { ds = 'ferm'; dsConf = Math.max(dsConf, 3); }
     // métricas de componentes del agua
     const comps = ['pisos', 'cip', 'gea'].filter((c) => new RegExp('\\b' + c + '\\b').test(q));
     // seguimiento: sin tema nuevo
@@ -897,6 +898,7 @@
     else if (F.list || (rowNoun && !F.sum && !F.mean && !F.count && !F.chart && (spec.conds.length || X.tanks.length || X.eqTerms.length || X.ops.length || X.brands.length || spec.period && !spec.periodDefault) && (!spec.metricExplicit || (spec.conds.length && spec.conds.every((c) => c.k === spec.metric))) && !by && !F.compare)) intent = 'list';
     else if (F.chart || (by && TIMEKEYS.includes(by))) intent = 'trend';
     else if (by) intent = 'stat';
+    if (ds === 'recuperacion' && F.compare && /levadura|recolect/.test(q) && /recuperad|cerveza/.test(q)) { intent = 'corr'; spec.cmp = null; }
     if (intent === 'rank' && !by) {
       // por defecto: filas (lotes, aseos…) o la dimensión natural del tema
       if (noun) by = null;
@@ -962,6 +964,7 @@
     if (ds === 'trasiego') {
       if (spec.cause) rows = rows.filter((r) => normS(r.cause).includes(spec.cause));
       if (spec.kind) rows = rows.filter((r) => r.kind === spec.kind);
+      for (const t of spec.eqTerms || []) rows = rows.filter((r) => normS(r.activity).includes(t));
     }
     if (ds === 'lev' && spec.state) rows = rows.filter((r) => r.state === spec.state);
     for (const c of spec.conds || []) rows = rows.filter((r) => condPass(c, r, ds));
@@ -1005,8 +1008,9 @@
   function deltaSentence(m, cur, prev, prevLabel, how) {
     const d = deltaPct(cur, prev);
     if (d == null) return prev == null ? '' : 'Frente a ' + prevLabel + ' (' + vFmt(m, prev) + ') no se puede calcular el cambio porcentual.';
-    if (Math.abs(d) < 0.5) return 'Prácticamente igual ' + frenteA(prevLabel) + ' (' + vFmt(m, prev) + ').';
+    if (Math.abs(d) < 0.5 || (m.u === '%' && m.t === 'ratio' && Math.abs(cur - prev) < 0.05)) return 'Prácticamente igual ' + frenteA(prevLabel) + ' (' + vFmt(m, prev) + ').';
     const up = d > 0, good = m.good ? (m.good === 'down') !== up : null;
+    if (m.u === '%' && (m.t === 'ratio')) { const pts = cur - prev; return (pts > 0 ? 'Subió ' : 'Bajó ') + fmt(Math.abs(pts), 2) + ' puntos porcentuales ' + frenteA(prevLabel) + ' (' + vFmt(m, prev) + ')' + (good == null ? '.' : good ? ', una buena señal.' : ', conviene mirarlo.'); }
     return (up ? 'Subió ' : 'Bajó ') + fmt(Math.abs(d), 1) + ' % ' + frenteA(prevLabel) + ' (' + vFmt(m, prev) + ')' + (good == null ? '.' : good ? ', una buena señal.' : ', conviene mirarlo.');
   }
   function sigSentence(a, b, lblA, lblB) {
@@ -1133,6 +1137,7 @@
     const ds = spec.ds, e = DL().extent(ds);
     R.h('No encontré datos para eso', esc(dsLabel(ds)) + ' · ' + esc(spec.period.label) + (filtTxt(spec) ? ' · ' + esc(filtTxt(spec)) : ''));
     R.p(why || 'No hay registros de ' + esc(dsLabel(ds).toLowerCase()) + ' que cumplan lo que pediste.');
+    if (e && e.to < spec.period.from) R.p('Aún no hay registros en ese periodo.');
     if (e) R.p('Los datos de ' + esc(dsLabel(ds).toLowerCase()) + ' van del <b>' + fd(e.from) + '</b> al <b>' + fd(Math.min(e.to, capT())) + '</b> (' + fmt(e.n, 0) + ' registros).');
     R.chip('Todo el año', DSEXAMPLE[ds] + ' este año').chip('Mes pasado', DSEXAMPLE[ds] + ' el mes pasado').chip('Últimos 90 días', DSEXAMPLE[ds] + ' en los últimos 90 días');
     R.conf = 0.55;
@@ -1236,7 +1241,7 @@
   }[ds]());
   const secondaryKpi = (spec, rows, m, how, a) => {
     if (m.k === '__n') { const days = Math.max(1, Math.round((Math.min(spec.period.to, capT()) - spec.period.from + 1) / DAY)); return days >= 7 ? kpi(days >= 60 ? 'Promedio por semana' : 'Promedio por día', days >= 60 ? (a.v / days) * 7 : a.v / days, '') : null; }
-    if (how === 'sum') { const dd = groupRows(spec.ds, rows.filter((r) => vals([r], m).length), 'day').length; return dd ? kpi('Promedio por día con datos', a.v / dd, m.u, { help: dd + ' días con registros' }) : null; }
+    if (how === 'sum') { const dd = groupRows(spec.ds, rows.filter((r) => vals([r], m).length), 'day').length; return dd > 1 ? kpi('Promedio por día con datos', a.v / dd, m.u, { help: dd + ' días con registros' }) : null; }
     if (how === 'wmean') { const s = aggregate(rows, m, 'mean'); const vv = rows.map((r) => (m.w ? (DL().N(r[m.w[0]]) / DL().N(r[m.w[1]])) * 100 : null)).filter((x) => x != null && Number.isFinite(x) && x >= m.plaus[0] && x <= m.plaus[1]); return vv.length ? kpi('Promedio simple por registro', vv.reduce((x, y) => x + y, 0) / vv.length, m.u, { help: 'sin ponderar por volumen' }) : null; }
     if (how === 'mean' || how === 'median') { const v = vals(rows, m); return v.length ? kpi('Rango', fa(Math.min(...v)) + ' – ' + fa(Math.max(...v)), m.u) : null; }
     return null;
@@ -1285,6 +1290,11 @@
     } else if (prevP && spec.period.kind !== 'all' && !spec.period.dflt) R.p('No hay datos en ' + esc(prevP.label) + ' para comparar.');
     const ins = insights(spec, rows, m, how);
     if (ins.length) R.list(ins);
+    if (ds === 'agua' && m.k !== '__n' && spec.period.to - spec.period.from < 40 * DAY && m.k === 'total') {
+      const nd = Math.max(1, Math.round((Math.min(spec.period.to, capT()) - spec.period.from + 1) / DAY)), exp = nd * 3;
+      if (a.n < exp * 0.85) R.note('Ojo: hay <b>' + a.n + '</b> lecturas válidas de unas ' + exp + ' esperadas (3 por día) en este periodo; el total está subestimado por las lecturas que faltan.', 'warn');
+    }
+    if (a.n > 0 && a.n < 5 && m.k !== '__n' && (how === 'mean' || how === 'median' || how === 'wmean')) R.note('Son pocos datos (' + a.n + ' ' + plural(a.n, 'registro') + '): tómalo como una referencia, no como una conclusión.', 'warn');
     // gráfico de tendencia cuando el periodo da para varios puntos
     const days = (Math.min(spec.period.to, capT()) - spec.period.from) / DAY;
     if (days >= 4 && !(how === 'max' || how === 'min')) {
@@ -1351,7 +1361,8 @@
     const rows = select(spec);
     if (!rows.length) return emptyAnswer(spec);
     const by = spec.by, dn = dimLabel(ds, by);
-    let g = groupAgg(spec, rows, by, m, how);
+    let g = groupAgg(spec, rows, by, m, how), noCause = null;
+    if (by === 'cause') { noCause = g.find((x) => x.label === 'Sin causa registrada'); g = g.filter((x) => x.label !== 'Sin causa registrada' && x.v > 0); }
     if (!g.length) return emptyAnswer(spec);
     const ord = orderOf(spec, m);
     const isRank = spec.intent === 'rank';
@@ -1362,7 +1373,7 @@
     const total = m.t === 'add' || m.k === '__n' ? sum(g.map((x) => x.v)) : null;
     const R = new Resp(spec, isRank ? 'rank' : 'stat');
     const lead = top[0], tail = g[g.length - 1];
-    R.h((isRank ? (ord === 'asc' ? 'Menores' : 'Mayores') + ' ' + dn + 's por ' : '') + esc(m.k === '__n' ? m.l : metTitle(m, how)) + (isRank ? '' : ' por ' + esc(dn)), esc(spec.period.label) + (spec.period.txt ? ' (' + esc(spec.period.txt) + ')' : '') + esc(brandTxt(spec)) + (filtTxt(spec) ? ' · ' + esc(filtTxt(spec)) : ''));
+    R.h((isRank ? 'Ranking · ' : '') + esc(m.k === '__n' ? m.l : metTitle(m, how)) + ' por ' + esc(dn), esc(spec.period.label) + (spec.period.txt ? ' (' + esc(spec.period.txt) + ')' : '') + esc(brandTxt(spec)) + (filtTxt(spec) ? ' · ' + esc(filtTxt(spec)) : ''));
     R.kpis([kpi(isRank ? (ord === 'asc' ? 'Menor' : 'Mayor') : 'Más alto', lead.v, m.u, { help: lead.label }), g.length > 1 ? kpi(isRank && ord === 'asc' ? 'Mayor' : 'Más bajo', (isRank && ord === 'asc' ? g[g.length - 1] : tail).v, m.u, { help: (isRank && ord === 'asc' ? g[g.length - 1] : tail).label }) : null, kpi('Grupos comparados', g.length, '')]);
     let sg = '';
     if (m.t !== 'add' && m.k !== '__n' && g.length >= 2) {
@@ -1374,7 +1385,7 @@
     if (sg) R.p(esc(sg));
     if (by === 'cause' && ds === 'trasiego') {
       const noC = rows.filter((r) => r.cause === 'Sin causa registrada').length;
-      if (noC) R.p('Ojo: ' + noC + ' de ' + rows.length + ' actividades (' + fmt((noC / rows.length) * 100, 0) + ' %) no tienen causa registrada; el ranking solo cuenta las que sí.');
+      if (noC) R.p('Ojo: ' + noC + ' de ' + rows.length + ' actividades (' + fmt((noC / rows.length) * 100, 0) + ' %) no tienen causa registrada' + (noCause ? ' y suman ' + vFmt(m, noCause.v) : '') + '; el ranking solo cuenta las que sí.');
     }
     const chartItems = (by === 'cause' ? top.filter((x) => x.label !== 'Sin causa registrada') : top).map((x) => ({ label: x.label, v: x.v }));
     if (by === 'cause' && m.t === 'add' && chartItems.length >= 3) R.chart(CH().pareto({ title: 'Pareto de ' + dn + 's', items: chartItems.map((x) => ({ label: String(x.label).slice(0, 30), value: Math.max(0, x.v) })), unit: m.u, w: CW, h: 260, toolbar: true }));
@@ -1550,7 +1561,7 @@
     if (!rows.length) return emptyAnswer(spec);
     const sorted = rows.slice().sort((a, b) => b.t - a.t);
     const R = new Resp(spec, 'list');
-    R.h(rows.length + ' ' + DSNOUN[ds][rows.length === 1 ? 0 : 1] + (spec.conds.length ? ' que cumplen' : ''), esc(spec.period.label) + (spec.period.txt && spec.period.kind !== 'day' ? ' (' + esc(spec.period.txt) + ')' : '') + esc(brandTxt(spec)) + (filtTxt(spec) ? ' · ' + esc(filtTxt(spec)) : ''));
+    R.h(rows.length + ' ' + DSNOUN[ds][rows.length === 1 ? 0 : 1] + (spec.conds.length ? (rows.length === 1 ? ' que cumple' : ' que cumplen') : ''), esc(spec.period.label) + (spec.period.txt && spec.period.kind !== 'day' ? ' (' + esc(spec.period.txt) + ')' : '') + esc(brandTxt(spec)) + (filtTxt(spec) ? ' · ' + esc(filtTxt(spec)) : ''));
     const a = aggregate(rows, m, defaultHow(m));
     const k = [kpi('Registros', rows.length, ''), a.v != null ? kpi(metTitle(m, defaultHow(m)), a.v, m.u) : null, kpi('Más reciente', fd(sorted[0].t), '')];
     R.kpis(k);
@@ -1572,6 +1583,7 @@
   H.count = function (spec) {
     const ds = spec.ds, ref = refTime(), m = metOf(ds, '__n');
     const rows = select(spec);
+    { const e0 = DL().extent(ds); if (!rows.length && e0 && e0.to < spec.period.from) return emptyAnswer(spec, 'Todavía no hay registros de ' + esc(dsLabel(ds).toLowerCase()) + ' en ' + esc(spec.period.label) + ': los datos llegan hasta el <b>' + fd(e0.to) + '</b>.'); }
     const R = new Resp(spec, 'count');
     const base = (spec.conds.length || (spec.tanks || []).length || (spec.eqTerms || []).length || (spec.ops || []).length || (spec.brands || []).length) ? select(Object.assign({}, spec, { conds: [], tanks: [], eqTerms: [], eqTypes: [], ops: [], brands: [], cause: null, state: null, kind: null })) : null;
     const prevP = prevPeriod(spec.period, ref), prev = prevP ? select(spec, { period: prevP }) : [];
@@ -1675,7 +1687,8 @@
     let xk, yk, daily = false;
     const found = (MET[ds] || []).filter((x) => !x.def && x.re.test(q)).map((x) => x.k);
     if (ds === 'agua') { xk = /aseos?/.test(q) ? 'aseos' : /trasegad/.test(q) ? 'transfer' : 'hlproc'; yk = 'total'; daily = true; }
-    else if (found.length >= 2) { xk = found[0]; yk = found[1]; }
+    else if (ds === 'recuperacion' && /levadura|recolect/.test(q) && /recuperad|cerveza/.test(q)) { xk = 'yeast'; yk = 'volume'; }
+    else if (found.length >= 2) { found.sort((a, b) => { const ia = (MET[ds].find((x) => x.k === a).re.exec(q) || {}).index, ib = (MET[ds].find((x) => x.k === b).re.exec(q) || {}).index; return ia - ib; }); xk = found[0]; yk = found[1]; }
     else { const pr = (CORR_PAIRS[ds] || [])[0]; if (!pr) return emptyAnswer(spec, 'No tengo una relación natural para ese tema.'); [xk, yk] = pr; if (found.length === 1) { const cand = (CORR_PAIRS[ds] || []).find((p) => p.includes(found[0])); if (cand) { xk = cand[0]; yk = cand[1]; } } }
     let pts = [], xl, yl, xu, yu;
     if (ds === 'agua') {
@@ -1816,10 +1829,10 @@
     if (ser.length < 14) return emptyAnswer(Object.assign({}, spec, { period: P(histFrom, eod(ref), 'últimos 90 días', 'rolling') }), 'Para proyectar necesito al menos 14 días con datos y encontré ' + ser.length + '.');
     const R = new Resp(spec, 'forecast');
     const lastDay = ser[ser.length - 1].t;
-    let horizon, label, mtd = 0, mtdDays = 0, start;
+    let horizon, label, mtd = 0, mtdDays = 0, start, skip = 0, nmDays = 0;
     if (mode === 'month') { const eom = new Date(y, mo + 1, 0).getDate(); horizon = Math.max(1, eom - d0.getDate()); label = 'cierre de ' + MESES[mo]; const cur = select(spec, { period: P(new Date(y, mo, 1).getTime(), eod(ref), '', 'month') }); mtd = add ? aggregate(cur, m, m.k === '__n' ? 'count' : 'sum').v || 0 : 0; mtdDays = d0.getDate(); }
     else if (mode === 'week') { horizon = 7; label = 'los próximos 7 días'; }
-    else if (mode === 'nextmonth') { const nm = new Date(y, mo + 1, 1), dn = new Date(y, mo + 2, 0).getDate(); horizon = Math.max(1, Math.round((nm.getTime() - sod(ref)) / DAY) - 1 + dn); label = MESES[nm.getMonth()]; start = nm; }
+    else if (mode === 'nextmonth') { const nm = new Date(y, mo + 1, 1), dn = new Date(y, mo + 2, 0).getDate(), rem0 = Math.max(0, new Date(y, mo + 1, 0).getDate() - d0.getDate()); horizon = rem0 + dn; skip = rem0; nmDays = dn; label = MESES[nm.getMonth()]; start = nm; }
     else { horizon = Math.max(1, Math.round((new Date(y, 11, 31).getTime() - sod(ref)) / DAY)); label = 'cierre de ' + y; mtd = add ? aggregate(select(spec, { period: P(new Date(y, 0, 1).getTime(), eod(ref), '', 'year') }), m, m.k === '__n' ? 'count' : 'sum').v || 0 : 0; }
     const h = Math.min(horizon, 400);
     const yv = ser.map((x) => x.v);
@@ -1828,9 +1841,9 @@
     const pts = fc.points.map((p) => ({ y: add ? Math.max(0, p.y) : p.y }));
     const rate14 = sum(yv.slice(-14)) / Math.min(14, yv.length);
     let remaining;
-    if (add) remaining = h > pts.length ? sum(pts.map((p) => p.y)) + (h - pts.length) * (pts[pts.length - 1] ? pts[pts.length - 1].y : rate14) : sum(pts.slice(0, h).map((p) => p.y));
+    if (add) { const all = pts.map((p) => p.y); while (all.length < h) all.push(all.length ? all[all.length - 1] : rate14); remaining = sum(all.slice(skip, h)); }
     const rmse = fc.rmse != null ? fc.rmse : 0, bt = fc.backtest;
-    const sdTot = rmse * Math.sqrt(h);
+    const sdTot = rmse * Math.sqrt(Math.max(1, h - skip));
     const est = add ? mtd + remaining : null;
     const unit = m.k === '__n' ? DSNOUN[ds][1] : m.u;
     if (add) {
@@ -1838,7 +1851,8 @@
       R.h('Proyección: ' + fmt(est, est > 100 ? 0 : 1) + ' ' + esc(unit), esc(label) + esc(brandTxt(spec)) + (filtTxt(spec) ? ' · ' + esc(filtTxt(spec)) : ''));
       const lo = Math.max(mtd, est - 1.96 * sdTot), hi = est + 1.96 * sdTot;
       R.kpis([kpi('Proyectado', est, unit, { delta: prevTot && prevTot.v ? deltaPct(est, prevTot.v) : undefined, deltaGood: m.good === 'down' ? 'down' : 'up', help: prevTot && prevTot.v ? 'vs mes pasado: ' + fa(prevTot.v) : '' }), mode !== 'week' && mode !== 'nextmonth' ? kpi('Ya acumulado', mtd, unit, { help: mtdDays ? mtdDays + ' días' : '' }) : null, kpi('Rango probable (95 %)', fa(lo) + ' – ' + fa(hi), unit)]);
-      R.p('A este ritmo, el ' + esc(label) + ' sería de <b>' + fa(est) + ' ' + esc(unit) + '</b>' + (mode === 'month' || mode === 'year' ? ' (' + fa(mtd) + ' ya acumulados + ' + fa(remaining) + ' proyectados en los ' + h + ' días que faltan)' : ' (' + fa(remaining) + ' en ' + h + ' días)') + '. Con un 95 % de confianza quedaría entre ' + fa(lo) + ' y ' + fa(hi) + '.');
+      const phr = { month: 'al ' + label, year: 'al ' + label, week: 'en ' + label, nextmonth: 'en ' + label }[mode];
+      R.p('A este ritmo, ' + esc(phr) + ' serían <b>' + fa(est) + ' ' + esc(unit) + '</b>' + (mode === 'month' || mode === 'year' ? ' (' + fa(mtd) + ' ya acumulados + ' + fa(remaining) + ' proyectados en los ' + h + ' días que faltan)' : mode === 'nextmonth' ? ' (' + nmDays + ' días)' : ' (' + fa(remaining) + ' en ' + h + ' días)') + '. Con un 95 % de confianza quedaría entre ' + fa(lo) + ' y ' + fa(hi) + '.');
       if (prevTot && prevTot.v) R.p(esc(deltaSentence(m, est, prevTot.v, 'el mes pasado', 'sum')));
     } else {
       const meanNext = sum(pts.slice(0, Math.min(h, pts.length)).map((p) => p.y)) / Math.min(h, pts.length);
@@ -2081,7 +2095,7 @@
 
   H.revisar = function (spec) {
     const ref = refTime();
-    const period = P(sod(addDays(ref, -13)), eod(ref), 'últimos 14 días', 'rolling');
+    const period = spec.period && !spec.periodDefault ? spec.period : P(sod(addDays(ref, -13)), eod(ref), 'últimos 14 días', 'rolling');
     const fs = scan(period, spec.ds);
     const hall = analisisHallazgos().filter((h) => h.sev === 'alta' || h.sev === 'media');
     let old = [];
@@ -2092,7 +2106,7 @@
     for (const f of fs.filter((x) => x.sev !== 'info').slice(0, 5)) items.push({ sev: f.sev, html: '<b>' + esc(f.area) + '</b> · ' + esc(f.titulo) + '<br><span class="cf-mut">' + esc(f.detalle) + '</span>', q: f.q });
     for (const h of hall.slice(0, 3)) if (!items.some((i) => i.html.includes(esc(h.titulo).slice(0, 25)))) items.push({ sev: h.sev, html: '<b>' + esc(h.area || h.tab) + '</b> · ' + esc(h.titulo) + (h.detalle ? '<br><span class="cf-mut">' + esc(h.detalle) + '</span>' : '') });
     for (const a of old) items.push({ sev: a.color === 'red' ? 'alta' : 'media', html: '<b>Tanques y levadura</b> · ' + esc(a.label) + (a.help ? '<br><span class="cf-mut">' + esc(a.help) + '</span>' : '') });
-    R.h('Para revisar hoy', 'datos al ' + fdt(ref) + ' · revisé ' + esc(period.label));
+    R.h(spec.periodDefault || !spec.period ? 'Para revisar hoy' : 'Lo más importante · ' + esc(period.label), 'datos al ' + fdt(ref) + ' · revisé ' + esc(period.label));
     if (!items.length && !prog.length) { R.p('No veo nada urgente: las áreas que monitoreo están dentro de metas y de su comportamiento habitual en los últimos 14 días.'); R.chip('Resumen de la semana', 'resumen de la semana').chip('Dónde puedo ahorrar', 'dónde puedo ahorrar'); R.conf = 0.8; return R; }
     items.sort((a, b) => ({ alta: 0, media: 1, info: 2 }[a.sev] - { alta: 0, media: 1, info: 2 }[b.sev]));
     R.kpis([kpi('Prioridad alta', items.filter((i) => i.sev === 'alta').length, ''), kpi('Para revisar', items.filter((i) => i.sev !== 'alta').length, ''), kpi('Programados hoy/mañana', prog.length, '')]);
@@ -2460,7 +2474,7 @@
     return r;
   }
   function splitQuestion(texto) {
-    const parts = String(texto).split(/\s*[?¿]\s*|\s+y\s+(?=(?:cu[aá]nt|cu[aá]l|qu[eé]|c[oó]mo|compar|graf|dame|mu[eé]str|top|por\s?qu))/i).map((s) => s.trim()).filter((s) => s.split(/\s+/).length >= 3);
+    const parts = String(texto).split(/\?\s+(?=¿?\w)|\s+y\s+(?=(?:cu[aá]nt|cu[aá]l|qu[eé]|c[oó]mo|compar|graf|dame|mu[eé]str|top|por\s?qu))/i).map((s) => s.trim()).filter((s) => s.split(/\s+/).length >= 3);
     return parts.length > 1 && parts.length <= 3 ? parts : null;
   }
   function run(texto) {
@@ -2470,7 +2484,7 @@
     if (plan.intent === 'vacio') return null;
     if (plan.intent === 'legacy') return { legacy: true, plan };
     // varias preguntas en un mensaje
-    const sp = splitQuestion(texto);
+    const sp = /\bsi\b.*\b(a|un|el|la)\b/.test(norm(texto)) && !/\?\s+¿?\w/.test(texto) ? null : splitQuestion(texto);
     if (sp && !S.inSplit) {
       S.inSplit = true;
       try {
