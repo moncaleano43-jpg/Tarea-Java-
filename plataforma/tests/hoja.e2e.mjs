@@ -3,7 +3,7 @@
 //   CAVAS_ORIGINAL=/ruta/Control_Cavas_v36.html NODE_PATH=$(npm root -g) node --test plataforma/tests/hoja.e2e.mjs
 // Todo se escribe «como lo haría un usuario» (teclado). Los datos de prueba solo viven en el navegador efímero;
 // no se escribe nada en el repositorio (las capturas de pantalla van a un directorio temporal).
-import test, { before, after } from 'node:test';
+import test, { before, after, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -43,8 +43,17 @@ after(async () => {
   if (process.env.CAVAS_KEEP !== '1') fs.rmSync(tmp, { recursive: true, force: true }); else console.log('capturas en', shots);
 });
 
+afterEach(async () => {   // pase lo que pase, deja la página limpia para la prueba siguiente
+  if (!p) return;
+  try {
+    await p.evaluate(() => { try { App.Captura.cerrar(); } catch (e) { /* nada */ } document.querySelectorAll('#demo,#demo2,#big,#ro,.cap-toast,.hoja-ayuda,.hoja-pop').forEach((n) => n.remove()); });
+    await p.setViewportSize({ width: 1500, height: 900 });
+  } catch (e) { /* página cerrada */ }
+});
+
 /* ---------- ayudas ---------- */
 const kb = () => p.keyboard;
+let R0 = 0;   // índice de la primera fila vacía (después de las capturas ya guardadas)
 async function abrir(ruta, hoja) {
   await p.evaluate((r) => { location.hash = '#/' + r; }, ruta);
   await p.waitForSelector('[data-cifra-btn^="capturar-excel"]', { timeout: 10000 });
@@ -53,12 +62,14 @@ async function abrir(ruta, hoja) {
   await p.click('[data-cifra-btn^="capturar-excel"]');
   await p.waitForSelector('.cap-panel .hoja-vp');
   await p.waitForTimeout(300);
+  R0 = await p.evaluate(() => App.Captura.hoja().filasN - 1);
 }
+const fila = (k) => p.evaluate((i) => App.Captura.hoja().getFilas().find((f) => f.indice === i), R0 + k);
 const cerrarPanel = async () => { await p.evaluate(() => App.Captura.cerrar()); await p.waitForTimeout(150); };
 const hoja = (fn, arg) => p.evaluate(`(${fn.toString()})(App.Captura.hoja(), ${JSON.stringify(arg === undefined ? null : arg)})`);
 /** enfoca la celda `key` de la última fila (la vacía) o de la fila `fila` y escribe como usuario; Tab confirma */
-async function escribir(key, texto, fila) {
-  await hoja((h, a) => h.enfocar(a.f == null ? h.filasN - 1 : a.f, a.k), { k: key, f: fila == null ? null : fila });
+async function escribir(key, texto, k = 0) {
+  await hoja((h, a) => h.enfocar(a.f, a.k), { k: key, f: R0 + k });
   await kb().type(texto);
   await kb().press('Tab');
 }
@@ -112,7 +123,7 @@ test('Consumo de agua: teclado, pegado TSV, cálculos, semáforos, guardado y de
   await escribir('lecturaGea', miles(ult.gea + 300));
   await escribir('mosto', '1200'); await escribir('trasegados', '1500');
   await escribir('utq', '1'); await escribir('colector', '1'); await escribir('linea', '2'); await escribir('gea', '1');
-  const f1 = await hoja((h) => h.getFilas()[0]);
+  const f1 = await fila(0);
   assert.equal(f1.consumoPisos, 50); assert.equal(f1.consumoCip, 30); assert.equal(f1.consumoGea, 300);
   assert.equal(f1.hlPisos, 500); assert.equal(f1.total, 1100); assert.equal(f1.totalAseos, 5);
   assert.equal(f1.m3Aseo, 7.5); assert.equal(f1.hlAseoGea, 300); assert.equal(f1.eficiencia, 0.407);
@@ -120,13 +131,13 @@ test('Consumo de agua: teclado, pegado TSV, cálculos, semáforos, guardado y de
   await foto('agua-1-fila');
 
   // pegar un bloque TSV: fecha, hora y lectura de pisos de dos turnos; luego las lecturas de CIP y GEA
-  await hoja((h) => h.enfocar(h.filasN - 1, 'fecha'));
+  await hoja((h, i) => h.enfocar(i, 'fecha'), R0 + 1);
   const via = await pegar(`09/10/2026\t16:00\t${miles(ult.pisos + 200)}\n09/10/2026\t00:00\t${ult.pisos + 350}\n`);
-  await hoja((h) => h.enfocar(1, 'lecturaCip'));
+  await hoja((h, i) => h.enfocar(i, 'lecturaCip'), R0 + 1);
   await pegar(`${ult.cip + 60}\n${ult.cip + 90}`);
-  await hoja((h) => h.enfocar(1, 'lecturaGea'));
+  await hoja((h, i) => h.enfocar(i, 'lecturaGea'), R0 + 1);
   await pegar(`${ult.gea + 700}\n${ult.gea + 1000}`);
-  const fs3 = await hoja((h) => h.getFilas());
+  const fs3 = (await hoja((h) => h.getFilas())).filter((f) => f.indice >= R0);
   assert.equal(fs3.length, 3, 'pegar creó las filas que faltaban (vía ' + via + ')');
   assert.equal(fs3[1].fecha, '2026-10-09'); assert.equal(fs3[1].hora, '16:00');
   assert.equal(fs3[1].lecturaPisos, ult.pisos + 200, 'miles con punto en columna entera');
@@ -164,7 +175,7 @@ test('Consumo de agua: teclado, pegado TSV, cálculos, semáforos, guardado y de
   // justificación en las dos filas rojas → se guardan
   await escribir('justificacion', 'Fuga en línea CIP', 1);
   await escribir('justificacion', 'Lavado extraordinario', 2);
-  assert.match(await estado(), /3 filas · 0 con error · 2 sin guardar/);
+  assert.match(await estado(), /3 filas · 0 con error · 2 sin guardar/, JSON.stringify(await hoja((h) => h.validar().errores)));
   await guardar();
   rs = await registros('agua');
   assert.equal(rs.length, antes + 3);
@@ -176,7 +187,7 @@ test('Consumo de agua: teclado, pegado TSV, cálculos, semáforos, guardado y de
   // Deshacer (aviso): vuelve al estado anterior y deja las filas como pendientes
   await p.click('.cap-toast button'); await p.waitForTimeout(500);
   assert.equal((await registros('agua')).length, antes + 1, 'deshacer restaura las capturas');
-  assert.match(await estado(), /3 filas · 0 con error · 2 sin guardar/);
+  assert.match(await estado(), /3 filas · 0 con error · 2 sin guardar/, JSON.stringify(await hoja((h) => h.validar().errores)));
   await guardar();
   assert.equal((await registros('agua')).length, antes + 3, 'se pueden guardar otra vez');
   await cerrarPanel();
@@ -200,7 +211,7 @@ test('Recuperación: recolecciones plegables, cálculos, semáforos y guardado',
   await escribir('volRec', '100'); await escribir('presRec', '5,6'); await escribir('tempRec', '1,2');
   await escribir('sv', '14'); await escribir('consSv', 'M24'); await escribir('marca', 'est');
   await escribir('extracto', '11'); await escribir('phFinal', '5,5'); await escribir('sensorial', 'ok');
-  const f = await hoja((h) => h.getFilas()[0]);
+  const f = await fila(0);
   assert.equal(f.totalLev, 150); assert.equal(f.aguaTeo, 75); assert.equal(f.relacion, 50);
   assert.equal(f.fmax, '2026-10-09T08:00', 'primera recolección + 96 h');
   assert.equal(f.horas, 72); assert.equal(f.semana, 41);
@@ -241,22 +252,22 @@ test('Programa de trasiego: plan encadenado, desvío, causa obligatoria y lista 
   await escribir('proceso', proc); await escribir('marca', 'est'); await escribir('sv', '12');
   // inicio del plan: sobrescribe la sugerencia con una hora concreta; fin plan = +8,5 h
   await escribir('inicioPlan', '8/10 08:00');
-  let f = await hoja((h) => h.getFilas()[0]);
+  let f = await fila(0);
   assert.equal(f.finPlan, '2026-10-08T16:30');
   await escribir('inicioReal', '8/10 08:20'); await escribir('finReal', '8/10 18:30');
-  f = await hoja((h) => h.getFilas()[0]);
+  f = await fila(0);
   assert.equal(f.desvio, 2);                                // 18:30 − 16:30
   assert.match(await estado(), /1 fila · 1 con error/, 'causa obligatoria si el retraso supera 1 h');
   await escribir('causa', 'falla bomba');
   // fila 2: CIP de centrífuga encadenado: inicio = fin anterior + 1 h; fin = +2,5 h; causa nueva con confirmación
-  await escribir('proceso', 'CIP CENTRIFUGA RECETA 40');
-  const f2 = await hoja((h) => h.getFilas()[1]);
+  await escribir('proceso', 'CIP CENTRIFUGA RECETA 40', 1);
+  const f2 = await fila(1);
   assert.equal(f2.inicioPlan, '2026-10-08T17:30'); assert.equal(f2.finPlan, '2026-10-08T20:00');
-  await hoja((h) => h.enfocar(1, 'causa'));
+  await hoja((h, i) => h.enfocar(i, 'causa'), R0 + 1);
   await kb().type('Causa inventada para la prueba'); await kb().press('Enter');
   assert.match(await p.evaluate(() => document.querySelector('.cap-panel .hoja-pie-msg').textContent), /valor nuevo/);
   await kb().press('Enter');                               // segunda confirmación
-  assert.equal(await hoja((h) => h.getCelda(1, 'causa')), 'Causa inventada para la prueba');
+  assert.equal(await hoja((h, i) => h.getCelda(i, 'causa'), R0 + 1), 'Causa inventada para la prueba');
   await foto('programa');
   await guardar();
   const rs = await registros('programa');
@@ -282,13 +293,13 @@ test('Aseos · Cada uso: cálculos, cumplimiento y aparece en la sección', { sk
   await escribir('triCond', '24'); await escribir('triTemp', '22'); await escribir('triTiempo', '35'); await escribir('triEstado', 'l');
   await escribir('ph', '6,8'); await escribir('flujo', '1200'); await escribir('apariencia', 'l'); await escribir('metil', 'ok');
   await escribir('operario', 'Operario de prueba'); await kb().press('Enter');            // valor nuevo: confirmar
-  await hoja((h) => h.enfocar(0, 'stl'));
-  await kb().type('rf'); await kb().press('Tab'); await escribir('comentarios', 'Prueba de captura', 0);
-  const f = await hoja((h) => h.getFilas()[0]);
+  await hoja((h, i) => h.enfocar(i, 'stl'), R0);
+  await kb().type('rf'); await kb().press('Tab'); await escribir('comentarios', 'Prueba de captura');
+  const f = await fila(0);
   assert.equal(f.duracion, 50); assert.equal(f.semana, 41); assert.equal(f.equipo, 'FV'); assert.equal(f.vapor, 'N/A');
   assert.equal(f.sodaConc, 1.1);                            // (60 + 2,4968) / 56,636
   assert.equal(f.triConc, 1.55);                            // (24 − 1,2316) / 14,703
-  assert.equal(f.cumple, 0.86);                             // 6 de 7 criterios: la soda de FV debe estar en 0,7–1,05 %
+  assert.equal(f.cumple, 0.86, JSON.stringify(f));                             // 6 de 7 criterios: la soda de FV debe estar en 0,7–1,05 %
   assert.equal(f.pre, 'SI'); assert.equal(f.sodaEstado, 'L'); assert.equal(f.operario, 'Operario de prueba');
   await foto('aseos-cada-uso');
   await guardar();
@@ -321,7 +332,7 @@ test('Aseos · hoja genérica generada desde el esquema (3. Mensual)', { skip },
   const num = cols.find((c) => /conductiv/i.test(c.titulo) && c.tipo === 'numero');
   assert.ok(fecha && num);
   await escribir(fecha.key, '6/10 09:00');
-  if (eq) { await hoja((h, k) => h.enfocar(h.filasN - 1, k), eq.key); await kb().type('RED'); await kb().press('Tab'); }
+  if (eq) { await escribir(eq.key, 'RED'); await kb().press('Enter'); }
   await escribir(num.key, '55,5');
   await foto('aseos-mensual');
   await guardar();
@@ -359,7 +370,7 @@ test('App.Hoja: atajos tipo Excel, fechas flexibles, listas, rango, deshacer y b
   await k.type('55,55'); await k.press('Tab');                // número con coma, 1 decimal → 55,6
   await k.type('n'); await k.press('Tab');                    // «n» → NL
   await k.press('Space');                                     // sí/no con espacio → SÍ
-  await k.press('Tab'); await k.press('Tab');                 // salta la celda calculada
+  await k.press('Tab');                                       // salta sola la celda calculada
   await k.type('texto libre'); await k.press('Enter');        // Enter baja
   let f = await g((h) => h.getFilas()[0]);
   assert.match(f.f, /T14:30$/); assert.equal(f.n, 55.6); assert.equal(f.l, 'NL'); assert.equal(f.sn, 'SI'); assert.equal(f.x, 111.2); assert.equal(f.t, 'texto libre');
@@ -377,27 +388,38 @@ test('App.Hoja: atajos tipo Excel, fechas flexibles, listas, rango, deshacer y b
   assert.equal(await g((h) => h.getCelda(2, 'f')), null);
   await k.press('Control+y');
   assert.ok(await g((h) => h.getCelda(2, 'f')), 'rehacer');
-  // validación de rango: 150 en un campo 0–100 se rechaza al escribir; con Esc se cancela
+  // validación en línea: 150 en un campo 0–100 se acepta pero queda marcado (borde rojo, tooltip y conteo)
   await g((h) => h.enfocar(2, 'n')); await k.type('150'); await k.press('Enter');
-  assert.match(await p.evaluate(() => document.querySelector('#demo .hoja-pie-msg').textContent + document.querySelector('#demo .hoja-estado').textContent), /./);
-  await k.press('Escape');
-  assert.equal(await g((h) => h.getCelda(2, 'n')), undefined);
-  // pegar fuera de rango: se acepta pero queda marcado en error
-  await pegar2('3\t150\tx');
+  assert.equal(await g((h) => h.getCelda(2, 'n')), 150);
   assert.match(await p.evaluate(() => document.querySelector('#demo .hoja-estado').textContent), /con error/);
-  assert.ok(await p.$('#demo .hoja-c--bad'), 'celda con error marcada');
+  const tip = await p.evaluate(() => document.querySelector('#demo .hoja-c--bad').getAttribute('title'));
+  assert.match(tip, /máximo 100/);
+  // texto no numérico: se rechaza al escribir (la celda sigue en edición) y Esc la cancela
+  await g((h) => h.enfocar(3, 'n')); await k.type('abc'); await k.press('Enter');
+  assert.ok(await p.$('#demo .hoja-ed--bad'), 'editor marcado');
+  await k.press('Escape');
+  assert.equal(await g((h) => h.getCelda(3, 'n')), null);
+  // pegar un bloque TSV con coma decimal en la fila vacía del final (se crea una fila más)
+  const base = await g((h) => h.filasN - 1);
+  await g((h) => h.enfocar(h.filasN - 1, 'f'));
+  await pegar('7/10 06:00\t12,5\tnl\n7/10 07:00\t13,5\tl');
+  assert.equal(await g((h, i) => h.getCelda(i, 'n'), base), 12.5); assert.equal(await g((h, i) => h.getCelda(i + 1, 'l'), base), 'L');
+  assert.equal(await g((h, i) => h.getCelda(i + 1, 'n'), base), 13.5);
+  await k.press('Control+z');
+  assert.equal(await g((h, i) => h.getCelda(i, 'n'), base), null, 'un solo Ctrl+Z deshace todo el pegado');
   // rango con Shift+flechas, copiar/pegar, Ctrl+D y Supr
   await g((h) => h.enfocar(1, 'n')); await k.type('10'); await k.press('Enter');          // fila 2, col n = 10
-  await g((h) => h.enfocar(1, 'n')); await k.press('Shift+ArrowDown'); await k.press('Shift+ArrowDown');
+  await g((h) => h.enfocar(1, 'n')); await k.press('Shift+ArrowDown');
   await k.press('Control+d');
-  assert.equal(await g((h) => h.getCelda(2, 'n')), 10); assert.equal(await g((h) => h.getCelda(3, 'n')), 10, 'Ctrl+D rellena hacia abajo');
+  assert.equal(await g((h) => h.getCelda(2, 'n')), 10, 'Ctrl+D rellena hacia abajo');
   await k.press('Delete');
-  assert.equal(await g((h) => h.getCelda(2, 'n')), undefined);
+  assert.equal(await g((h) => h.getCelda(2, 'n')), null);
   await k.press('Control+z');
   assert.equal(await g((h) => h.getCelda(2, 'n')), 10, 'deshacer el borrado del rango');
   // lista con teclado: flecha abajo abre las opciones, Enter elige
-  await g((h) => h.enfocar(4, 'l')); await k.press('F2'); await k.press('ArrowDown'); await k.press('ArrowDown'); await k.press('Enter');
-  assert.equal(await g((h) => h.getCelda(4, 'l')), 'NL');
+  const ult = await g((h) => h.filasN - 1);
+  await g((h) => h.enfocar(h.filasN - 1, 'l')); await k.press('F2'); await k.press('ArrowDown'); await k.press('ArrowDown'); await k.press('Enter');
+  assert.equal(await g((h, i) => h.getCelda(i, 'l'), ult), 'NL');
   // guardar: solo filas completas y válidas
   const res = await g((h) => h.validar());
   assert.ok(res.errores.length > 0 && res.listas.length > 0);
@@ -418,7 +440,6 @@ test('App.Hoja: atajos tipo Excel, fechas flexibles, listas, rango, deshacer y b
   await p.evaluate(() => { localStorage.removeItem('cavas:hoja:prueba-demo'); window.__g2.destruir(); document.getElementById('demo').remove(); document.getElementById('demo2').remove(); });
   sinErrores();
 
-  async function pegar2(t) { await pegar(t); }
 });
 
 test('App.Hoja escala: 4000 filas con ventana de render y teclado fluido', { skip }, async () => {

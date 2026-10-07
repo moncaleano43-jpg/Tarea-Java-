@@ -142,7 +142,8 @@
   An1.marcaTxt = (ctx) => (ctx.filtraMarca ? 'la marca ' + ctx.marcas.join(', ') : 'todas las marcas');
 
   /* ---------- Piezas de interfaz ---------- */
-  An1.W = { full: 1120, half: 620, third: 400 };
+  // En pantallas angostas las gráficas se dibujan más pequeñas para que el texto siga legible.
+  An1.W = { get full() { return window.innerWidth < 700 ? 400 : 1120; }, get half() { return window.innerWidth < 700 ? 400 : 620; }, get third() { return 400; } };
   /** Gráfica + «Cómo leerlo» dentro de una tarjeta. */
   An1.tarjeta = (UI, titulo, sub, chart, lectura, o = {}) => UI.card(titulo, sub, `${chart || ''}${lectura ? UI.lectura(lectura, o.tono) : ''}${o.extra || ''}`, o);
   An1.kpi = (o) => {
@@ -166,7 +167,7 @@
   An1.pts = (periods, fn) => periods.map((p) => ({ x: p.t, y: fin(fn(p)) }));
   An1.fechaIso = (t) => (t == null ? '' : iso(t));
   An1.fecha = (t) => (t == null ? '—' : fmtDate(t));
-  An1.round = (v, d = 2) => (v == null || !Number.isFinite(v) ? null : Math.round(v * Math.pow(10, d)) / Math.pow(10, d));
+  An1.round = (v, d = 2) => { if (v == null || !Number.isFinite(v)) return null; const r = Math.round(v * Math.pow(10, d)) / Math.pow(10, d); return r === 0 ? 0 : r; };
   /** Columna de fecha para tablas: ordena por ISO y muestra «12 mar 2026». */
   An1.colFecha = (k = 'fecha', t = 'Fecha') => ({ k, t, f: (v) => esc(v ? fmtDate(new Date(v + 'T12:00:00').getTime()) : '—') });
   An1.colNum = (k, t, d = 1) => ({ k, t, num: true, f: (v) => (v == null ? '—' : fmt(v, d)) });
@@ -229,21 +230,31 @@
   }
   An1.recupR = recupR; An1.trasR = trasR; An1.aseosR = aseosR;
 
-  function kpiList(ctx) {
+  /** Datos de los indicadores clave (los usa el Resumen y el Informe). */
+  function kpiData(ctx) {
     const out = [];
-    const add = (o) => out.push(An1.kpi(o));
+    const add = (o) => out.push(o);
     try { if (An1.aguaR) { const R = An1.aguaR(ctx); if (R.n) {
       add({ tab: 'agua', label: 'Agua por turno', unit: 'm³/turno', v: R.mean, p: R.prevMean, dec: 1, bueno: 'baja', spark: R.spark, help: `${R.n} turnos medidos` });
       add({ tab: 'agua', label: 'Agua por Hl procesado', unit: 'Hl/Hl', v: R.eff.actual, p: R.eff.previo, dec: 3, bueno: 'baja', spark: R.eff.spark, help: 'Cuánta agua se gasta por cada Hl trasegado o recibido' });
     } } } catch (e) { warn('kpi agua', e); }
     try { if (An1.mermaR) { const R = An1.mermaR(ctx); for (const ph of ['FV', 'SV']) { const q = R.fase[ph]; if (q && q.n) add({ tab: 'merma', label: 'Merma ' + ph, unit: '%', v: q.tasa, p: q.tasaPrev, dec: 2, bueno: 'baja', pp: true, spark: q.spark, help: `${q.n} lotes cerrados · ponderada por volumen` }); } } } catch (e) { warn('kpi merma', e); }
-    try { if (An1.fermR) { const R = An1.fermR(ctx); if (R.n) add({ tab: 'fermentacion', label: 'Tiempo a 75 % de atenuación', unit: 'h', v: R.h75.med, p: R.h75.medPrev, dec: 1, bueno: 'baja', spark: R.h75.spark, help: `Mediana de ${R.h75.n} fermentaciones` }); } } catch (e) { warn('kpi ferm', e); }
+    try { if (An1.fermR) { const R = An1.fermR(ctx); if (R.n && R.h75.med != null) add({ tab: 'fermentacion', label: 'Tiempo a 75 % de atenuación', unit: 'h', v: R.h75.med, p: R.h75.medPrev, dec: 1, bueno: 'baja', spark: R.h75.spark, help: `Mediana de ${R.h75.n} fermentaciones` }); } } catch (e) { warn('kpi ferm', e); }
     try { if (An1.levR) { const R = An1.levR(ctx); if (R.n) add({ tab: 'levadura', label: 'Viabilidad de levadura', unit: '%', v: R.viab.mean, p: R.viab.prev, dec: 1, bueno: 'sube', pp: true, spark: R.viab.spark, help: `${R.n} cosechas · meta ≥ ${fmt(R.meta, 0)} %` }); } } catch (e) { warn('kpi lev', e); }
     const rc = recupR(ctx); if (rc.n) add({ tab: 'recuperacion', label: 'Cerveza recuperada', unit: 'Hl', v: rc.hl, p: rc.hlPrev, dec: 0, bueno: 'sube', spark: rc.spark, help: `${rc.n} recuperaciones${rc.rend != null ? ' · rinde ' + fmt(rc.rend, 0) + ' % de la levadura' : ''}` });
     const tr = trasR(ctx); if (tr.n) add({ tab: 'operacion', label: 'Desvío de trasiego', unit: 'h', v: tr.med, p: tr.medPrev, dec: 1, bueno: 'baja', abs: true, spark: tr.spark, help: `Mediana frente al plan · ${tr.n} actividades` });
     const as = aseosR(ctx); if (as.cumple != null) add({ tab: 'operacion', label: 'Aseos con pH en rango', unit: '%', v: as.cumple, p: as.cumplePrev, dec: 0, bueno: 'sube', pp: true, spark: as.spark, help: `${as.n} aseos · pH ${fmt(ctx.metas.get('aseos.phMin', 6), 0)}–${fmt(ctx.metas.get('aseos.phMax', 8), 0)}` });
     return out;
   }
+  An1.kpiData = kpiData;
+  const kpiList = (ctx) => kpiData(ctx).map((o) => An1.kpi(o));
+  /** Estado de un indicador frente al periodo anterior: 'mejor' | 'peor' | 'igual' | null. */
+  An1.kpiEstado = (o) => {
+    if (o.v == null || o.p == null) return null;
+    const d = o.v - o.p, tol = o.pp || o.abs ? 0.05 : Math.abs(o.p) * 0.005;
+    if (Math.abs(d) <= tol) return 'igual';
+    return (d > 0) === (o.bueno === 'sube') ? 'mejor' : 'peor';
+  };
   function warn(w, e) { if (window.console) console.warn('[An1]', w, e); }
 
   function miniRecup(ctx) {

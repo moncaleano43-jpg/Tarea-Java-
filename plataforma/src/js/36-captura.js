@@ -393,15 +393,17 @@
   (function () {
     const kind = (e) => { e = String(e || '').toUpperCase().trim(); return /^CENTRIFUGA/.test(e) ? 'CENT' : /^FV\b/.test(e) ? 'FV' : /^SV\b/.test(e) ? 'SV' : /^RED MOSTO/.test(e) ? 'MOSTO' : 'OTRO'; };
     const inR = (v, a, b) => isNum(v) && v >= a && v <= b;
+    const concSoda = (f) => (isNum(f.sodaCond) && f.sodaCond > 0 ? r2((f.sodaCond + 2.4968) / 56.636) : null);
+    const concTri = (f) => (isNum(f.triCond) && f.triCond > 0 ? r2((f.triCond - 1.2316) / 14.703) : null);
     /** criterios simplificados de cumplimiento (hoja «1. Cada uso»): 7 criterios de 1/7 */
     function criterios(f) {
       const k = kind(f.equipo), fvsv = k === 'FV' || k === 'SV';
       const tSoda = k === 'FV' ? [30, 40] : k === 'SV' ? [14, 40] : k === 'MOSTO' ? [30, 48] : k === 'CENT' ? [30, 69] : [30, 40];
       return {
-        sodaConc: inR(f.sodaConc, fvsv ? 0.7 : 1.73, fvsv ? 1.05 : 2.1),
+        sodaConc: inR(concSoda(f), fvsv ? 0.7 : 1.73, fvsv ? 1.05 : 2.1),
         sodaTiempo: inR(f.sodaTiempo, tSoda[0], tSoda[1]),
         sodaTemp: k === 'CENT' ? inR(f.sodaTemp, 79, 81) : inR(f.sodaTemp, 20, 26),
-        triConc: inR(f.triConc, 1.4, 1.6),
+        triConc: inR(concTri(f), 1.4, 1.6),
         triTemp: inR(f.triTemp, 20, 25),
         triTiempo: k === 'CENT' ? (blank(f.triTiempo) || inR(f.triTiempo, 10, 40)) : inR(f.triTiempo, 30, 40),
         estados: f.sodaEstado === 'L' && f.triEstado === 'L' && f.apariencia === 'L',
@@ -437,14 +439,14 @@
             semaforo: (v) => (isNum(v) ? (v >= 0.9 ? ['ok', 'Cumple (≥ 90 %)'] : v >= 0.7 ? ['warn', 'Cumplimiento parcial'] : ['bad', 'Cumplimiento bajo']) : null) },
           { key: 'pre', titulo: 'Preenjuague', grupo: 'Soda cáustica', tipo: 'sino', ancho: 90 },
           { key: 'sodaConc', titulo: 'Concentración', grupo: 'Soda cáustica', tipo: 'calc', formato: 'numero', unidad: '%', decimales: 2, ancho: 100, ayuda: '(conductividad + 2,4968) / 56,636',
-            calc: (f) => (isNum(f.sodaCond) && f.sodaCond > 0 ? r2((f.sodaCond + 2.4968) / 56.636) : null), semaforo: sem('sodaConc', 'Fuera del rango de concentración de soda para este equipo') },
+            calc: concSoda, semaforo: sem('sodaConc', 'Fuera del rango de concentración de soda para este equipo') },
           n('sodaCond', 'Conductividad', 'Soda cáustica', 'mS', { max: 200, decimales: 1 }),
           n('sodaTiempo', 'Tiempo', 'Soda cáustica', 'min', { max: 240, decimales: 0, semaforo: sem('sodaTiempo', 'Fuera del tiempo de contacto para este equipo') }),
           n('sodaTemp', 'Temperatura', 'Soda cáustica', '°C', { max: 100, decimales: 1, semaforo: sem('sodaTemp', 'Fuera de la temperatura esperada') }),
           { key: 'sodaEstado', titulo: 'Estado solución', grupo: 'Soda cáustica', tipo: 'lista', opciones: LNL, ancho: 90, ayuda: 'L = limpia · NL = no limpia' },
           n('sodaEnj', 'Tiempo enjuague', 'Soda cáustica', 'min', { max: 120, decimales: 0 }),
           { key: 'triConc', titulo: 'Concentración', grupo: 'Trimeta', tipo: 'calc', formato: 'numero', unidad: '%', decimales: 2, ancho: 100, ayuda: '(conductividad − 1,2316) / 14,703',
-            calc: (f) => (isNum(f.triCond) && f.triCond > 0 ? r2((f.triCond - 1.2316) / 14.703) : null), semaforo: sem('triConc', 'Fuera de 1,4–1,6 %') },
+            calc: concTri, semaforo: sem('triConc', 'Fuera de 1,4–1,6 %') },
           n('triCond', 'Conductividad', 'Trimeta', 'mS', { max: 200, decimales: 1 }),
           n('triTemp', 'Temperatura', 'Trimeta', '°C', { max: 100, decimales: 1, semaforo: sem('triTemp', 'Fuera de 20–25 °C') }),
           n('triTiempo', 'Tiempo', 'Trimeta', 'min', { max: 240, decimales: 0, semaforo: sem('triTiempo', 'Fuera del tiempo de contacto de trimeta') }),
@@ -687,6 +689,7 @@
                 if (i >= 0) Object.entries(vals).forEach(([k, v]) => h.setCelda(i, k, typeof v === 'string' ? v : v));
               } else h.agregarFila(vals);
             });
+            h.enfocar(Math.max(0, h.filasN - 1), 0);
             toast('Cambios deshechos. Tus filas quedaron como pendientes en la hoja.');
           },
         });

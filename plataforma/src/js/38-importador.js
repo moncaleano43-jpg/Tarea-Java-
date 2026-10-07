@@ -224,7 +224,7 @@
    * Claves de fusión por fila. Devuelve un array paralelo a rows con la clave (texto) o null.
    * Devuelve null si la hoja no tiene clave definida (se reemplaza completa).
    */
-  function claves(tipo, nombre, rows, encab) {
+  function claves(tipo, nombre, rows, encab, sinRelleno) {
     const cuenta = new Map();
     const unica = (k) => { const n = (cuenta.get(k) || 0) + 1; cuenta.set(k, n); return n > 1 ? k + '#' + n : k; };
     const hdrRow = encab ? encab.row : 0;
@@ -233,7 +233,7 @@
       return rows.map((r) => {
         if (r.row <= hdrRow) return null;
         const d = comoFecha(r.cells[1]);
-        if (d != null) { dia = Math.floor(d); enDia = 0; } else if (dia == null) return null; else enDia++;
+        if (d != null) { dia = Math.floor(d); enDia = 0; } else if (dia == null || sinRelleno) return null; else enDia++;
         const hf = r.cells[3];
         return unica('D' + dia + '|' + (isNum(hf) ? minuto(hf) : '#' + enDia));
       });
@@ -383,6 +383,7 @@
   }));
   const colNum = (L) => { let n = 0; for (let i = 0; i < L.length; i++) n = n * 26 + L.charCodeAt(i) - 64; return n - 1; };
   async function inflarRaw(u) {
+    if (typeof DecompressionStream === 'undefined') throw new Error('NAVEGADOR');
     const ds = new DecompressionStream('deflate-raw');
     return new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(ds)).arrayBuffer());
   }
@@ -407,7 +408,6 @@
   }
   const atr = (tag, n) => { const m = new RegExp('\\b' + n + '="([^"]*)"').exec(tag); return m ? m[1] : null; };
   async function libroRapido(buf) {
-    if (typeof DecompressionStream === 'undefined') throw new Error('NAVEGADOR');
     const leer = zipLeer(buf);
     const wb = await leer('xl/workbook.xml'), rels = (await leer('xl/_rels/workbook.xml.rels')) || '';
     if (!wb) throw new Error('FORMATO');
@@ -931,7 +931,9 @@
   }
   function destinosDe(tipo, hoja) {
     const S = A.OperationSources;
-    try { return S.schema(tipo, hoja).cols.filter((c) => !/^Columna \d+$/.test(c.label)); } catch (e) { return []; }
+    try {
+      return S.schema(tipo, hoja).cols.map((c) => (tipo === 'agua' && c.i === 30 && /^Columna \d+$/.test(c.label) ? { i: 30, label: 'Comentario' } : c)).filter((c) => !/^Columna \d+$/.test(c.label));
+    } catch (e) { return []; }
   }
 
   /** Convierte la matriz según el mapeo y calcula contadores contra lo que ya existe. */
@@ -968,13 +970,17 @@
     // claves y comparación con lo que ya existe
     const ed = (A.S.config && A.S.config.aseoCellEdits) || {};
     const enc = { row: 0, cells: Object.fromEntries(colsDest.map((c) => [c.i, c.label])) };
-    const kNew = claves(t, L.hoja, filas.map((f, i) => ({ row: i + 1000, cells: f.cells })), enc);
+    const kNew = claves(t, L.hoja, filas.map((f, i) => ({ row: i + 1000, cells: f.cells })), enc, true);
     const existentes = S.records(t, L.hoja);
-    const kEx = claves(t, L.hoja, existentes.map((r, i) => ({ row: r.row == null ? 100000 + i : r.row, cells: r.cells })), { row: sch.header, cells: Object.fromEntries(colsDest.map((c) => [c.i, c.label])) });
-    const mapaEx = new Map();
-    if (kEx) kEx.forEach((k, i) => { if (k != null && !mapaEx.has(k)) mapaEx.set(k, existentes[i]); });
+    const hdrEx = { row: sch.header, cells: Object.fromEntries(colsDest.map((c) => [c.i, c.label])) };
+    const delExcel = existentes.filter((r) => r.origin !== 'Plataforma'), delaPlat = existentes.filter((r) => r.origin === 'Plataforma');
+    const mapaEx = new Map(), mapaPl = new Map();
+    const kExc = claves(t, L.hoja, delExcel.map((r) => ({ row: r.row, cells: r.cells })), hdrEx);
+    if (kExc) kExc.forEach((k, i) => { if (k != null && !mapaEx.has(k)) mapaEx.set(k, delExcel[i]); });
+    const kPl = claves(t, L.hoja, delaPlat.map((r, i) => ({ row: 100000 + i, cells: r.cells })), hdrEx, true);
+    if (kPl) kPl.forEach((k, i) => { if (k != null && !mapaPl.has(k)) mapaPl.set(k, delaPlat[i]); });
     const c = { nuevas: 0, actualizadas: 0, iguales: 0, conflictos: 0, repetidas: 0 };
-    const sets = new Set(), ops = [];
+    const sets = new Set(), ops = [], porId = new Map(existentes.map((r) => [r.id, r]));
     const importadas = existentes.filter((r) => r.origin === 'Plataforma' && /^imp-/.test(r.id || ''));
     const modoReemp = s.modo === 'reemplazar';
     const idsBorrar = new Set(modoReemp ? importadas.filter((r) => r.source === L.hoja).map((r) => r.id) : []);
@@ -984,7 +990,9 @@
       const id = 'imp-' + t + '-' + hash(L.hoja + '|' + (k != null ? k : JSON.stringify(f.cells)));
       if (sets.has(id)) { dup++; return; }
       sets.add(id);
-      const ex = k != null ? mapaEx.get(k) : (existentes.find((r) => r.id === id) || null);
+      let ex = null;
+      if (k != null) { ex = mapaPl.get(k) || null; if (!ex) { const x = mapaEx.get(k); if (x && tieneDatos(t, x.cells)) ex = x; } } // una casilla vacía de la plantilla del Excel no cuenta
+      else ex = porId.get(id) || null;
       if (!ex || idsBorrar.has(ex.id)) { c.nuevas++; ops.push({ tipo: 'nueva', id, cells: f.cells }); return; }
       const sub = Object.fromEntries(Object.keys(f.cells).map((d) => [d, ex.cells[d]]).filter(([, v]) => v !== undefined));
       const igual = iguales(f.cells, sub) && Object.keys(sub).length === Object.keys(f.cells).length;
@@ -1030,7 +1038,7 @@
     const r = s.resumen;
     if (!r) return 'Detecté: <b>' + esc(ETIQ_TIPO(t)) + '</b>';
     const rango = r.desde != null ? ` · ${dmy(r.desde)} → ${dmy(r.hasta)}` : '';
-    return `Detecté: <b>${esc(ETIQ_TIPO(t))}</b> · hoja ${esc(s.mainReal)} · ${fmtN(r.n)} ${esc(TIPOS[t].unidad)}${rango}${r.hojas > 1 ? ` · ${r.hojas} hojas con datos` : ''}`;
+    return `Detecté: <b>${esc(ETIQ_TIPO(t))}</b> · hoja ${esc(s.mainReal)} · ${fmtN(r.n)} ${esc(TIPOS[t].unidad)}${rango}${t === 'aseos' && r.hojas > 1 ? ` · ${r.hojas} hojas con datos` : ''}`;
   }
 
   function tarjetasConteo(c, extra) {
@@ -1110,7 +1118,7 @@
       const sel = `<select data-map="${j}"><option value="-1">— No importar —</option>${dest.map((d) => `<option value="${d.i}" ${L.mapa[j] === d.i ? 'selected' : ''}>${esc(d.label)} (${letra(d.i)})${usados.has(d.i) && L.mapa[j] !== d.i ? ' · ya usada' : ''}</option>`).join('')}</select>`;
       return `<div class="imp-map-r ${L.mapa[j] >= 0 ? 'on' : ''}"><span class="imp-map-o"><b>${esc(n)}</b><small>${esc(mu).slice(0, 70)}</small></span><span class="imp-arrow">→</span>${sel}</div>`;
     }).join('') + '</div></div>';
-    if (L.plan) {
+    if (L.plan && L.filas.length) {
       const comb = s.modo === 'combinar';
       h += `<div class="imp-modes" role="radiogroup">
         <label class="imp-mode ${comb ? 'on' : ''}"><input type="radio" name="imp-modo" value="combinar" ${comb ? 'checked' : ''}><span><b>Combinar <em>Recomendado</em></b>Agrega las filas nuevas y actualiza las importadas antes; no toca el Excel original ni tus capturas manuales.</span></label>
@@ -1119,7 +1127,7 @@
       const ok = L.plan.c.nuevas + L.plan.c.actualizadas > 0 || (!comb && L.plan.idsBorrar.length > 0);
       return { html: h, puede: ok, ok: comb ? 'Combinar e importar' : 'Reemplazar importación' };
     }
-    return { html: h + '<p class="imp-note">Asigna al menos una columna de destino.</p>', puede: false, ok: 'Importar' };
+    return { html: h + `<p class="imp-note">${L.mapa.some((x) => x >= 0) ? 'No hay filas con datos debajo de la fila de encabezado.' : 'Asigna al menos una columna de destino.'}</p>`, puede: false, ok: 'Importar' };
   }
 
   function avisosHTML(av) {
@@ -1342,6 +1350,12 @@
 
   function botones(vista, ruta) {
     if (!RUTAS.includes(ruta) || !A.Seccion) return;
+    // pantallas sin fila de acciones en la cabecera (levaduras, base de datos, merma): se crea una
+    if (!vista.querySelector('.studio-actions, .acts, .page-h .acts')) {
+      const ph = vista.querySelector('.page-h'), sh = vista.querySelector('.studio-heading');
+      if (ph) { const d = document.createElement('div'); d.className = 'acts'; d.dataset.impActs = '1'; ph.appendChild(d); }
+      else if (sh) { const d = document.createElement('div'); d.className = 'studio-actions'; d.dataset.impActs = '1'; sh.appendChild(d); }
+    }
     const b = A.Seccion.boton(vista, 'imp-cargar', 'Cargar archivo', () => abrir({ seccion: ruta }), { primario: false });
     if (b) b.classList.add('imp-btn');
     if (OPS.includes(ruta)) { const p = A.Seccion.boton(vista, 'imp-plantilla', 'Descargar plantilla', () => plantilla(ruta)); if (p) p.classList.add('imp-btn'); }

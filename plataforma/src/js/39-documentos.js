@@ -223,8 +223,15 @@
     const host = vista.querySelector('.studio-page') || vista;
     const p = construir(ruta);
     host.appendChild(p);
+    if (A.Seccion && A.Seccion.boton) {
+      const b = A.Seccion.boton(vista, 'doc-abrir', 'Documentos', () => {
+        const q = document.querySelector('[data-doc-panel]'); if (!q) return;
+        q.open = true; q.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      if (b) b.classList.add('imp-btn');
+    }
     // el contador y la lista se completan en segundo plano
-    contar(ruta).then((n) => { const e = p.querySelector('[data-doc-n]'); if (e) e.textContent = '(' + n + ')'; if (p.open) pintarLista(p); }).catch(() => {});
+    contar(ruta).then((n) => { const e = p.querySelector('[data-doc-n]'); if (e) e.textContent = '(' + n + ')'; const bt = vista.querySelector('[data-cifra-btn=doc-abrir]'); if (bt) bt.textContent = 'Documentos' + (n ? ' (' + n + ')' : ''); if (p.open) pintarLista(p); }).catch(() => {});
   }
   function refrescar() {
     document.querySelectorAll('[data-doc-panel]').forEach((p) => pintarLista(p).catch(() => {}));

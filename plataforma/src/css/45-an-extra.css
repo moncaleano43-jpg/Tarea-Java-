@@ -78,3 +78,11 @@
 .an-note strong{font-weight:600;color:var(--ink)}
 .an-note.warn strong,.an-note.bad strong,.an-note.ok strong{color:inherit}
 @media (max-width:700px){.an-kpis.an-k4,.an-kpis.an-k3,.an-kpis.an-k2{grid-template-columns:repeat(2,minmax(0,1fr))}.an-kpis.an-k1{grid-template-columns:minmax(0,1fr)}}
+/* Gráficas legibles en teléfono: se desplazan en horizontal en vez de encogerse */
+@media (max-width:700px){
+  .an-card figure.ch{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .an-card figure.ch:not(.ch-k-donut):not(.ch-k-empty) .ch-svg{min-width:560px}
+  .an-card figure.ch-k-heat .ch-svg{min-width:780px}
+  .an-card figure.ch-k-gantt .ch-svg{min-width:640px}
+  .an-card .ch-head,.an-card .ch-legend{position:sticky;left:0}
+}

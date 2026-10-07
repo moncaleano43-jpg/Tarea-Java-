@@ -303,7 +303,9 @@
       if (b === 'numero') {
         const n = parseNum(txt, col.decimales === 0);
         if (n == null || Number.isNaN(n)) return modo === 'enter' ? { ok: false, msg: 'No es un número. Ejemplo: 12,5' } : { ok: true, val: txt };
-        return { ok: true, val: col.decimales != null ? +n.toFixed(col.decimales) : n };
+        if (col.decimales == null) return { ok: true, val: n };
+        const pw = Math.pow(10, col.decimales);
+        return { ok: true, val: (Math.sign(n) * Math.round(Math.abs(n) * pw + 1e-9)) / pw };
       }
       if (TIPOS_FECHA.includes(b)) {
         const s = parseFecha(txt, b);
@@ -327,7 +329,8 @@
         return null;
       }
       const b = col.base;
-      if (b === 'numero') {
+      if (col.tipo === 'calc' && typeof v === 'string' && !col.anulable) { /* una fórmula puede devolver un texto de estado */ }
+      else if (b === 'numero') {
         if (!isNum(v)) return { t: 'err', msg: 'No es un número' };
         if (col.min != null && v < col.min) return { t: 'err', msg: 'Fuera de rango: mínimo ' + col.min + (col.unidad ? ' ' + col.unidad : '') };
         if (col.max != null && v > col.max) return { t: 'err', msg: 'Fuera de rango: máximo ' + col.max + (col.unidad ? ' ' + col.unidad : '') };
@@ -420,7 +423,7 @@
       return true;
     };
     function trasCambio(idxs, todo, cambios) {
-      if (todo || !idxs) recalc(0);
+      if (todo || !idxs) recalc(null);
       else if (opts.cadena) recalc(null);
       else [...new Set(idxs)].forEach((i) => { if (rows[i]) evalRow(i); });
       asegurarFinal();
@@ -671,7 +674,7 @@
       const txt = input.value;
       let res;
       const popSel = pop && ed.hl >= 0 ? pop.items[ed.hl] : null;
-      if (col.base === 'lista' && popSel && !popSel.nuevo && !o.suave && txt.trim()) res = { ok: true, val: popSel.v };
+      if (col.base === 'lista' && popSel && !popSel.nuevo && !o.suave) res = { ok: true, val: popSel.v };
       else res = interpretar(col, row, txt, o.suave ? 'suave' : 'enter');
       if (!res.ok) {
         if (res.nuevo) {
@@ -1086,7 +1089,7 @@
         r.st = null;
       });
       undoS.length = 0; redoS.length = 0;
-      asegurarFinal(); recalc(0); renderWin(true); resumen(); borrador();
+      asegurarFinal(); recalc(null); renderWin(true); resumen(); borrador();
       const pend = v.errores.length ? new Set(v.errores.map((e) => e.fila)).size : 0;
       msg('Guardadas ' + lista.length + (lista.length === 1 ? ' fila' : ' filas') + (pend ? ' · ' + pend + ' con error siguen pendientes' : ''), 5000);
       return true;
@@ -1170,10 +1173,10 @@
       original = (filas || []).map((f) => Object.assign({}, f));
       rows = original.map((f) => mkRow(f));
       undoS.length = 0; redoS.length = 0; tx = null;
-      asegurarFinal(); recalc(0);
+      asegurarFinal(); recalc(null);
       let n = 0;
       if (conBorrador) n = recuperarBorrador();
-      asegurarFinal(); defectos(); recalc(0);
+      asegurarFinal(); defectos(); recalc(null);
       act = { r: Math.min(act.r, rows.length - 1), c: act.c }; ext = { ...act };
       rowEls.forEach((d) => d.remove()); rowEls.clear();
       renderWin(true); resumen();
@@ -1198,15 +1201,15 @@
           if (!row) { row = mkRow(); const pos = rows.findIndex((r) => vacia(r)); if (pos >= 0) rows.splice(pos, 0, row); else rows.push(row); }
           row.d = p.d; row.ov = p.ov; row.tocada = true; row.sucio = true;
         }
-        asegurarFinal(); recalc(0); renderWin(true); resumen(); borrador();
+        asegurarFinal(); recalc(null); renderWin(true); resumen(); borrador();
       },
       validar, agregarFila,
       enfocar(r, c) { const [rr, cc] = celdaPorClave(r, c); ir(rr, cc == null ? act.c : cc); vp.focus({ preventScroll: true }); },
       guardar, deshacer, rehacer,
-      recalcular() { recalc(0); defectos(); renderWin(true); resumen(); },
+      recalcular() { recalc(null); defectos(); renderWin(true); resumen(); },
       setContexto(c) { opts.contexto = c; api.recalcular(); },
       setSoloLectura(v) { ro = !!v; renderWin(true); resumen(); },
-      getCelda(r, key) { const row = rows[r]; return row ? valorDe(row, cols[colIdx[key]]) : undefined; },
+      getCelda(r, key) { const row = rows[r]; if (!row) return null; const v = valorDe(row, cols[colIdx[key]]); return v === undefined ? null : v; },
       setCelda(r, key, val) { const c = colIdx[key]; if (c == null || !rows[r]) return false; const res = interpretar(cols[c], rows[r], val, 'suave'); escribir([{ r, c, val: res.val }]); return true; },
       get activa() { return { fila: act.r, columna: cols[act.c] && cols[act.c].key }; },
       get filasN() { return rows.length; },

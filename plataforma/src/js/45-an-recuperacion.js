@@ -56,7 +56,7 @@
       })).join('')}</div>`;
     },
     /** Figura con barra de descarga PNG/SVG. */
-    fig(kind, o) { return C[kind](Object.assign({ toolbar: true, id: X.id('anc') }, o)); },
+    fig(kind, o) { o = Object.assign({ toolbar: true, id: X.id('anc') }, o); if (o.full && !o.w) o.w = 1080; return C[kind](o); },
     /** Explica un p-valor en palabras simples. */
     grid12(a, b) { return `<div class="an-grid an-g-12">${a}${b}</div>`; },
     sig(p, n) {

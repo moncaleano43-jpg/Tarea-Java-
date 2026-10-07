@@ -23,11 +23,11 @@
     const m = {};
     for (const b of new Set(all.map((r) => r.brand))) {
       const rs = all.filter((r) => r.brand === b);
-      m[b] = {}; for (const v of VARS.concat([{ k: 'rata' }])) m[b][v.k] = med(vals(rs, v.k));
+      m[b] = {}; for (const v of VARS.concat([{ k: 'rata' }, { k: 'atten' }])) m[b][v.k] = med(vals(rs, v.k));
     }
     return m;
   }
-  const enriquecer = (rows, bm) => rows.map((r) => { const o = Object.assign({}, r); for (const k of ['eo', 'h15', 'h75', 'rdf', 'rata']) o[k + 'R'] = r[k] != null && bm[r.brand] && bm[r.brand][k] != null ? r[k] - bm[r.brand][k] : null; return o; });
+  const enriquecer = (rows, bm) => rows.map((r) => { const o = Object.assign({}, r); for (const k of ['eo', 'h15', 'h75', 'rdf', 'rata', 'atten']) o[k + 'R'] = r[k] != null && bm[r.brand] && bm[r.brand][k] != null ? r[k] - bm[r.brand][k] : null; return o; });
 
   function curvas(ctx, rows, marcas) {
     let hist = []; try { hist = (A.Hist2 && A.Hist2.hist && A.Hist2.hist()) || []; } catch (e) { hist = []; }
@@ -130,7 +130,7 @@
       An1.stat('Hasta 75 % (mediana)', R.h75.med != null ? fmt(R.h75.med, 1) + ' h' : '—', R.h75.medPrev != null ? `antes ${fmt(R.h75.medPrev, 1)} h` : ''),
       An1.stat('Hasta 15 °P (mediana)', R.h15.med != null ? fmt(R.h15.med, 1) + ' h' : '—', R.h15.medPrev != null ? `antes ${fmt(R.h15.medPrev, 1)} h` : ''),
       An1.stat('E.O. dentro de especificación', dentroEo != null ? fmt(dentroEo, 0) + ' %' : '—', 'extracto original del mosto', dentroEo != null && dentroEo < 80 ? 'warn' : ''),
-      An1.stat('Tiempo a 75 % dentro del límite', dentro75 != null ? fmt(dentro75, 0) + ' %' : '—', 'límite «Rata fermentación» del Excel', dentro75 != null && dentro75 < 50 ? 'warn' : ''),
+      An1.stat('Tiempo a 75 % dentro del límite', dentro75 != null ? fmt(dentro75, 0) + ' %' : '—', 'límite «Rata fermentación» del Excel'),
       An1.stat('Cambios de nivel', fmt(R.cambios.filter((c) => c.cp.p < 0.05).length, 0), 'variables con cambio real en el periodo'),
     ]));
 
@@ -172,7 +172,7 @@
       const rows = R.cap.map((c) => ({ marca: c.marca, variable: c.variable.label, n: c.cap.n, media: An1.round(c.cap.mean, c.variable.dec), lie: c.lim.inf, lse: c.lim.sup, cp: An1.round(c.cap.cp, 2), cpk: An1.round(c.cap.cpk, 2), fuera: An1.round(c.cap.pctOut, 0), veredicto: c.cap.cpk == null ? '' : c.cap.cpk >= R.cpkMin ? 'Capaz' : c.cap.cpk >= 1 ? 'Marginal' : 'No capaz' }));
       const malos = rows.filter((r) => r.veredicto === 'No capaz'), buenos = rows.filter((r) => r.veredicto === 'Capaz');
       const l = `Cpk mide qué tan cómodo cabe el proceso dentro de los límites de especificación: <b>1,33 o más es capaz</b> (meta de la plataforma ${fmt(R.cpkMin, 2)}), entre 1 y 1,33 es marginal y menos de 1 es que el proceso sale de los límites con frecuencia. ` +
-        `De ${rows.length} combinaciones marca-variable, <b>${buenos.length} son capaces</b> y <b>${malos.length} no lo son</b>` + (malos.length ? `; las peores: ${malos.sort((a, b) => a.cpk - b.cpk).slice(0, 3).map((r) => `${r.marca} · ${r.variable.toLowerCase()} (Cpk ${fmt(r.cpk, 2)})`).join('; ')}.` : '.') + ' Cp compara el ancho del límite con la variación; si Cp es alto y Cpk bajo, el problema es que el proceso está descentrado.';
+        `De ${rows.length} combinaciones marca-variable, <b>${buenos.length} son capaces</b> y <b>${malos.length} no lo son</b>` + (malos.length ? `; las peores: ${malos.sort((a, b) => a.cpk - b.cpk).slice(0, 3).map((r) => `${r.marca} · ${r.variable.toLowerCase()} (Cpk ${fmt(r.cpk, 2)})`).join('; ')}.` : '.') + ' Cp compara el ancho del límite con la variación; si Cp es alto y Cpk bajo, el problema es que el proceso está descentrado.' + (rows.some((r) => r.variable.startsWith('Horas hasta 75')) ? ' <b>Ojo:</b> el límite «Rata fermentación» del Excel (horas) se compara aquí con el tiempo hasta 75 % de atenuación medido desde el fin del llenado; si en planta ese límite se mide desde otro punto, esas filas no son comparables y conviene revisar la definición.' : '');
       return UI.card('Capacidad del proceso (Cp / Cpk)', 'Qué tan bien cumple cada marca las especificaciones del Excel. Mide la variación dentro de cada marca con el rango móvil.',
         UI.tabla([{ k: 'marca', t: 'Marca' }, { k: 'variable', t: 'Variable' }, An1.colNum('n', 'n', 0), An1.colNum('media', 'Media', 2), An1.colNum('lie', 'Límite inf.', 2), An1.colNum('lse', 'Límite sup.', 2), An1.colNum('cp', 'Cp', 2), An1.colNum('cpk', 'Cpk', 2), An1.colNum('fuera', 'Fuera de límite (%)', 0), An1.badgeCol('veredicto', 'Veredicto', { Capaz: 'ok', Marginal: 'warn', 'No capaz': 'bad' })],
           rows, { id: 'tb-fe-cap', nombre: 'fermentacion-capacidad', sort: { k: 'cpk', dir: 1 }, max: 14 }) + UI.lectura(l, malos.length > buenos.length ? 'warn' : ''));
@@ -212,7 +212,7 @@
     out.push((() => {
       const rows = R.atipicas.map((r) => ({ fecha: iso(r.t), t: r.t, lote: r.lote, tq: r.tq, marca: r.brand, h75: An1.round(r.h75, 1), normal: An1.round(R.bm[r.brand] ? R.bm[r.brand].h75 : null, 1), desvio: An1.round(r.h75R, 1), h15: An1.round(r.h15, 1), atten: An1.round(r.atten, 1), gen: r.gen, viab: An1.round(r.viab, 1), sentido: r.h75R > 0 ? 'Más lenta' : 'Más rápida', source: r.source }));
       const cuerpo = rows.length ? UI.tabla([An1.colFecha('fecha', 'Llenado'), { k: 'lote', t: 'Lote' }, { k: 'tq', t: 'Tanque' }, { k: 'marca', t: 'Marca' }, An1.colNum('h75', 'Hasta 75 % (h)', 1), An1.colNum('normal', 'Normal de la marca (h)', 1), An1.colNum('desvio', 'Desvío (h)', 1), An1.colNum('h15', 'Hasta 15 °P (h)', 1), An1.colNum('gen', 'Gen. levadura', 0), An1.colNum('viab', 'Viab. (%)', 1), An1.badgeCol('sentido', 'Sentido', { 'Más lenta': 'warn' }), An1.colFuente()], rows, { id: 'tb-fe-atip', nombre: 'fermentacion-atipicas', sort: { k: 'desvio', dir: -1 }, max: 10 }) : UI.vacio('Ninguna fermentación se aparta de lo normal por criterio robusto.');
-      const l = rows.length ? `Hay <b>${rows.length} fermentaciones atípicas</b> (más de 3,5 desviaciones robustas MAD de lo normal de su marca): ${rows.filter((r) => r.sentido === 'Más lenta').length} más lentas y ${rows.filter((r) => r.sentido === 'Más rápida').length} más rápidas. Revisa temperatura, aireación y levadura de esos lotes.` : '';
+      const l = rows.length ? `Hay <b>${rows.length} fermentación${rows.length === 1 ? '' : 'es'} atípica${rows.length === 1 ? '' : 's'}</b> (más de 3,5 desviaciones robustas MAD de lo normal de su marca): ${rows.filter((r) => r.sentido === 'Más lenta').length} más lentas y ${rows.filter((r) => r.sentido === 'Más rápida').length} más rápidas. Revisa temperatura, aireación y levadura de esos lotes.` : '';
       return UI.card('Fermentaciones atípicas', 'Lotes que tardaron mucho más o mucho menos de lo normal para su marca.', cuerpo + (l ? UI.lectura(l) : ''));
     })());
 
@@ -269,8 +269,8 @@
       let fr = enriquecer(An1.sane('ferm', ctx.rows('ferm')), bm); R.efectoHist = false;
       if (fr.filter((r) => r.gen != null && r.h75R != null).length < 30) { fr = enriquecer(fermAll.filter((r) => !ctx.filtraMarca || ctx.marcas.includes(r.brand)), bm); R.efectoHist = true; }
       R.ferm = fr;
-      const preds = [['gen', 'Generación de la levadura'], ['viab', 'Viabilidad de la siembra (%)'], ['cons', 'Consistencia de la siembra (%)']];
-      const outs = [['h75R', 'Tiempo a 75 % (vs. su marca)'], ['h15R', 'Tiempo a 15 °P (vs. su marca)'], ['rataR', 'Ritmo de caída (vs. su marca)'], ['rdfR', 'Extracto final (vs. su marca)']];
+      const preds = [['gen', 'Generación de la levadura', 'Generación'], ['viab', 'Viabilidad de la siembra (%)', 'Viabilidad'], ['cons', 'Consistencia de la siembra (%)', 'Consistencia']];
+      const outs = [['h75R', 'Tiempo a 75 % (vs. su marca)', 'A 75 %'], ['h15R', 'Tiempo a 15 °P (vs. su marca)', 'A 15 °P'], ['rataR', 'Ritmo de caída medio, °P/h (vs. su marca)', 'Ritmo'], ['attenR', 'Atenuación final (vs. su marca)', 'Atenuación']];
       R.preds = preds; R.outs = outs;
       R.corr = preds.map(([pk, pl]) => outs.map(([ok, ol]) => { const xs = fr.map((r) => r[pk]), ys = fr.map((r) => r[ok]); const sp = S.spearman(xs, ys); return { pk, pl, ok, ol, r: sp ? sp.r : null, p: sp ? sp.p : null, n: sp ? sp.n : 0 }; }));
       const gg = new Map(); fr.forEach((r) => { if (r.gen != null && r.h75R != null) { const g = Math.round(r.gen); if (!gg.has(g)) gg.set(g, []); gg.get(g).push(r.h75R); } });
@@ -338,7 +338,7 @@
     out.push((() => {
       const flat = R.corr.flat().filter((c) => c.n >= 10);
       if (!flat.length) return UI.card('¿La generación de la levadura cambia la fermentación?', '', UI.vacio('No hay suficientes fermentaciones con datos de levadura.'));
-      const heat = C.heatmap({ w: W.half, rows: R.preds.map((p) => p[1]), cols: R.outs.map((o) => o[1]), matrix: R.corr.map((fila) => fila.map((c) => (c.r == null ? null : An1.round(c.r, 2)))), domain: [-0.5, 0.5], diverging: true, toolbar: true, id: 'ch-le-heat', title: 'Correlación (Spearman)', subtitle: 'Positivo = a más levadura, más horas (más lento)' });
+      const heat = C.heatmap({ w: W.half, rows: R.preds.map((p) => p[2]), cols: R.outs.map((o) => o[2]), matrix: R.corr.map((fila) => fila.map((c) => (c.r == null ? null : An1.round(c.r, 2)))), domain: [-0.5, 0.5], diverging: true, toolbar: true, id: 'ch-le-heat', title: 'Correlación (Spearman)', subtitle: 'r de Spearman. En tiempos, positivo = más lento; en ritmo y atenuación, positivo = más rápido o más atenuada.' });
       const reales = flat.filter((c) => c.p != null && c.p < 0.05).sort((a, b) => Math.abs(b.r) - Math.abs(a.r));
       const box = R.porGen.length >= 2 ? C.box({ w: W.half, h: 290, unit: 'h', toolbar: true, id: 'ch-le-gen', title: 'Tiempo a 75 % por generación (vs. su marca)', groups: R.porGen.map((x) => ({ label: `Gen ${x.g} (${x.n})`, values: x.v })), refs: [{ y: 0, label: 'Normal', dashed: false }] }) : '';
       const dg = An1.difGrupos(R.cmpGen);

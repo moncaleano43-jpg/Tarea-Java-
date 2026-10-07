@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const code = fs.readFileSync(path.join(dir, '../src/js/38-importador.js'), 'utf8');
 const win = { App: {} };
-const ctx = vm.createContext({ window: win, console });
+const ctx = vm.createContext({ window: win, console, TextDecoder, TextEncoder });
 vm.runInContext(code, ctx);
 const P = win.App.Importador._p;
 
@@ -119,4 +119,44 @@ test('validación: fechas imposibles, errores y valores desproporcionados', () =
   const av = P.validar('agua', [{ row: 14, cells: { 1: '31/02/2026', 5: -3 } }, { row: 15, cells: { 1: 2, 5: 99999 } }, { row: 16, cells: { 1: '#REF!' } }], lab, {});
   const t = av.map((a) => a.texto).join('|');
   assert.match(t, /fecha/); assert.match(t, /negativo/); assert.match(t, /desproporcionado/); assert.match(t, /error de Excel/);
+});
+
+// ---- lector rápido de .xlsx: se prueba con un libro mínimo armado a mano (zip sin compresión)
+function zipStored(files) {
+  const enc = new TextEncoder(), parts = [], cd = [];
+  let off = 0;
+  for (const [name, text] of Object.entries(files)) {
+    const nb = enc.encode(name), db = enc.encode(text);
+    const lh = new Uint8Array(30 + nb.length); const dv = new DataView(lh.buffer);
+    dv.setUint32(0, 0x04034b50, true); dv.setUint16(4, 20, true); dv.setUint32(18, db.length, true); dv.setUint32(22, db.length, true); dv.setUint16(26, nb.length, true);
+    lh.set(nb, 30); parts.push(lh, db);
+    const ch = new Uint8Array(46 + nb.length); const cv = new DataView(ch.buffer);
+    cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true); cv.setUint32(20, db.length, true); cv.setUint32(24, db.length, true); cv.setUint16(28, nb.length, true); cv.setUint32(42, off, true);
+    ch.set(nb, 46); cd.push(ch); off += lh.length + db.length;
+  }
+  const cdLen = cd.reduce((a, b) => a + b.length, 0), eo = new Uint8Array(22), ev = new DataView(eo.buffer);
+  ev.setUint32(0, 0x06054b50, true); ev.setUint16(8, cd.length, true); ev.setUint16(10, cd.length, true); ev.setUint32(12, cdLen, true); ev.setUint32(16, off, true);
+  const all = [...parts, ...cd, eo], out = new Uint8Array(all.reduce((a, b) => a + b.length, 0)); let p = 0;
+  for (const b of all) { out.set(b, p); p += b.length; }
+  return out.buffer;
+}
+test('lector rápido: textos compartidos, inline, números, booleanos, errores, entidades y límites', async () => {
+  const sheet = '<worksheet><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1"><v>46301.5</v></c><c r="C1" t="b"><v>1</v></c><c r="D1" t="e"><v>#REF!</v></c></row>'
+    + '<row r="3" spans="1:16384"><c r="A3" t="inlineStr"><is><t>a &amp; b</t></is></c><c r="B3" t="str"><f>A1</f><v>x &lt; y</v></c><c r="C3" s="5"/><c r="AA3"><v>9</v></c></row></sheetData></worksheet>';
+  const buf = zipStored({
+    'xl/workbook.xml': '<workbook><sheets><sheet name="Datos &amp; más" sheetId="1" r:id="rId1"/></sheets></workbook>',
+    'xl/_rels/workbook.xml.rels': '<Relationships><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>',
+    'xl/sharedStrings.xml': '<sst><si><t>Fecha</t></si><si><r><t>x</t></r></si></sst>',
+    'xl/worksheets/sheet1.xml': sheet,
+  });
+  const l = await P.libroRapido(buf);
+  assert.equal(l.hojas[0], 'Datos & más');
+  const f = await l.filas('Datos & más', {});
+  assert.equal(f[0][0], 'Fecha'); assert.equal(f[0][1], 46301.5); assert.equal(f[0][2], true); assert.equal(f[0][3], null);
+  assert.equal(f[1], undefined);
+  assert.equal(f[2][0], 'a & b'); assert.equal(f[2][1], 'x < y'); assert.equal(f[2][26], 9); assert.equal(f[2][2], undefined);
+  const g = await l.filas('Datos & más', { maxCol: 10, maxRow: 2 });
+  assert.equal(g[2], undefined); assert.equal(g[0][1], 46301.5);
+  const h = await l.filas('Datos & más', { maxCol: 10 });
+  assert.equal(h[2][26], undefined);
 });

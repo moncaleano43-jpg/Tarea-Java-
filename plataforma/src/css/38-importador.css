@@ -88,7 +88,7 @@
 .imp-tbl tr:last-child td{border-bottom:0}
 .imp-bd>.imp-tbl{border:1px solid var(--line);border-radius:var(--r-sm)}
 
-.imp-map-g{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;max-height:300px;overflow-y:auto}
+.imp-map-g{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;max-height:230px;overflow-y:auto}
 .imp-map-r{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);gap:10px;align-items:center;padding:8px 12px;background:var(--surface)}
 .imp-map-r+.imp-map-r{border-top:1px solid var(--line-2)}
 .imp-map-r:not(.on){opacity:.7}
@@ -165,3 +165,7 @@
 .doc-nopreview{display:flex;flex-direction:column;align-items:center;gap:10px;padding:40px;color:var(--muted)}
 .doc-nota{margin:0;font-size:13px;color:var(--ink-2)}
 @media (max-width:640px){.doc-item{flex-wrap:wrap}.doc-acts{width:100%;justify-content:flex-start}.doc-panel>summary small{display:none}}
+
+/* El programa original fija texto blanco (!important) en button.btn.pri; en modo oscuro el fondo del botón
+   primario es claro, así que se reafirma el color de texto del tema en los controles de esta capa. */
+.imp-dlg button.btn.pri,.doc-panel button.btn.pri,.doc-dlg button.btn.pri{color:var(--accent-ink)!important}
