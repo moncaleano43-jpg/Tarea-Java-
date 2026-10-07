@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Control de Cavas</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ctext y=%2713%27 font-size=%2713%27%3E%F0%9F%8D%BA%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script src="vendor/chart.umd.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Control de Cavas</h1>
+    <nav id="tabs">
+      <button data-tab="dashboard" class="active">Dashboard</button>
+      <button data-tab="fermentaciones">Fermentación</button>
+      <button data-tab="maduraciones">Maduración</button>
+      <button data-tab="levaduras">Levadura</button>
+      <button data-tab="indicadores">Indicadores</button>
+      <button data-tab="registrar">Registrar</button>
+      <button data-tab="calculadora">Calculadora</button>
+    </nav>
+  </header>
+  <main>
+    <div id="toast" role="status"></div>
+
+    <section id="dashboard" class="tab active">
+      <div class="toolbar">
+        <label>Estado a la fecha <input type="datetime-local" id="ahora"></label>
+        <button id="ahoraBtn">Actualizar</button>
+        <span id="kpis"></span>
+      </div>
+      <h2>Fermentadores (FV)</h2>
+      <div class="scroll"><table id="tblFv"></table></div>
+      <h2>Maduradores (SV)</h2>
+      <div class="scroll"><table id="tblSv"></table></div>
+    </section>
+
+    <section id="fermentaciones" class="tab">
+      <div class="toolbar">
+        <label>Marca <select id="fMarca"><option value="">Todas</option></select></label>
+        <span class="muted">Clic en una fila para ver la curva de fermentación</span>
+      </div>
+      <div class="scroll"><table id="tblFer"></table></div>
+      <div id="detalleFer" hidden>
+        <h2 id="detalleTitulo"></h2>
+        <div class="charts">
+          <div><canvas id="chExtracto"></canvas></div>
+          <div><canvas id="chTemp"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="maduraciones" class="tab"><div class="scroll"><table id="tblMad"></table></div></section>
+
+    <section id="levaduras" class="tab">
+      <div class="toolbar"><label><input type="checkbox" id="levDisp"> Solo disponibles para resiembra</label></div>
+      <div class="scroll"><table id="tblLev"></table></div>
+    </section>
+
+    <section id="indicadores" class="tab">
+      <div class="toolbar">
+        <label>Desde <input type="date" id="indDesde"></label>
+        <label>Hasta <input type="date" id="indHasta"></label>
+        <button id="indBtn">Calcular</button>
+      </div>
+      <div id="indCont"></div>
+    </section>
+
+    <section id="registrar" class="tab">
+      <div class="forms">
+        <form id="formLlenado">
+          <h2>Recibo de mosto (llenado de FV)</h2>
+          <label>FV <input name="tq" type="number" required min="1"></label>
+          <label>Marca <select name="marca" class="marcas" required></select></label>
+          <label>Inicio llenado <input name="inicioLlenado" type="datetime-local" required></label>
+          <label>Fin llenado <input name="finLlenado" type="datetime-local"></label>
+          <label>Volumen (Hl) <input name="volumenHl" type="number" step="any"></label>
+          <label>E.O ponderado (°P) <input name="eoPonderado" type="number" step="any"></label>
+          <label>Extracto límite (°P) <input name="eLimite" type="number" step="any"></label>
+          <label>Recuento 3 h (Mcel/ml) <input name="recuento3h" type="number" step="any"></label>
+          <label>Levadura cosechada <select name="levaduraCodigo" id="selLev"><option value="">— Propagador —</option></select></label>
+          <label>Código propagador <input name="levaduraPropagador"></label>
+          <label>Temp. siembra (°C) <input name="tempSiembra" type="number" step="any"></label>
+          <button>Registrar llenado</button>
+        </form>
+
+        <form id="formMuestra">
+          <h2>Muestreo de extracto / pH</h2>
+          <label>Fermentación <select name="cons" class="fvActivos" required></select></label>
+          <label>Fecha y hora <input name="fecha" type="datetime-local" required></label>
+          <label>Extracto (°P) <input name="extracto" type="number" step="any" required></label>
+          <label>pH <input name="ph" type="number" step="any"></label>
+          <button>Registrar muestra</button>
+        </form>
+
+        <form id="formTemp">
+          <h2>Temperatura y presión</h2>
+          <label>Fermentación <select name="cons" class="fvActivos" required></select></label>
+          <label>Fecha y hora <input name="fecha" type="datetime-local" required></label>
+          <label>Temp. M (°C) <input name="tempM" type="number" step="any"></label>
+          <label>Temp. I (°C) <input name="tempI" type="number" step="any"></label>
+          <label>Set point (°C) <input name="setPoint" type="number" step="any"></label>
+          <label>Presión (PSI) <input name="presion" type="number" step="any"></label>
+          <button>Registrar lectura</button>
+        </form>
+
+        <form id="formEtapaFv">
+          <h2>Cambio de etapa del FV</h2>
+          <label>Fermentación <select name="cons" class="fvActivos" required></select></label>
+          <label>Etapa <select name="etapa"><option value="EN">EN – Fermentación</option><option value="AF">AF – Descanso</option><option value="RF">RF – Frío</option></select></label>
+          <button>Cambiar etapa</button>
+        </form>
+
+        <form id="formTrasiego">
+          <h2>Trasiego FV → SV</h2>
+          <label>SV destino <input name="tq" type="number" required min="1"></label>
+          <label>Fermentación origen <select name="fvCons" class="fvActivos" required></select></label>
+          <label>Segunda fermentación (opcional) <select name="fv2Cons" class="fvActivos opcional"></select></label>
+          <label>Inicio trasiego <input name="inicioTrasiego" type="datetime-local" required></label>
+          <label>Fin trasiego <input name="finTrasiego" type="datetime-local"></label>
+          <label>Volumen contador (Hl) <input name="volContadorHl" type="number" step="any"></label>
+          <label>Lote sílica/PVPP <input name="loteSilica"></label>
+          <label>Bultos sílica <input name="silicaKg" type="number" step="any"></label>
+          <label>Responsable <input name="responsable"></label>
+          <button>Registrar trasiego</button>
+        </form>
+
+        <form id="formAnalisis">
+          <h2>Análisis fisicoquímico final (SV)</h2>
+          <label>Maduración <select name="cons" class="svActivos" required></select></label>
+          <label>Fecha muestreo <input name="fechaMuestreo" type="datetime-local" required></label>
+          <label>E.O (°P) <input name="extractoOriginal" type="number" step="any"></label>
+          <label>E. App (°P) <input name="eApp" type="number" step="any"></label>
+          <label>E. Real (°P) <input name="extractoReal" type="number" step="any"></label>
+          <label>Alcohol (%v/v) <input name="alcoholV" type="number" step="any"></label>
+          <label>Color (EBC) <input name="color" type="number" step="any"></label>
+          <label>pH <input name="ph" type="number" step="any"></label>
+          <label>Amargo (BU) <input name="amargo" type="number" step="any"></label>
+          <label>O2 disuelto (ppb) <input name="o2Ppb" type="number" step="any"></label>
+          <label>CO2 <input name="co2" type="number" step="any"></label>
+          <label>Sensorial 1 <input name="sensorial1"></label>
+          <label>Sensorial 2 <input name="sensorial2"></label>
+          <button>Registrar análisis</button>
+        </form>
+
+        <form id="formEtapaSv">
+          <h2>Cambio de etapa del SV</h2>
+          <label>Maduración <select name="cons" class="svActivos" required></select></label>
+          <label>Etapa <select name="etapa"><option>MADURANDO</option><option>LISTO</option><option>VACIO</option></select></label>
+          <button>Cambiar etapa</button>
+        </form>
+
+        <form id="formCosecha">
+          <h2>Cosecha de levadura</h2>
+          <label>Código (p.ej. EK7F1) <input name="codigo" required></label>
+          <label>Marca <select name="marca" class="marcas"></select></label>
+          <label>Generación <input name="generacion" type="number" min="0"></label>
+          <label>FV fuente <input name="utqFuente" type="number"></label>
+          <label>Fin remoción <input name="finRemocion" type="datetime-local"></label>
+          <label>Volumen (Hl) <input name="volumenHl" type="number" step="any"></label>
+          <label>Consistencia (0–1) <input name="consistencia" type="number" step="any"></label>
+          <label>Viabilidad (0–1) <input name="viabilidad" type="number" step="any"></label>
+          <label>pH <input name="ph" type="number" step="any"></label>
+          <label>Temp. cosecha (°C) <input name="tempCosecha" type="number" step="any"></label>
+          <label>Máx. resiembra <input name="maxResiembra" type="datetime-local"></label>
+          <button>Registrar cosecha</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="calculadora" class="tab">
+      <form id="formCalc" class="forms single">
+        <h2>Calculadora de extracto</h2>
+        <label>E.O (°P) <input name="eo" type="number" step="any"></label>
+        <label>Volumen (Hl) <input name="volHl" type="number" step="any"></label>
+        <label>E.O equivalente (°P) <input name="eoEqui" type="number" step="any"></label>
+        <label>Densidad <input name="densidad" type="number" step="any"></label>
+        <label>Extracto real (°P) <input name="extractoReal" type="number" step="any"></label>
+        <button>Calcular</button>
+        <pre id="calcOut"></pre>
+      </form>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

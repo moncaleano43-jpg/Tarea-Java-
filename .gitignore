@@ -1,0 +1,9 @@
+target/
+data/
+out/
+*.xlsm
+*.xlsx
+*.zip
+.idea/
+*.iml
+__pycache__/

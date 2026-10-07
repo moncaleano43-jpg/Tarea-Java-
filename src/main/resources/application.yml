@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: control-cavas
+  datasource:
+    url: jdbc:h2:file:./data/cavas;AUTO_SERVER=TRUE
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate.jdbc.batch_size: 100
+      hibernate.order_inserts: true
+  jackson:
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
+
+server:
+  port: ${PORT:8080}
+
+cavas:
+  # Directorio con los CSV generados por tools/extract_excel.py. Si se define y la base está vacía, se importan al arrancar.
+  import-dir: ${CAVAS_IMPORT_DIR:}
+
+---
+# Producción: SPRING_PROFILES_ACTIVE=postgres + DB_URL / DB_USER / DB_PASSWORD
+spring:
+  config:
+    activate:
+      on-profile: postgres
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/cavas}
+    username: ${DB_USER:cavas}
+    password: ${DB_PASSWORD:}
