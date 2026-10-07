@@ -280,11 +280,11 @@
       if (col.base === 'lista') { const o = opcionesDe(col, row).find((x) => x.v === v); return o ? o.t : String(v); }
       return String(v);
     }
-    function resolver(col, row, txt) {
+    function resolver(col, row, txt, exacto) {
       const n = norm(txt); if (!n) return null;
       const os = opcionesDe(col, row);
-      let hit = os.find((o) => norm(o.t) === n || norm(o.v) === n);
-      if (hit) return hit;
+      const hit = os.find((o) => norm(o.t) === n || norm(o.v) === n);
+      if (hit || (exacto && col.libre)) return hit || null;
       const pre = os.filter((o) => norm(o.t).startsWith(n));
       if (pre.length) return pre[0];
       const con = os.filter((o) => norm(o.t).includes(n));
@@ -306,7 +306,7 @@
         return { ok: true, val: s };
       }
       if (b === 'lista') {
-        const o = resolver(col, row, txt);
+        const o = resolver(col, row, txt, modo !== 'enter');
         if (o) return { ok: true, val: o.v };
         if (col.libre) return modo === 'enter' ? { ok: false, nuevo: true, val: txt } : { ok: true, val: txt };
         return modo === 'enter' ? { ok: false, msg: '«' + txt + '» no está en la lista' } : { ok: true, val: txt };
@@ -415,8 +415,9 @@
       return true;
     };
     function trasCambio(idxs, todo, cambios) {
-      const min = idxs && idxs.length ? Math.min(...idxs) : 0;
-      recalc(todo || !idxs ? 0 : min);
+      if (todo || !idxs) recalc(0);
+      else if (opts.cadena) recalc(Math.min(...idxs));
+      else [...new Set(idxs)].forEach((i) => { if (rows[i]) evalRow(i); });
       asegurarFinal();
       if (act.r >= rows.length) act.r = rows.length - 1;
       if (ext.r >= rows.length) ext.r = rows.length - 1;
@@ -664,9 +665,8 @@
       const txt = input.value;
       let res;
       const popSel = pop && ed.hl >= 0 ? pop.items[ed.hl] : null;
-      if (col.base === 'lista' && popSel && !o.suave && txt.trim()) {
-        res = popSel.nuevo ? { ok: true, val: popSel.v } : { ok: true, val: popSel.v };
-      } else res = interpretar(col, row, txt, o.suave ? 'suave' : 'enter');
+      if (col.base === 'lista' && popSel && !popSel.nuevo && !o.suave && txt.trim()) res = { ok: true, val: popSel.v };
+      else res = interpretar(col, row, txt, o.suave ? 'suave' : 'enter');
       if (!res.ok) {
         if (res.nuevo) {
           if (ed.pend === txt.trim()) res = { ok: true, val: txt.trim() };
@@ -682,6 +682,15 @@
       return true;
     }
     function mover(dr, dc, extend) { ir(act.r + dr, dc ? colSig(act.c, dc) : act.c, extend); }
+    /** Tab / Shift+Tab: devuelve false si el foco debe salir de la hoja */
+    function tab(shift) {
+      const c = colSig(act.c, shift ? -1 : 1);
+      if (c !== act.c) { ir(act.r, c); return true; }
+      const r = act.r + (shift ? -1 : 1);
+      if (r < 0 || r >= rows.length) return false;
+      let cc = shift ? cols.length - 1 : 0; if (!visible(cc)) cc = colSig(cc, shift ? -1 : 1);
+      ir(r, cc); return true;
+    }
     function teclaEdicion(e) {
       if (!ed) return;
       const col = cols[ed.c];
@@ -694,7 +703,7 @@
         if (commitEdit()) mover(e.shiftKey ? -1 : 1, 0);
         return;
       }
-      if (e.key === 'Tab') { e.preventDefault(); if (commitEdit()) mover(0, e.shiftKey ? -1 : 1) ; return; }
+      if (e.key === 'Tab') { e.preventDefault(); if (commitEdit()) tab(e.shiftKey); return; }
       if (col.base === 'lista' && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
         e.preventDefault();
         if (!pop) { ed.hl = -1; abrirPop(); }
@@ -728,7 +737,8 @@
         d.addEventListener('mousedown', (e) => e.preventDefault());
         d.addEventListener('click', (e) => {
           const li = e.target.closest('[data-i]'); if (!li || !ed) return;
-          ed.hl = +li.dataset.i; ed.input.value = pop.items[ed.hl].nuevo ? pop.items[ed.hl].v : pop.items[ed.hl].t;
+          ed.hl = +li.dataset.i; const it = pop.items[ed.hl];
+          ed.input.value = it.nuevo ? it.v : it.t; if (it.nuevo) ed.pend = it.v;
           if (commitEdit()) mover(1, 0);
         });
         document.body.appendChild(d);
@@ -937,16 +947,7 @@
         case 'ArrowUp': return nav(-1, 0);
         case 'ArrowLeft': return nav(0, -1);
         case 'ArrowRight': return nav(0, 1);
-        case 'Tab': {
-          const c = colSig(act.c, e.shiftKey ? -1 : 1);
-          if (c === act.c) {
-            const r = act.r + (e.shiftKey ? -1 : 1);
-            if (r < 0 || r >= rows.length) return;       // salir de la hoja
-            e.preventDefault(); let cc = e.shiftKey ? cols.length - 1 : 0; if (!visible(cc)) cc = colSig(cc, e.shiftKey ? -1 : 1);
-            ir(r, cc);
-          } else { e.preventDefault(); ir(act.r, c); }
-          return;
-        }
+        case 'Tab': if (tab(e.shiftKey)) e.preventDefault(); return;
         case 'Enter': e.preventDefault(); if (act.r === rows.length - 1 && !vacia(rows[act.r])) asegurarFinal(); ir(act.r + (e.shiftKey ? -1 : 1), act.c); return;
         case 'Home': e.preventDefault(); ir(act.r, colSig(-1, 1), e.shiftKey); return;
         case 'End': e.preventDefault(); { let c = cols.length; c = colSig(c, -1); ir(act.r, c, e.shiftKey); } return;
@@ -1067,7 +1068,7 @@
       try { res = await opts.onGuardar(lista.map((r) => pub(r, rows.indexOf(r))), api); }
       catch (e) { res = false; if (root.console) console.error(e); }
       saving = false;
-      if (res === false || res == null && false) { resumen(); return false; }
+      if (res === false) { resumen(); return false; }
       lista.forEach((r, i) => {
         r.sucio = false; r.nuevo = false;
         const id = Array.isArray(res) && res[i] != null ? (typeof res[i] === 'object' ? res[i].id : res[i]) : null;
