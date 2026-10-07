@@ -1,0 +1,12 @@
+.pal42{position:fixed;inset:0;z-index:300;background:rgba(15,15,14,.38);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;justify-content:center;align-items:flex-start;padding:13vh 16px 0}
+.pal42-box{width:100%;max-width:600px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.32);overflow:hidden}
+.pal42-in{width:100%;box-sizing:border-box;border:0;outline:0;background:transparent;color:var(--ink);font:17px var(--sans);padding:18px 20px;border-bottom:1px solid var(--line)}
+.pal42-list{list-style:none;margin:0;padding:6px;max-height:min(52vh,420px);overflow:auto}
+.pal42-list li{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 12px;border-radius:9px;font-size:14.5px;color:var(--ink);cursor:pointer}
+.pal42-list li small{color:var(--muted);font-size:12px;flex-shrink:0}
+.pal42-list li.on{background:var(--ink);color:var(--bg)}
+.pal42-list li.on small{color:color-mix(in srgb,var(--bg) 70%,transparent)}
+.pal42-list li.pal42-g{cursor:default;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:10px 12px 4px;font-weight:600}
+.pal42-list li.pal42-vacio{cursor:default;color:var(--muted)}
+.pal42-pie{display:flex;gap:16px;padding:9px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);background:var(--surface-2)}
+.pal42-in,.pal42-in:focus,.pal42-in:focus-visible{outline:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important;border-width:0 0 1px 0!important}
