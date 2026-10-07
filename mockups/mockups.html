@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LevaBot — mockups</title>
+<style>
+:root{
+  --bg:#F2F2F7;--surface:#fff;--surface2:#F9F9FB;--sunken:#E9E9EE;--ink:#000;--ink2:#3C3C43;--muted:#8E8E93;--faint:#C7C7CC;--line:#E5E5EA;
+  --accent:#007AFF;--accent-soft:#E5F0FF;--green:#34C759;--green-bg:#E3F9EA;--orange:#FF9500;--orange-bg:#FFF2E0;--red:#FF3B30;--red-bg:#FFE5E3;--purple:#5856D6;--teal:#32ADE6;
+  --glass:rgba(250,250,252,.78);--sh:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Segoe UI",Roboto,sans-serif;
+}
+[data-theme=dark]{
+  --bg:#000;--surface:#1C1C1E;--surface2:#2C2C2E;--sunken:#3A3A3C;--ink:#fff;--ink2:#EBEBF5;--muted:#8E8E93;--faint:#48484A;--line:#38383A;
+  --accent:#0A84FF;--accent-soft:#0A2540;--green:#30D158;--green-bg:#0F2E1B;--orange:#FF9F0A;--orange-bg:#3A2E14;--red:#FF453A;--red-bg:#3A1614;--purple:#BF5AF2;--teal:#64D2FF;
+  --glass:rgba(20,20,22,.78);--sh:0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);color:var(--ink);-webkit-font-smoothing:antialiased;background:#e8e9ef}
+button{font-family:inherit}
+.stage{padding:56px;background:linear-gradient(135deg,#dfe7ff 0%,#f3e7ff 45%,#ffe8ee 100%);width:max-content}
+[data-theme=dark] .stage{background:linear-gradient(135deg,#0b1020,#1a1030 50%,#2a0f1a)}
+.win{width:1360px;border-radius:18px;overflow:hidden;background:var(--bg);box-shadow:0 40px 100px rgba(20,20,60,.28),0 0 0 1px rgba(0,0,0,.08)}
+.titlebar{height:40px;background:var(--surface2);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 16px;gap:8px;position:relative}
+.titlebar i{width:12px;height:12px;border-radius:50%;background:#ff5f57}.titlebar i:nth-child(2){background:#febc2e}.titlebar i:nth-child(3){background:#28c840}
+.titlebar span{position:absolute;left:50%;transform:translateX(-50%);font-size:12px;color:var(--muted);background:var(--bg);padding:4px 60px;border-radius:8px}
+
+/* nav */
+.topnav{background:var(--glass);border-bottom:1px solid var(--line);height:56px;display:flex;align-items:center;padding:0 40px;gap:26px}
+.brand{width:22px;height:22px}
+.topnav nav{display:flex;gap:22px;font-size:14px;color:var(--ink2);flex:1}
+.topnav nav a{position:relative;padding:18px 0;display:flex;gap:6px;align-items:center}
+.topnav nav a.on{font-weight:600;color:var(--ink)}
+.topnav nav a.on::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--ink);border-radius:2px}
+.cnt{background:var(--red);color:#fff;font-size:11px;font-weight:600;border-radius:99px;padding:1px 6px}
+.search{background:var(--sunken);border-radius:10px;padding:8px 14px;font-size:13px;color:var(--muted);width:210px;display:flex;gap:8px;align-items:center}
+.circ{width:34px;height:34px;border-radius:50%;background:var(--surface);display:grid;place-items:center;position:relative;box-shadow:var(--sh)}
+.circ b{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:10px;border-radius:99px;padding:1px 5px}
+.botpill{display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:99px;padding:4px 14px 4px 6px;font-size:13px;font-weight:600;box-shadow:var(--sh)}
+.botpill img{width:26px;height:26px;border-radius:50%}
+.page{padding:36px 40px 48px}
+.eyebrow{color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+h1{font-size:46px;line-height:1.05;letter-spacing:-.04em;font-weight:700}
+h1 .m{color:var(--muted)}
+h2{font-size:20px;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:15px;margin-top:8px}
+.card{background:var(--surface);border-radius:22px;padding:22px;box-shadow:var(--sh);min-width:0}
+.card h3{font-size:17px;letter-spacing:-.02em}
+.card .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.card .hd small{color:var(--muted);font-size:12px}
+.link{color:var(--accent);font-size:13px}
+.grid{display:grid;gap:16px}
+.pill{display:inline-block;font-size:11px;font-weight:600;border-radius:99px;padding:3px 10px;white-space:nowrap}
+.pill.red{background:var(--red-bg);color:var(--red)}.pill.org{background:var(--orange-bg);color:var(--orange)}.pill.grn{background:var(--green-bg);color:var(--green)}.pill.gry{background:var(--sunken);color:var(--muted)}.pill.blu{background:var(--accent-soft);color:var(--accent)}
+.chip{display:inline-block;font-size:11px;font-weight:600;border-radius:6px;padding:2px 7px;color:#fff}
+.kpi{display:flex;flex-direction:column;gap:6px}
+.kpi small{color:var(--muted);font-size:13px}
+.kpi .v{font-size:38px;font-weight:700;letter-spacing:-.04em;line-height:1}
+.kpi .d{font-size:12px;color:var(--green);font-weight:600}
+.kpi .d.bad{color:var(--red)}
+svg text{font-family:var(--font)}
+.axis{fill:var(--muted);font-size:11px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.row{display:grid;grid-template-columns:96px 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--surface2);margin-bottom:8px}
+.row .t{font-size:12px;color:var(--muted);line-height:1.35}
+.row b{font-size:14px;display:block}
+.row p{font-size:12px;color:var(--muted);margin-top:2px}
+.bar{height:6px;border-radius:99px;background:var(--sunken);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:99px}
+.tank{display:flex;flex-direction:column;gap:10px}
+.tank .top{display:flex;justify-content:space-between;align-items:flex-start}
+.tank .fv{font-size:26px;font-weight:700;letter-spacing:-.03em}
+.tank .meta{font-size:12px;color:var(--muted)}
+.tank .num{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.tank .num b{display:block;font-size:20px;color:var(--ink);letter-spacing:-.02em}
+.eta{font-size:12px;background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:8px 10px;font-weight:500}
+.eta.org{background:var(--orange-bg);color:var(--orange)}
+.eta.gry{background:var(--sunken);color:var(--muted)}
+.seg{display:inline-flex;background:var(--sunken);padding:3px;border-radius:99px}
+.seg span{font-size:13px;padding:6px 16px;border-radius:99px;color:var(--muted);font-weight:500}
+.seg span.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.field label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+.inp{background:var(--sunken);border-radius:12px;padding:12px 14px;font-size:16px}
+.big{font-size:64px;font-weight:700;letter-spacing:-.05em;line-height:1}
+.btn{background:var(--accent);color:#fff;border-radius:99px;padding:14px 26px;font-weight:600;font-size:16px;text-align:center}
+.btn.ghost{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.ins{background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;border-radius:22px;padding:22px}
+.ins img{width:34px;height:34px;border-radius:50%;background:#fff;margin-bottom:10px}
+.ins p{font-size:15px;line-height:1.45}
+.ins b{font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-weight:500;font-size:12px;padding:0 8px 8px}
+td{padding:9px 8px;border-top:1px solid var(--line)}
+.num-r{text-align:right;font-variant-numeric:tabular-nums}
+
+/* phones */
+.phones{display:flex;gap:48px}
+.phone{width:390px;height:844px;border-radius:56px;background:#0b0b0d;padding:12px;box-shadow:0 40px 90px rgba(20,20,60,.35),inset 0 0 0 2px #333;position:relative;flex:none}
+.phone .scr{width:100%;height:100%;border-radius:44px;overflow:hidden;background:var(--bg);position:relative;display:flex;flex-direction:column}
+.island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:110px;height:32px;background:#000;border-radius:20px;z-index:5}
+.status{height:52px;display:flex;justify-content:space-between;align-items:flex-end;padding:0 30px 6px;font-size:15px;font-weight:600}
+.pbody{flex:1;padding:8px 18px 0;overflow:hidden;display:flex;flex-direction:column;gap:12px}
+.tabbar{height:84px;background:var(--glass);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding-top:10px;font-size:10px;color:var(--muted)}
+.tabbar div{display:flex;flex-direction:column;align-items:center;gap:3px}
+.tabbar div.on{color:var(--accent)}
+.tabbar svg{width:24px;height:24px}
+.ptitle{font-size:32px;font-weight:700;letter-spacing:-.04em}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.keys div{background:var(--surface);border-radius:16px;height:56px;display:grid;place-items:center;font-size:24px;font-weight:500;box-shadow:var(--sh)}
+.tchips{display:flex;gap:8px;overflow:hidden}
+.tchips span{background:var(--surface);border-radius:99px;padding:8px 14px;font-size:14px;font-weight:600;box-shadow:var(--sh);white-space:nowrap}
+.tchips span.on{background:var(--accent);color:#fff}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="data.js"></script>
+<script>
+const D = DATA, BOT = 'bot.png';
+const NOW = new Date('2026-10-07T08:00');
+const MARCA = { 'ESTANDAR':'#5856D6', 'LIGHT':'#32ADE6', 'CLUB COLOMBIA':'#FF9500', 'AZTECA':'#34C759' };
+const COLS = ['#007AFF','#5856D6','#32ADE6','#FF9500','#34C759','#FF2D55','#AF52DE'];
+const $ = (s) => document.querySelector(s);
+const f2 = (n) => n.toFixed(2).replace('.', ',');
+const f1 = (n) => n.toFixed(1).replace('.', ',');
+const pct = (v) => f1(v * 100) + '%';
+const dd = (d) => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+const title = (m) => m === 'CLUB COLOMBIA' ? 'Club Colombia' : m[0] + m.slice(1).toLowerCase();
+
+/* ---------- análisis ---------- */
+function regress(xs, ys) {
+  const n = xs.length; let sx=0, sy=0, sxy=0, sxx=0;
+  xs.forEach((x,i)=>{ sx+=x; sy+=ys[i]; sxy+=x*ys[i]; sxx+=x*x; });
+  const m = (n*sxy - sx*sy) / (n*sxx - sx*sx), b = (sy - m*sx) / n;
+  let se = 0; xs.forEach((x,i)=>{ se += (ys[i]-(m*x+b))**2; });
+  return { m, b, se: Math.sqrt(se / Math.max(n-2,1)) };
+}
+// curva de fermentación + proyección lineal sobre las últimas 3 muestras hasta el extracto límite
+const LAST_H = [24,6,14,9,20,11,16];  // horas desde la última muestra (demo "en vivo")
+function tankModel(t, i) {
+  const orig = new Date(t.fin);
+  const lastT = t.muestras.length ? new Date(t.muestras[t.muestras.length-1].t) : null;
+  const shift = lastT ? NOW - lastT - (LAST_H[i] ?? 12)*36e5 : NOW - orig - 20*36e5;
+  const fin = new Date(+orig + shift);
+  const pts = [{ x:0, y:t.eo }].concat(t.muestras.map(s => ({ x:(new Date(s.t) - orig)/864e5, y:s.ext, at:new Date(+new Date(s.t) + shift) })));
+  const n = t.muestras.length;
+  let proj = null, eta = null, prog = 0;
+  if (n) prog = Math.max(0, Math.min(1, (t.eo - pts[pts.length-1].y) / (t.eo - (t.eLim ?? t.eo*.12))));
+  if (n >= 2 && t.eLim != null) {
+    const last = pts.slice(-3), r = regress(last.map(p=>p.x), last.map(p=>p.y));
+    const xe = (t.eLim - r.b) / r.m, x0 = pts[pts.length-1];
+    if (r.m < 0 && xe > x0.x) { proj = [{ x:x0.x, y:x0.y }, { x:xe, y:t.eLim }]; eta = new Date(+fin + xe*864e5); }
+  }
+  return { fin, pts, proj, eta, prog, lastY: n ? pts[pts.length-1].y : null };
+}
+const TK = D.tanques.map((t,i)=>({ ...t, ...tankModel(t,i), color: COLS[i % COLS.length] }));
+const state = (t) => !t.muestras.length ? ['Espera','gry'] : t.prog >= 1 ? ['Lista','grn'] : t.prog >= .75 ? ['Próximo','org'] : ['Fermentando','blu'];
+const hrs = (ms) => { const h = Math.round(ms/36e5); return Math.abs(h) < 48 ? `${Math.abs(h)} h` : `${Math.round(Math.abs(h)/24)} d`; };
+const COLEC = D.col.map(c => ({ ...c, due: new Date(c.maxAbi) }));
+const vencidos = COLEC.filter(c => c.due < NOW);
+const viabAvg = TK.reduce((a,t)=>a+t.lev.viab,0)/TK.length;
+
+/* ---------- svg helpers ---------- */
+function frame(w, h, P, xr, yr, ticksY, xlab) {
+  const x = (v) => P.l + (v - xr[0]) / (xr[1] - xr[0]) * (w - P.l - P.r);
+  const y = (v) => P.t + (yr[1] - v) / (yr[1] - yr[0]) * (h - P.t - P.b);
+  let s = '';
+  ticksY.forEach(v => { s += `<line x1="${P.l}" x2="${w-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text class="axis" x="${P.l-8}" y="${y(v)+4}" text-anchor="end">${xlab.y(v)}</text>`; });
+  xlab.xs.forEach(v => { s += `<text class="axis" x="${x(v)}" y="${h-8}" text-anchor="middle">${xlab.x(v)}</text>`; });
+  return { x, y, s };
+}
+const path = (pts, X, Y) => pts.map((p,i)=>`${i?'L':'M'}${X(p.x).toFixed(1)} ${Y(p.y).toFixed(1)}`).join(' ');
+const smooth = (pts, X, Y) => {
+  if (pts.length < 3) return path(pts, X, Y);
+  let d = `M${X(pts[0].x)} ${Y(pts[0].y)}`;
+  for (let i=0;i<pts.length-1;i++){ const a=pts[i], b=pts[i+1], mx=(X(a.x)+X(b.x))/2; d += ` C${mx} ${Y(a.y)} ${mx} ${Y(b.y)} ${X(b.x)} ${Y(b.y)}`; }
+  return d;
+};
+
+function ferChart(w, h, list, opts = {}) {
+  const P = { l:40, r:20, t:14, b:28 };
+  const xmax = opts.xmax || 6, ymax = 20;
+  const F = frame(w, h, P, [0,xmax], [0,ymax], [0,5,10,15,20], { y:v=>v, xs:[0,1,2,3,4,5,6].filter(v=>v<=xmax), x:v=>v+' d' });
+  let s = F.s;
+  list.forEach(t => {
+    if (!t.muestras.length) return;
+    s += `<path d="${smooth(t.pts, F.x, F.y)}" fill="none" stroke="${t.color}" stroke-width="${opts.thick||3}" stroke-linecap="round"/>`;
+    if (t.proj) {
+      s += `<path d="${path(t.proj, F.x, F.y)}" fill="none" stroke="${t.color}" stroke-width="${opts.thick||3}" stroke-dasharray="2 7" stroke-linecap="round" opacity=".8"/>`;
+      s += `<circle cx="${F.x(t.proj[1].x)}" cy="${F.y(t.proj[1].y)}" r="5.5" fill="var(--surface)" stroke="${t.color}" stroke-width="2.5"/>`;
+    }
+    const L = t.pts[t.pts.length-1];
+    s += `<circle cx="${F.x(L.x)}" cy="${F.y(L.y)}" r="4.5" fill="${t.color}"/>`;
+    if (opts.labels) s += `<text x="${F.x(L.x)+8}" y="${F.y(L.y)-8}" font-size="11" font-weight="600" fill="${t.color}">FV ${t.tq}</text>`;
+  });
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${s}</svg>`;
+}
+
+function spark(t, w, h) {
+  const P = { l:4, r:8, t:8, b:6 }, xmax = Math.max(4, (t.proj ? t.proj[1].x : 0) + .3, t.pts[t.pts.length-1].x + .3);
+  const F = frame(w, h, P, [0,xmax], [0,20], [], { y:()=>'', xs:[], x:()=>'' });
+  let s = '';
+  if (t.eLim != null) s += `<line x1="${P.l}" x2="${w-P.r}" y1="${F.y(t.eLim)}" y2="${F.y(t.eLim)}" stroke="var(--orange)" stroke-dasharray="3 4" opacity=".7"/>`;
+  if (t.muestras.length) {
+    s += `<path d="${smooth(t.pts,F.x,F.y)}" fill="none" stroke="${t.color}" stroke-width="3" stroke-linecap="round"/>`;
+    if (t.proj) s += `<path d="${path(t.proj,F.x,F.y)}" fill="none" stroke="${t.color}" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round" opacity=".8"/>`;
+    const L = t.pts[t.pts.length-1];
+    s += `<circle cx="${F.x(L.x)}" cy="${F.y(L.y)}" r="4" fill="${t.color}"/>`;
+  } else s += `<text x="${w/2}" y="${h/2+4}" text-anchor="middle" class="axis">Sin muestras aún</text>`;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${s}</svg>`;
+}
+
+/* ---------- chrome ---------- */
+const ICON = {
+  search:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  bell:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 8a6 6 0 1112 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 004 0"/></svg>',
+  brand:'<svg class="brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="9" r="4.5"/><circle cx="17" cy="6" r="2.5"/><circle cx="16" cy="16" r="4"/></svg>'
+};
+function nav(active) {
+  const items = [['Inicio'],['Tanques', vencidos.length],['Levaduras'],['Colectores', 5],['Muestra'],['Análisis'],['Histórico']];
+  return `<div class="topnav">${ICON.brand}<nav>${items.map(([n,c])=>`<a class="${n===active?'on':''}">${n}${c?`<span class="cnt">${c}</span>`:''}</a>`).join('')}</nav>
+  <div class="search">${ICON.search}Busca un FV, familia…</div><div class="circ">${ICON.bell}<b>12</b></div><div class="botpill"><img src="${BOT}">LevaBot</div></div>`;
+}
+const win = (url, active, body) => `<div class="stage"><div class="win"><div class="titlebar"><i></i><i></i><i></i><span>${url}</span></div>${nav(active)}<div class="page">${body}</div></div></div>`;
+
+/* ---------- pantallas ---------- */
+function agendaRows(n) {
+  return [...COLEC].sort((a,b)=>a.due-b.due).filter((c,i,a)=>a.findIndex(o=>o.nombre===c.nombre&&o.maxAbi===c.maxAbi)===i).slice(0,n).map(c => {
+    const late = c.due < NOW, soon = !late && c.due - NOW < 24*36e5;
+    return `<div class="row"><div class="t">${dd(c.due)}<br>${late?'hace ':'en '}${hrs(c.due-NOW)}</div><div><b>FV ${c.tq} · ${title(c.marca)}</b><p>Límite de retiro de levadura ${c.nombre} · G${c.gen}</p></div><span class="pill ${late?'red':soon?'org':'blu'}">${late?'Vencido':soon?'Vence hoy':'Programado'}</span></div>`;
+  }).join('');
+}
+
+function screenInicio() {
+  const act = TK.filter(t=>t.muestras.length && t.proj);
+  return win('levabot.cava / inicio', 'Inicio', `
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px">
+    <div><div class="eyebrow">Corte 07/10/2026 · Cava</div><h1>Buenos días.<br><span class="m">Esto pasa en las cavas.</span></h1></div>
+    <div class="ins" style="width:330px"><img src="${BOT}"><p><b>LevaBot:</b> FV 32 alcanzaría su extracto límite en ≈ ${hrs(TK.find(t=>t.tq==32).eta - NOW)}. Hay ${vencidos.length} colectores con retiro vencido.</p></div>
+  </div>
+  <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+    <div class="card kpi"><small>Tanques activos</small><div class="v">${TK.length}</div><div class="d">3 en llenado</div></div>
+    <div class="card kpi"><small>Colectores en uso</small><div class="v">7<span style="color:var(--muted);font-size:24px"> / 12</span></div><div class="bar" style="margin-top:4px"><i style="width:58%;background:var(--accent)"></i></div></div>
+    <div class="card kpi"><small>Viabilidad promedio</small><div class="v">${pct(viabAvg)}</div><div class="d">▲ 0,4 pts vs. semana anterior</div></div>
+    <div class="card kpi"><small>Retiros vencidos</small><div class="v" style="color:var(--red)">${vencidos.length}</div><div class="d bad">Requieren atención</div></div>
+  </div>
+  <div class="grid" style="grid-template-columns:1.55fr 1fr">
+    <div class="card"><div class="hd"><div><h3>Curvas de fermentación</h3><small>Extracto aparente (°P) · línea punteada = proyección al límite</small></div><div class="seg"><span class="on">Todas</span><span>Estándar</span><span>Light</span></div></div>
+      ${ferChart(730, 300, TK)}
+      <div class="legend" style="margin-top:10px">${act.map(t=>`<span><i style="background:${t.color}"></i>FV ${t.tq} · ${title(t.marca)}</span>`).join('')}</div></div>
+    <div class="card"><div class="hd"><h3>Próximas acciones</h3><span class="link">Ver monitor ›</span></div>${agendaRows(5)}</div>
+  </div>`);
+}
+
+function tankCard(t) {
+  const [st, cls] = state(t), has = t.muestras.length;
+  const eta = t.eta ? `Límite estimado <b>${dd(t.eta)}</b> · en ${hrs(t.eta-NOW)}` : has ? 'Calculando proyección…' : 'Esperando primera muestra';
+  return `<div class="card tank"><div class="top"><div><div class="fv">FV ${t.tq}</div><div class="meta">Lote ${t.lote}</div></div><div style="text-align:right"><span class="chip" style="background:${MARCA[t.marca]}">${title(t.marca)}</span><div style="margin-top:6px"><span class="pill ${cls}">${st}</span></div></div></div>
+    ${spark(t, 250, 78)}
+    <div class="num"><div>Extracto actual<b>${has ? f2(t.lastY) : '—'}<small style="font-size:12px;color:var(--muted)"> °P</small></b></div><div style="text-align:right">Límite<b>${t.eLim!=null ? f2(t.eLim) : '—'}</b></div></div>
+    <div><div class="bar"><i style="width:${(t.prog*100).toFixed(0)}%;background:${cls==='org'?'var(--orange)':cls==='grn'?'var(--green)':'var(--accent)'}"></i></div><div class="meta" style="margin-top:5px">${(t.prog*100).toFixed(0)}% de atenuación · ${t.lev.nombre} · G${t.lev.generacion}</div></div>
+    <div class="eta ${t.prog>=.75?'org':has?'':'gry'}">${eta}</div></div>`;
+}
+const screenTanques = () => win('levabot.cava / tanques', 'Tanques', `
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:26px"><div><div class="eyebrow">Fermentación</div><h1>Tanques.<br><span class="m">Cada curva, con su futuro.</span></h1></div>
+  <div style="display:flex;gap:12px;align-items:center"><div class="seg"><span class="on">Tarjetas</span><span>Tabla</span></div><div class="btn">+ Nueva muestra</div></div></div>
+  <div class="grid" style="grid-template-columns:repeat(4,1fr)">${TK.slice(0,8).map(tankCard).join('')}</div>`);
+
+function screenMuestra() {
+  const t = TK.find(x=>x.tq==27);
+  const entered = 3.05, x = (NOW - t.fin)/864e5;
+  const pts = [...t.pts, { x, y: entered }];
+  const last = pts.slice(-3), r = regress(last.map(p=>p.x), last.map(p=>p.y)), xe = (t.eLim - r.b)/r.m;
+  const nt = { ...t, pts, muestras:[...t.muestras,{}], proj:[{x,y:entered},{x:xe,y:t.eLim}], color:'#007AFF' };
+  const eta = new Date(+t.fin + xe*864e5);
+  const rows = [...t.pts.slice(1).map((p)=>[p.at, p.y]), [NOW, entered]];
+  return win('levabot.cava / muestra', 'Muestra', `
+  <div style="margin-bottom:26px"><div class="eyebrow">Ingreso de datos</div><h1>Nueva muestra.<br><span class="m">Escribe y mira la proyección al instante.</span></h1></div>
+  <div class="grid" style="grid-template-columns:420px 1fr">
+    <div class="card" style="display:flex;flex-direction:column;gap:18px">
+      <div class="field"><label>Tanque</label><div class="tchips"><span>FV 17</span><span class="on">FV 27</span><span>FV 30</span><span>FV 32</span></div></div>
+      <div class="grid" style="grid-template-columns:1fr 1fr"><div class="field"><label>Lote</label><div class="inp">${t.lote}</div></div><div class="field"><label>Marca</label><div class="inp">${title(t.marca)}</div></div></div>
+      <div class="field"><label>Fecha y hora de la muestra</label><div class="inp">${dd(NOW).slice(0,5)}/2026 · ${dd(NOW).slice(6)}</div></div>
+      <div class="field"><label>Extracto aparente (°P)</label><div style="background:var(--accent-soft);border:2px solid var(--accent);border-radius:16px;padding:14px 18px;display:flex;align-items:baseline;gap:8px"><span class="big" style="color:var(--accent)">${f2(entered)}</span><span style="color:var(--accent);font-weight:600">°P</span></div>
+        <div style="margin-top:8px;display:flex;gap:8px"><span class="pill grn">✓ Dentro del rango esperado</span><span class="pill gry">Δ −2,54 °P vs. anterior</span></div></div>
+      <div style="display:flex;gap:10px"><div class="btn" style="flex:1">Guardar muestra</div><div class="btn ghost">Cancelar</div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card"><div class="hd"><div><h3>FV 27 · Light · ${t.lote}</h3><small>Vista previa con la muestra nueva</small></div><span class="pill org">Próximo a límite</span></div>
+        <div style="display:flex;gap:28px;margin-bottom:6px"><div class="kpi"><small>Extracto actual</small><div class="v" style="font-size:30px">${f2(entered)} °P</div></div><div class="kpi"><small>Límite</small><div class="v" style="font-size:30px">${f2(t.eLim)} °P</div></div><div class="kpi"><small>Llegaría al límite</small><div class="v" style="font-size:30px;color:var(--accent)">${dd(eta)}</div></div></div>
+        ${ferChart(730, 250, [nt], { xmax:6, thick:3.5 })}</div>
+      <div class="card"><div class="hd"><h3>Muestras del lote</h3><span class="link">Editar ›</span></div>
+        <table><thead><tr><th>Fecha</th><th class="num-r">Extracto °P</th><th class="num-r">Δ día</th><th>Estado</th></tr></thead><tbody>
+        ${rows.map((r,i)=>`<tr><td>${dd(r[0])}</td><td class="num-r"><b>${f2(r[1])}</b></td><td class="num-r">${i?f2(r[1]-rows[i-1][1]):'—'}</td><td>${i===rows.length-1?'<span class="pill blu">Nueva</span>':'<span class="pill gry">Guardada</span>'}</td></tr>`).join('')}
+        </tbody></table></div>
+    </div>
+  </div>`);
+}
+
+function screenAnalisis() {
+  const G = D.gen.filter(g=>g.g<=9), r = regress(G.map(g=>g.g), G.map(g=>g.v));
+  const w = 760, h = 300, P = { l:48, r:20, t:16, b:30 };
+  const F = frame(w, h, P, [.5,12.5], [.92,1.0], [.92,.94,.96,.98,1.0], { y:v=>(v*100).toFixed(0)+'%', xs:[1,2,3,4,5,6,7,8,9,10,11,12], x:v=>'G'+v });
+  let s = F.s;
+  const real = D.gen.filter(g=>g.g<=9).map(g=>({x:g.g,y:g.v})), pr = [9,10,11,12].map(g=>({x:g,y:r.m*g+r.b}));
+  const band = r.se*1.6;
+  s += `<polygon points="${pr.map(p=>`${F.x(p.x)},${F.y(p.y+band*(p.x-8)/4)}`).join(' ')} ${[...pr].reverse().map(p=>`${F.x(p.x)},${F.y(p.y-band*(p.x-8)/4)}`).join(' ')}" fill="var(--purple)" opacity=".16"/>`;
+  D.gen.forEach(g => { s += `<rect x="${F.x(g.g)-15}" y="${F.y(.92+ (g.n/90)*.012)}" width="30" height="${(g.n/90)*.012/.08*(h-P.t-P.b)}" rx="6" fill="var(--sunken)"/>`; });
+  s += `<path d="${path(pr,F.x,F.y)}" fill="none" stroke="var(--purple)" stroke-width="3.5" stroke-dasharray="2 8" stroke-linecap="round"/>`;
+  s += `<path d="${smooth(real,F.x,F.y)}" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round"/>`;
+  real.forEach(p => s += `<circle cx="${F.x(p.x)}" cy="${F.y(p.y)}" r="5" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>`);
+  pr.slice(1).forEach(p => s += `<circle cx="${F.x(p.x)}" cy="${F.y(p.y)}" r="5" fill="var(--surface)" stroke="var(--purple)" stroke-width="2.5"/>`);
+  const p11 = r.m*11+r.b;
+  const tot = Object.values(D.marcas).reduce((a,b)=>a+b,0); let acc = 0;
+  const marcas = Object.entries(D.marcas).filter(([k])=>MARCA[k]);
+  const donut = marcas.map(([k,v])=>{ const len = v/tot*2*Math.PI*54, d = `<circle r="54" cx="70" cy="70" fill="none" stroke="${MARCA[k]}" stroke-width="18" stroke-dasharray="${len-3} ${2*Math.PI*54}" stroke-dashoffset="${-acc}" transform="rotate(-90 70 70)"/>`; acc += len; return d; }).join('');
+  const slots = Array.from({length:12},(_,i)=>`c${Math.floor(i/2)+1}-${i%2+1}`);
+  const grid = slots.map(id => { const c = COLEC.find(x=>x.id===id); if (!c) return `<div style="background:var(--surface2);border:1.5px dashed var(--faint);border-radius:14px;padding:12px;text-align:center;color:var(--muted);font-size:12px">Colector ${id.slice(1).replace('-','·')}<br><b style="font-size:13px">Libre</b></div>`;
+    const late = c.due<NOW, soon=!late&&c.due-NOW<24*36e5, col = late?'var(--red)':soon?'var(--orange)':'var(--green)', bg = late?'var(--red-bg)':soon?'var(--orange-bg)':'var(--green-bg)';
+    return `<div style="background:${bg};border-radius:14px;padding:12px"><div style="font-size:11px;color:${col};font-weight:700">${id.slice(1).replace('-','·')} · ${c.nombre}</div><div style="font-size:17px;font-weight:700;margin-top:3px">${pct(c.viab)}</div><div style="font-size:11px;color:var(--muted)">${late?'Vencido hace '+hrs(NOW-c.due):'Vence en '+hrs(c.due-NOW)}</div></div>`; }).join('');
+  return win('levabot.cava / análisis', 'Análisis', `
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:26px"><div><div class="eyebrow">Levaduras · ${D.total} registros</div><h1>Análisis.<br><span class="m">Qué pasó y qué viene.</span></h1></div>
+  <div class="seg"><span class="on">Todas</span><span>Estándar</span><span>Light</span><span>Azteca</span></div></div>
+  <div class="grid" style="grid-template-columns:1.7fr 1fr;margin-bottom:16px">
+    <div class="card"><div class="hd"><div><h3>Viabilidad por generación</h3><small>Promedio histórico + proyección lineal con rango de confianza</small></div></div>
+      <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${s}</svg>
+      <div class="legend" style="margin-top:8px"><span><i style="background:var(--accent)"></i>Promedio real</span><span><i style="background:var(--purple)"></i>Proyección</span><span><i style="background:var(--sunken)"></i>Nº de registros</span></div></div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="ins"><img src="${BOT}"><p>La viabilidad baja ≈ <b>${f2(Math.abs(r.m)*100)} pts por generación</b>. En <b>G11</b> se proyecta <b>${pct(p11)}</b>; considera retirar levaduras antes de G9.</p></div>
+      <div class="card"><div class="hd"><h3>Registros por marca</h3></div><div style="display:flex;align-items:center;gap:20px"><svg width="140" height="140" viewBox="0 0 140 140">${donut}<text x="70" y="68" text-anchor="middle" font-size="24" font-weight="700" fill="var(--ink)">${tot}</text><text x="70" y="86" text-anchor="middle" class="axis">con marca</text></svg>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">${marcas.map(([k,v])=>`<div><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${MARCA[k]};margin-right:8px"></i>${title(k)} <b style="margin-left:6px">${v}</b></div>`).join('')}</div></div></div>
+    </div>
+  </div>
+  <div class="card"><div class="hd"><div><h3>Colectores</h3><small>7 de 12 en uso · viabilidad y tiempo al límite</small></div><span class="link">Ver todos ›</span></div><div class="grid" style="grid-template-columns:repeat(6,1fr)">${grid}</div></div>`);
+}
+
+function phone(inner, tab) {
+  const tabs = [['Inicio','M3 11l9-8 9 8v9H3z'],['Tanques','M7 3h10v18H7z'],['Muestra','M12 5v14M5 12h14'],['Colectores','M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z'],['LevaBot','M12 3a9 9 0 100 18 9 9 0 000-18z']];
+  return `<div class="phone"><div class="island"></div><div class="scr"><div class="status"><span>9:41</span><span>●●● 100%</span></div>${inner}<div class="tabbar">${tabs.map(([n,d])=>`<div class="${n===tab?'on':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="${d}"/></svg>${n}</div>`).join('')}</div></div></div>`;
+}
+function screenMovil() {
+  const t = TK.find(x=>x.tq==27), [st,cls] = state(t);
+  const p1 = phone(`<div class="pbody"><div class="eyebrow" style="margin:0">Corte 07/10</div><div class="ptitle">Inicio</div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px"><div class="card kpi" style="padding:14px"><small>Tanques</small><div class="v" style="font-size:30px">${TK.length}</div></div><div class="card kpi" style="padding:14px"><small>Vencidos</small><div class="v" style="font-size:30px;color:var(--red)">${vencidos.length}</div></div></div>
+    <div class="ins" style="padding:16px"><p style="font-size:14px"><b>LevaBot:</b> FV 32 llega a su límite en ≈ ${hrs(TK.find(x=>x.tq==32).eta-NOW)}.</p></div>
+    <div style="font-weight:700;font-size:17px">Próximas acciones</div>${agendaRows(3).replace(/class="row"/g,'class="row" style="grid-template-columns:70px 1fr"').replace(/<span class="pill[^>]*>[^<]*<\/span>/g,'')}</div>`, 'Inicio');
+  const keys = ['1','2','3','4','5','6','7','8','9',',','0','⌫'].map(k=>`<div>${k}</div>`).join('');
+  const p2 = phone(`<div class="pbody"><div class="eyebrow" style="margin:0">Ingreso rápido</div><div class="ptitle">Nueva muestra</div>
+    <div class="tchips"><span>FV 17</span><span class="on">FV 27</span><span>FV 30</span><span>FV 32</span></div>
+    <div class="card" style="text-align:center;padding:20px 14px"><div style="color:var(--muted);font-size:13px;margin-bottom:6px">Extracto aparente · F474</div><div class="big" style="color:var(--accent)">3,05<span style="font-size:22px"> °P</span></div><div style="margin-top:12px"><span class="pill grn">✓ En rango</span></div></div>
+    <div class="eta">Llegaría al límite (1,78) ≈ <b>${MU}</b></div><div class="keys">${keys}</div><div class="btn">Guardar muestra</div></div>`, 'Muestra');
+  const p3 = phone(`<div class="pbody"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="ptitle">FV ${t.tq}</div><div style="color:var(--muted);font-size:13px">Lote ${t.lote} · Light</div></div><span class="pill ${cls}">${st}</span></div>
+    <div class="card" style="padding:14px"><div class="hd" style="margin-bottom:6px"><h3 style="font-size:15px">Curva de fermentación</h3></div>${ferChart(318, 190, [t], { xmax:6, thick:3 })}</div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px"><div class="card kpi" style="padding:14px"><small>Extracto</small><div class="v" style="font-size:26px">${f2(t.lastY)}</div></div><div class="card kpi" style="padding:14px"><small>Límite</small><div class="v" style="font-size:26px">${f2(t.eLim)}</div></div></div>
+    <div class="card" style="padding:14px"><div style="font-size:12px;color:var(--muted)">Levadura</div><b style="font-size:15px">${t.lev.nombre} · G${t.lev.generacion}</b><div style="display:flex;gap:10px;margin-top:8px;font-size:12px;color:var(--muted)"><span>Viab. <b style="color:var(--ink)">${pct(t.lev.viab)}</b></span><span>Cons. <b style="color:var(--ink)">${f2(t.lev.cons)}</b></span><span>pH <b style="color:var(--ink)">${f2(t.lev.ph)}</b></span></div></div></div>`, 'Tanques');
+  return `<div class="stage" style="padding:60px"><div class="phones">${p1}${p2}${p3}</div></div>`;
+}
+
+const MU = (()=>{ const t=TK.find(x=>x.tq==27), x=(NOW-t.fin)/864e5, pts=[...t.pts,{x,y:3.05}], l=pts.slice(-3), r=regress(l.map(p=>p.x),l.map(p=>p.y)); return dd(new Date(+t.fin+((t.eLim-r.b)/r.m)*864e5)); })();
+const SCREENS = { inicio:screenInicio, tanques:screenTanques, muestra:screenMuestra, analisis:screenAnalisis, movil:screenMovil };
+const q = new URLSearchParams(location.search);
+if (q.get('theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+document.getElementById('root').innerHTML = SCREENS[q.get('s') || 'inicio']();
+</script>
+</body>
+</html>
