@@ -1,0 +1,1318 @@
+{
+ "version": 1,
+ "nota": "Banco de preguntas para probar a Cifra. 'ok' = intenciones aceptables; 'chart' exige gráfico; 'legacy' = debe responder el motor anterior. Sin datos de producción.",
+ "categorias": {
+  "agua": [
+   {
+    "q": "¿cuanta agua gastamos este mes?"
+   },
+   {
+    "q": "consumo de agua de los ultimos 7 dias"
+   },
+   {
+    "q": "grafícame el consumo de agua de los últimos 30 días",
+    "chart": true
+   },
+   {
+    "q": "k turno gasta mas agua"
+   },
+   {
+    "q": "consumo d agua por turno en septiembre"
+   },
+   {
+    "q": "cuánta agua usamos por hl procesado"
+   },
+   {
+    "q": "consumoo de agua en marzo"
+   },
+   {
+    "q": "compara el agua de este mes vs el mes pasado",
+    "chart": true,
+    "ok": [
+     "compare"
+    ]
+   },
+   {
+    "q": "agua de ayer"
+   },
+   {
+    "q": "total de agua de la semana pasada"
+   },
+   {
+    "q": "evolución del consumo de agua",
+    "chart": true,
+    "ok": [
+     "trend"
+    ]
+   },
+   {
+    "q": "turno con más consumo de agua en septiembre"
+   },
+   {
+    "q": "cuánta agua gastamos del 3 al 10 de abril"
+   },
+   {
+    "q": "consumo de pisos en septiembre"
+   },
+   {
+    "q": "gasto de agua en lo que va del año"
+   },
+   {
+    "q": "m3 de agua por turno esta semana"
+   },
+   {
+    "q": "distribución del consumo de agua",
+    "chart": true,
+    "ok": [
+     "dist"
+    ]
+   },
+   {
+    "q": "relación entre el agua y la producción",
+    "chart": true,
+    "ok": [
+     "corr"
+    ]
+   },
+   {
+    "q": "consumo de agua desde enero"
+   },
+   {
+    "q": "cip vs gea vs pisos este mes",
+    "chart": true,
+    "ok": [
+     "compare",
+     "stat"
+    ]
+   },
+   {
+    "q": "top 5 días con más consumo de agua"
+   },
+   {
+    "q": "¿qué día gastamos más agua?"
+   }
+  ],
+  "aseos": [
+   {
+    "q": "¿cuántos aseos hicimos este mes?"
+   },
+   {
+    "q": "cuantos aseos en agosto"
+   },
+   {
+    "q": "agua gastada en aseos en septiembre"
+   },
+   {
+    "q": "aseos de sv 12 en septiembre"
+   },
+   {
+    "q": "aseos del fv27 este año"
+   },
+   {
+    "q": "limpiezas del colector 3"
+   },
+   {
+    "q": "aseos d la red de cosecha en el último mes"
+   },
+   {
+    "q": "¿qué equipo gasta más agua en aseos?"
+   },
+   {
+    "q": "top 10 aseos con más consumo"
+   },
+   {
+    "q": "aseos que superan 10 m3"
+   },
+   {
+    "q": "¿quién hace más aseos?"
+   },
+   {
+    "q": "duración promedio de los aseos de centrifuga"
+   },
+   {
+    "q": "grafícame los aseos por semana",
+    "chart": true,
+    "ok": [
+     "trend"
+    ]
+   },
+   {
+    "q": "aseos de ayer"
+   },
+   {
+    "q": "pH promedio de los enjuagues de aseo"
+   },
+   {
+    "q": "cuántos aseos tienen ph fuera de rango"
+   },
+   {
+    "q": "distribución del agua por aseo",
+    "chart": true,
+    "ok": [
+     "dist"
+    ]
+   },
+   {
+    "q": "aseos de luis en septiembre"
+   },
+   {
+    "q": "m3 por aseo promedio este año"
+   },
+   {
+    "q": "lavados de unitanques el mes pasado"
+   }
+  ],
+  "merma": [
+   {
+    "q": "¿cuál es la merma de este año?"
+   },
+   {
+    "q": "merma por marca"
+   },
+   {
+    "q": "que tanque tiene mas merma"
+   },
+   {
+    "q": "merma de light en los ultimos 3 meses"
+   },
+   {
+    "q": "grafícame la merma mensual",
+    "chart": true,
+    "ok": [
+     "trend"
+    ]
+   },
+   {
+    "q": "compara la merma de fv vs sv",
+    "chart": true,
+    "ok": [
+     "compare"
+    ]
+   },
+   {
+    "q": "merma de club vs estandar",
+    "chart": true,
+    "ok": [
+     "compare"
+    ]
+   },
+   {
+    "q": "¿cuántos hl perdimos en julio?"
+   },
+   {
+    "q": "lotes con merma mayor a 3 %"
+   },
+   {
+    "q": "top 5 lotes con más merma",
+    "chart": true,
+    "ok": [
+     "rank"
+    ]
+   },
+   {
+    "q": "¿por qué subió la merma?",
+    "chart": true,
+    "ok": [
+     "cause"
+    ]
+   },
+   {
+    "q": "si bajamos la merma a 1% ¿cuanto ahorramos?"
+   },
+   {
+    "q": "distribución de la merma por lote",
+    "chart": true,
+    "ok": [
+     "dist"
+    ]
+   },
+   {
+    "q": "cuántos lotes cerrados tuvimos en agosto"
+   },
+   {
+    "q": "perdidas del mes pasado"
+   },
+   {
+    "q": "faltante de volumen por marca"
+   },
+   {
+    "q": "mermma de azteca"
+   },
+   {
+    "q": "lotes con saldo negativo"
+   }
+  ],
+  "ferm": [
+   {
+    "q": "cuántas fermentaciones cerramos en agosto"
+   },
+   {
+    "q": "atenuación promedio de light"
+   },
+   {
+    "q": "¿cuánto tarda en llegar al 75% de atenuación?"
+   },
+   {
+    "q": "extracto a las 72 horas por marca"
+   },
+   {
+    "q": "fermentaciones del fv 27"
+   },
+   {
+    "q": "¿qué marca fermenta más rápido?"
+   },
+   {
+    "q": "distribución del h75",
+    "chart": true,
+    "ok": [
+     "dist"
+    ]
+   },
+   {
+    "q": "fermentaciones con h75 mayor a 100 h"
+   },
+   {
+    "q": "relación entre la viabilidad y el h75",
+    "chart": true,
+    "ok": [
+     "corr"
+    ]
+   },
+   {
+    "q": "compara la atenuación de club colombia vs light",
+    "chart": true,
+    "ok": [
+     "compare"
+    ]
+   },
+   {
+    "q": "extracto original promedio por marca"
+   },
+   {
+    "q": "grafícame el h75 por mes",
+    "chart": true,
+    "ok": [
+     "trend"
+    ]
+   },
+   {
+    "q": "¿cuál fue la fermentación más lenta?"
+   },
+   {
+    "q": "tiempo de llenado promedio por marca"
+   },
+   {
+    "q": "atenuasion final de estandar"
+   },
+   {
+    "q": "h75 de azteca en el trimestre"
+   },
+   {
+    "q": "fermentaciones de septiembre"
+   }
+  ],
+  "lev": [
+   {
+    "q": "viabilidad promedio de la levadura en septiembre"
+   },
+   {
+    "q": "cuántas cosechas de levadura hicimos en septiembre"
+   },
+   {
+    "q": "viabilidad por generacion"
+   },
+   {
+    "q": "cosechas con viabilidad menor a 95%"
+   },
+   {
+    "q": "consistencia promedio por marca"
+   },
+   {
+    "q": "¿qué generación tiene mejor viabilidad?"
+   },
+   {
+    "q": "viabilidad por familia"
+   },
+   {
+    "q": "evolución de la viabilidad por mes",
+    "chart": true,
+    "ok": [
+     "trend"
+    ]
+   },
+   {
+    "q": "¿cuántas cosechas fueron descartadas?"
+   },
+   {
+    "q": "ph promedio de la levadura cosechada"
+   },
+   {
+    "q": "distribución de la viabilidad",
+    "chart": true,
+    "ok": [
+     "dist"
+    ]
+   },
+   {
+    "q": "compara la viabilidad de light vs estándar",
+    "chart": true,
+    "ok": [
+     "compare"
+    ]
+   },
+   {
+    "q": "viavilidad de la levadura este año"
+   },
+   {
+    "q": "cosechas de agosto"
+   },
+   {
+    "q": "etanol promedio de las cosechas"
+   }
+  ],
+  "recup": [
+   {
+    "q": "¿cuántos hl de cerveza recuperamos este año?"
+   },
+   {
+    "q": "horas promedio de recuperación"
+   },
+   {
+    "q": "¿qué porcentaje de recuperaciones se hace en menos de 72 h?"
+   },
+   {
+    "q": "recuperación por utk"
+   },
+   {
+    "q": "¿cuál utk recupera más?"
+   },
+   {
+    "q": "rendimiento de la recuperación"
+   },
+   {
+    "q": "recuperaciones que pasaron de 96 horas"
+   },
+   {
+    "q": "si el 80% de las recuperaciones se hace en 72 h ¿qué ganamos?"
+   },
+   {
+    "q": "grafícame la recuperación por mes",
+    "chart": true,
+    "ok": [
+     "trend"
+    ]
+   },
+   {
+    "q": "recuperación del utk 20 en agosto"
+   },
+   {
+    "q": "cerveza recuperada vs levadura recolectada",
+    "chart": true,
+    "ok": [
+     "corr"
+    ]
+   },
+   {
+    "q": "distribución de las horas de recuperación",
+    "chart": true,
+    "ok": [
+     "dist"
+    ]
+   },
+   {
+    "q": "recuperasion de cerveza en julio"
+   },
+   {
+    "q": "hl recuperados por marca"
+   },
+   {
+    "q": "cuantas recuperaciones hicimos en septiembre"
+   }
+  ],
+  "tras": [
+   {
+    "q": "¿cuántos trasiegos hicimos en septiembre?"
+   },
+   {
+    "q": "trasiegos de club colombia con desvío mayor a 2 h"
+   },
+   {
+    "q": "principales causas de desvío en los trasiegos",
+    "chart": true,
+    "ok": [
+     "rank",
+     "stat"
+    ]
+   },
+   {
+    "q": "duración promedio de los trasiegos"
+   },
+   {
+    "q": "¿qué trasiegos están programados?"
+   },
+   {
+    "q": "horas de desvío acumuladas este año"
+   },
+   {
+    "q": "trasiegos de utq 17"
+   },
+   {
+    "q": "cuántos cip de centrífuga hicimos"
+   },
+   {
+    "q": "desvío promedio por marca"
+   },
+   {
+    "q": "trasiegos de light en agosto"
+   },
+   {
+    "q": "top 5 trasiegos más largos"
+   },
+   {
+    "q": "compara los trasiegos de este mes con los del mes pasado",
+    "chart": true,
+    "ok": [
+     "compare"
+    ]
+   },
+   {
+    "q": "distribución de la duración de los trasiegos",
+    "chart": true,
+    "ok": [
+     "dist"
+    ]
+   },
+   {
+    "q": "retrasos del programa de trasiego"
+   },
+   {
+    "q": "trasiegos mas largoos"
+   },
+   {
+    "q": "si eliminamos los desvíos ¿cuántas horas ganamos?"
+   },
+   {
+    "q": "próximos trasiegos"
+   }
+  ],
+  "analisis": [
+   {
+    "q": "¿cuánto vamos a gastar de agua este mes?"
+   },
+   {
+    "q": "pronóstico de aseos para el próximo mes"
+   },
+   {
+    "q": "si bajamos el consumo por aseo a 2 m3 ¿cuánta agua ahorramos?"
+   },
+   {
+    "q": "si reducimos el consumo de agua un 10% ¿cuánto ahorramos?"
+   },
+   {
+    "q": "¿por qué subió el consumo de agua?",
+    "chart": true,
+    "ok": [
+     "cause"
+    ]
+   },
+   {
+    "q": "¿hay algo raro en los datos?",
+    "chart": true,
+    "ok": [
+     "anomalias"
+    ]
+   },
+   {
+    "q": "¿qué está fuera de lo normal?"
+   },
+   {
+    "q": "¿dónde puedo ahorrar?",
+    "chart": true,
+    "ok": [
+     "ahorro"
+    ]
+   },
+   {
+    "q": "¿qué debería revisar hoy?"
+   },
+   {
+    "q": "lo mas importante de este mes"
+   },
+   {
+    "q": "ranking de ahorro potencial",
+    "chart": true,
+    "ok": [
+     "ahorro"
+    ]
+   },
+   {
+    "q": "compara el consumo de agua de marzo con abril",
+    "chart": true,
+    "ok": [
+     "compare"
+    ]
+   },
+   {
+    "q": "proyección de recuperación de cerveza este año"
+   },
+   {
+    "q": "que pasaria si el consumo por aseo baja a 3 m3"
+   },
+   {
+    "q": "alertas de hoy"
+   },
+   {
+    "q": "oye hay algo extraño en el consumo de agua?"
+   }
+  ],
+  "calidad": [
+   {
+    "q": "¿qué datos faltan?"
+   },
+   {
+    "q": "¿qué tan confiables son los datos?"
+   },
+   {
+    "q": "¿cuántas lecturas de agua son inválidas?"
+   },
+   {
+    "q": "¿cuántos aseos no tienen caudal o minutos?"
+   },
+   {
+    "q": "¿cuántos trasiegos no tienen causa de desvío?"
+   },
+   {
+    "q": "¿qué lotes de merma tienen saldo negativo?"
+   },
+   {
+    "q": "¿hasta qué fecha llegan los datos?"
+   },
+   {
+    "q": "¿cuántos registros hay de cada tema?"
+   },
+   {
+    "q": "¿desde cuándo hay datos de agua?"
+   },
+   {
+    "q": "¿confío en el consumo de agua?"
+   },
+   {
+    "q": "calidad de los datos de merma"
+   },
+   {
+    "q": "hay datos vacios en recuperación?"
+   },
+   {
+    "q": "huecos en las lecturas de agua"
+   }
+  ],
+  "plataforma": [
+   {
+    "q": "¿qué sabes hacer?"
+   },
+   {
+    "q": "¿cómo cargo un excel?"
+   },
+   {
+    "q": "como subo un archivo de excel a la plataforma"
+   },
+   {
+    "q": "¿cómo capturo datos como en excel?"
+   },
+   {
+    "q": "¿dónde registro el agua?"
+   },
+   {
+    "q": "¿dónde registro un aseo?"
+   },
+   {
+    "q": "¿para qué sirve la sección de merma?"
+   },
+   {
+    "q": "¿dónde veo el análisis de agua?"
+   },
+   {
+    "q": "¿cómo cambio la meta de consumo por aseo?"
+   },
+   {
+    "q": "¿cómo descargo una gráfica?"
+   },
+   {
+    "q": "¿cómo cambio el nombre del asistente?"
+   },
+   {
+    "q": "¿qué es el constructor de análisis?"
+   },
+   {
+    "q": "¿cómo exporto a excel?"
+   },
+   {
+    "q": "¿dónde están las alertas?"
+   },
+   {
+    "q": "¿qué significa h75?"
+   },
+   {
+    "q": "¿qué es la merma?"
+   },
+   {
+    "q": "que es un utk"
+   },
+   {
+    "q": "¿eres una inteligencia artificial?"
+   },
+   {
+    "q": "¿qué documentos hay de aseos?"
+   },
+   {
+    "q": "ayuda"
+   },
+   {
+    "q": "hola"
+   },
+   {
+    "q": "gracias"
+   }
+  ],
+  "reportes": [
+   {
+    "q": "resumen de la semana"
+   },
+   {
+    "q": "resumen del mes"
+   },
+   {
+    "q": "resumen del día"
+   },
+   {
+    "q": "resumen del turno"
+   },
+   {
+    "q": "dame un reporte"
+   },
+   {
+    "q": "abre el informe"
+   },
+   {
+    "q": "llévame al análisis de agua"
+   },
+   {
+    "q": "¿cómo vamos?"
+   },
+   {
+    "q": "resumen del mes pasado"
+   },
+   {
+    "q": "ir a merma"
+   },
+   {
+    "q": "abre el constructor"
+   },
+   {
+    "q": "resumen de la semana de light"
+   },
+   {
+    "q": "novedades de hoy"
+   }
+  ],
+  "legacy": [
+   {
+    "q": "cómo va el FV 5",
+    "legacy": true
+   },
+   {
+    "q": "qué vence primero",
+    "legacy": true
+   },
+   {
+    "q": "cuántos Hl tengo",
+    "legacy": true
+   },
+   {
+    "q": "qué hay en C5",
+    "legacy": true
+   },
+   {
+    "q": "qué es el T0",
+    "legacy": true
+   },
+   {
+    "q": "resumen de la planta",
+    "legacy": true
+   },
+   {
+    "q": "qué levadura siembro para light",
+    "legacy": true
+   }
+  ]
+ },
+ "secuencias": [
+  {
+   "name": "agua: mes, mes pasado, gráfico, comparar, exportar",
+   "steps": [
+    {
+     "q": "consumo de agua este mes",
+     "ok": [
+      "stat"
+     ]
+    },
+    {
+     "q": "¿y el mes pasado?",
+     "ok": [
+      "stat"
+     ],
+     "periodo": "pasado"
+    },
+    {
+     "q": "grafícalo",
+     "ok": [
+      "trend"
+     ],
+     "chart": true
+    },
+    {
+     "q": "compáralo con el mes anterior",
+     "ok": [
+      "compare"
+     ]
+    },
+    {
+     "q": "exporta eso",
+     "ok": [
+      "exportar"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "merma: marca, Light, detalle, top",
+   "steps": [
+    {
+     "q": "merma por marca",
+     "ok": [
+      "stat"
+     ]
+    },
+    {
+     "q": "¿y de Light?",
+     "ok": [
+      "stat",
+      "trend",
+      "compare",
+      "list",
+      "rank"
+     ]
+    },
+    {
+     "q": "más detalle",
+     "ok": [
+      "list"
+     ]
+    },
+    {
+     "q": "top 5",
+     "ok": [
+      "rank",
+      "list"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "aseos: SV 12, agosto, exportar",
+   "steps": [
+    {
+     "q": "aseos de SV 12 en septiembre",
+     "ok": [
+      "list"
+     ]
+    },
+    {
+     "q": "¿y en agosto?",
+     "ok": [
+      "list"
+     ],
+     "periodo": "agosto"
+    },
+    {
+     "q": "exporta eso",
+     "ok": [
+      "exportar"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "recuperación: horas, UTK, gráfico",
+   "steps": [
+    {
+     "q": "horas promedio de recuperación",
+     "ok": [
+      "stat"
+     ]
+    },
+    {
+     "q": "¿y por utk?",
+     "ok": [
+      "stat",
+      "rank"
+     ]
+    },
+    {
+     "q": "grafícalo",
+     "ok": [
+      "trend",
+      "stat",
+      "rank"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "trasiegos: Club, agosto, comparar",
+   "steps": [
+    {
+     "q": "trasiegos de club colombia",
+     "ok": [
+      "list"
+     ]
+    },
+    {
+     "q": "¿y de light?",
+     "ok": [
+      "list"
+     ]
+    },
+    {
+     "q": "compáralo con el mes pasado",
+     "ok": [
+      "compare"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "fermentación: Light, Club, comparar",
+   "steps": [
+    {
+     "q": "atenuación promedio de light",
+     "ok": [
+      "stat"
+     ]
+    },
+    {
+     "q": "¿y de club colombia?",
+     "ok": [
+      "stat"
+     ]
+    },
+    {
+     "q": "grafícalo",
+     "ok": [
+      "trend"
+     ],
+     "chart": true
+    }
+   ]
+  },
+  {
+   "name": "levadura: viabilidad, por generación, mes pasado",
+   "steps": [
+    {
+     "q": "viabilidad promedio este mes",
+     "ok": [
+      "stat"
+     ]
+    },
+    {
+     "q": "¿y por generación?",
+     "ok": [
+      "stat",
+      "rank"
+     ]
+    },
+    {
+     "q": "¿y el mes pasado?",
+     "ok": [
+      "stat",
+      "rank"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "agua: turnos y por qué",
+   "steps": [
+    {
+     "q": "consumo de agua por turno este mes",
+     "ok": [
+      "stat"
+     ]
+    },
+    {
+     "q": "¿por qué subió?",
+     "ok": [
+      "cause"
+     ]
+    },
+    {
+     "q": "¿cuánto vamos a gastar este mes?",
+     "ok": [
+      "forecast"
+     ]
+    }
+   ]
+  }
+ ],
+ "numericas": [
+  {
+   "q": "consumo de agua en septiembre",
+   "calc": {
+    "ds": "agua",
+    "k": "total",
+    "agg": "sum",
+    "plaus": [
+     0,
+     1000
+    ],
+    "from_": "2026-09-01",
+    "to": "2026-09-30"
+   }
+  },
+  {
+   "q": "cuánta agua gastamos en marzo",
+   "calc": {
+    "ds": "agua",
+    "k": "total",
+    "agg": "sum",
+    "plaus": [
+     0,
+     1000
+    ],
+    "from_": "2026-03-01",
+    "to": "2026-03-31"
+   }
+  },
+  {
+   "q": "consumo de agua de los últimos 7 días",
+   "calc": {
+    "ds": "agua",
+    "k": "total",
+    "agg": "sum",
+    "plaus": [
+     0,
+     1000
+    ],
+    "from_": "REF-6",
+    "to": "REF"
+   }
+  },
+  {
+   "q": "consumo de pisos en septiembre",
+   "calc": {
+    "ds": "agua",
+    "k": "pisos",
+    "agg": "sum",
+    "plaus": [
+     0,
+     1000
+    ],
+    "from_": "2026-09-01",
+    "to": "2026-09-30"
+   }
+  },
+  {
+   "q": "consumo máximo de agua en septiembre",
+   "calc": {
+    "ds": "agua",
+    "k": "total",
+    "agg": "max",
+    "plaus": [
+     0,
+     1000
+    ],
+    "from_": "2026-09-01",
+    "to": "2026-09-30"
+   }
+  },
+  {
+   "q": "mediana del consumo de agua en septiembre",
+   "calc": {
+    "ds": "agua",
+    "k": "total",
+    "agg": "median",
+    "plaus": [
+     0,
+     1000
+    ],
+    "from_": "2026-09-01",
+    "to": "2026-09-30"
+   }
+  },
+  {
+   "q": "promedio de agua por aseo en septiembre",
+   "calc": {
+    "ds": "aseos",
+    "k": "m3",
+    "agg": "mean",
+    "plaus": [
+     0,
+     200
+    ],
+    "from_": "2026-09-01",
+    "to": "2026-09-30"
+   }
+  },
+  {
+   "q": "total de agua de aseos en septiembre",
+   "calc": {
+    "ds": "aseos",
+    "k": "m3",
+    "agg": "sum",
+    "plaus": [
+     0,
+     200
+    ],
+    "from_": "2026-09-01",
+    "to": "2026-09-30"
+   }
+  },
+  {
+   "q": "cuántos aseos hicimos en agosto",
+   "calc": {
+    "ds": "aseos",
+    "agg": "count",
+    "from_": "2026-08-01",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "q": "cuántos aseos superan 10 m3 este año",
+   "calc": {
+    "ds": "aseos",
+    "agg": "count",
+    "k": "m3",
+    "gt": 10,
+    "plaus": [
+     0,
+     200
+    ],
+    "from_": "2026-01-01",
+    "to": "REF"
+   }
+  },
+  {
+   "q": "cuántos aseos de sv 12 en septiembre",
+   "calc": {
+    "ds": "aseos",
+    "agg": "count",
+    "from_": "2026-09-01",
+    "to": "2026-09-30",
+    "eqType": "SV",
+    "tqN": 12
+   }
+  },
+  {
+   "q": "merma de light en agosto",
+   "calc": {
+    "ds": "merma",
+    "agg": "wmean",
+    "k": "lossPct",
+    "from_": "2026-08-01",
+    "to": "2026-08-31",
+    "brand": "LIGHT"
+   }
+  },
+  {
+   "q": "cuántos hl perdimos en julio por merma",
+   "calc": {
+    "ds": "merma",
+    "k": "loss",
+    "agg": "sum",
+    "plaus": [
+     -5000,
+     20000
+    ],
+    "from_": "2026-07-01",
+    "to": "2026-07-31"
+   }
+  },
+  {
+   "q": "cuántos lotes con merma mayor a 3 % en septiembre",
+   "calc": {
+    "ds": "merma",
+    "agg": "count",
+    "k": "lossPct",
+    "gt": 3,
+    "plaus": [
+     -100,
+     100
+    ],
+    "from_": "2026-09-01",
+    "to": "2026-09-30"
+   }
+  },
+  {
+   "q": "cuántos lotes cerrados tuvimos en agosto",
+   "calc": {
+    "ds": "merma",
+    "agg": "count",
+    "from_": "2026-08-01",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "q": "horas promedio de recuperación en agosto",
+   "calc": {
+    "ds": "recuperacion",
+    "k": "hours",
+    "agg": "mean",
+    "plaus": [
+     0,
+     400
+    ],
+    "from_": "2026-08-01",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "q": "cuántos hl de cerveza recuperamos en julio",
+   "calc": {
+    "ds": "recuperacion",
+    "k": "volume",
+    "agg": "sum",
+    "plaus": [
+     0,
+     2000
+    ],
+    "from_": "2026-07-01",
+    "to": "2026-07-31"
+   }
+  },
+  {
+   "q": "qué porcentaje de recuperaciones se hace en menos de 72 h",
+   "calc": {
+    "ds": "recuperacion",
+    "k": "hours",
+    "agg": "share_lt",
+    "v": 72,
+    "plaus": [
+     0,
+     400
+    ],
+    "from_": "2026-01-01",
+    "to": "REF"
+   }
+  },
+  {
+   "q": "cuántos trasiegos hicimos en septiembre",
+   "calc": {
+    "ds": "trasiego",
+    "agg": "count",
+    "from_": "2026-09-01",
+    "to": "2026-09-30",
+    "kind": "Trasiego"
+   }
+  },
+  {
+   "q": "desvío promedio en agosto",
+   "calc": {
+    "ds": "trasiego",
+    "k": "delay",
+    "agg": "mean",
+    "plaus": [
+     -72,
+     240
+    ],
+    "from_": "2026-08-01",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "q": "atenuación promedio de light",
+   "calc": {
+    "ds": "ferm",
+    "k": "atten",
+    "agg": "mean",
+    "plaus": [
+     0,
+     100
+    ],
+    "from_": "2026-01-01",
+    "to": "REF",
+    "brand": "LIGHT"
+   }
+  },
+  {
+   "q": "h75 promedio de club colombia",
+   "calc": {
+    "ds": "ferm",
+    "k": "h75",
+    "agg": "mean",
+    "plaus": [
+     10,
+     400
+    ],
+    "from_": "2026-01-01",
+    "to": "REF",
+    "brand": "CLUB COLOMBIA"
+   }
+  },
+  {
+   "q": "cuántas fermentaciones cerramos en agosto",
+   "calc": {
+    "ds": "ferm",
+    "agg": "count",
+    "from_": "2026-08-01",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "q": "viabilidad promedio de la levadura en septiembre",
+   "calc": {
+    "ds": "lev",
+    "k": "viab",
+    "agg": "mean",
+    "plaus": [
+     0,
+     100
+    ],
+    "from_": "2026-09-01",
+    "to": "2026-09-30"
+   }
+  },
+  {
+   "q": "cuántas cosechas de levadura hicimos en septiembre",
+   "calc": {
+    "ds": "lev",
+    "agg": "count",
+    "from_": "2026-09-01",
+    "to": "2026-09-30"
+   }
+  },
+  {
+   "q": "ph promedio de la levadura en agosto",
+   "calc": {
+    "ds": "lev",
+    "k": "ph",
+    "agg": "mean",
+    "plaus": [
+     2,
+     8
+    ],
+    "from_": "2026-08-01",
+    "to": "2026-08-31"
+   }
+  },
+  {
+   "q": "cuántas cosechas fueron descartadas este año",
+   "calc": {
+    "ds": "lev",
+    "agg": "count",
+    "from_": "2026-01-01",
+    "to": "REF",
+    "state": "descartada"
+   }
+  }
+ ]
+}

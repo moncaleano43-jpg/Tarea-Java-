@@ -100,8 +100,13 @@
 .cf-doc b{font-size:.84rem}.cf-doc span{font-size:.74rem;color:var(--muted)}
 
 /* ---------- bienvenida (estado vacío) ---------- */
-.bot.cf-empty #botM{display:none!important}
-.cf-welcome{flex:1;min-height:0;overflow:auto;padding:18px 16px 12px;display:flex;flex-direction:column;gap:16px}
+.bot.cf-empty #botM{flex:0 1 auto!important;min-height:0;max-height:36%;order:3}
+.bot.cf-empty .cf-welcome{order:2}
+.bot.cf-empty .bot-f{order:5}
+.bot.cf-empty #botM .bm:first-child{display:none!important}
+.bot.cf-empty #botM:not(:has(.bm.b:nth-child(2))){display:none!important}
+.bot.cf-empty .cf-welcome{flex:1 1 auto}
+.cf-welcome{flex:0 1 auto;min-height:0;overflow:auto;padding:18px 16px 12px;display:flex;flex-direction:column;gap:16px}
 .cf-welcome[hidden]{display:none!important}
 .cf-w-hi b{display:block;font-size:1.25rem;font-weight:650;letter-spacing:-.02em;color:var(--ink)}
 .cf-w-hi p{margin:6px 0 0;color:var(--muted);font-size:.86rem;line-height:1.5}
@@ -142,7 +147,7 @@
 .cf-sug-i:hover,.cf-sug-i.on{background:var(--surface-2)}
 .bot-f{border-top:1px solid var(--line)!important;background:var(--surface)!important;padding:10px 12px max(12px,env(safe-area-inset-bottom))!important}
 .bot-f textarea{border-radius:12px!important;background:var(--surface-2)!important;border:1px solid var(--line)!important;color:var(--ink)!important;font-size:.9rem!important}
-.bot-f textarea:focus{outline:2px solid var(--ink)!important;outline-offset:1px;box-shadow:none!important;border-color:var(--ink)!important}
+.bot-f textarea:focus{outline:0!important;box-shadow:0 0 0 3px var(--accent-soft)!important;border-color:var(--ink)!important}
 .bot-f .send{border-radius:12px!important;background:var(--ink)!important;color:var(--bg)!important;box-shadow:none!important}
 .bot-f .send svg{stroke:currentColor}
 

@@ -35,7 +35,7 @@
   const fdt = (t) => { const d = new Date(t); return fd(t) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); };
   const plural = (n, s, p) => (Math.abs(n) === 1 ? s : p || s + 's');
   const strip = (s) => String(s == null ? '' : s).normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
-  const tagsOut = (h) => String(h).replace(/<br\s*\/?>/g, ' ').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, ' ').trim();
+  const tagsOut = (h) => String(h).replace(/\u2060/g, '').replace(/<br\s*\/?>/g, ' ').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/\s+/g, ' ').trim();
   const uniq = (a) => [...new Set(a)];
   const sum = (a) => a.reduce((x, y) => x + y, 0);
   const jparse = (s, d) => { try { return JSON.parse(s); } catch (e) { return d; } };
@@ -252,7 +252,8 @@
       { k: 'volume', re: /.*/, t: 'add', good: 'up', plaus: [0, 2000], def: true },
     ],
     trasiego: [
-      { k: 'delay', re: /desvio|retraso|demora|atraso|tarde/, t: 'add', good: 'down', plaus: [-72, 240], l: 'Desvío frente al plan' },
+      { k: 'duration', re: /duracion|\bdura\b|demora\w*|tarda\w*|cuanto tiempo|largo|larga|cuanto dura/, t: 'ratio', good: 'down', plaus: [0.25, 72] },
+      { k: 'delay', re: /desvio|retraso|atraso/, t: 'add', good: 'down', plaus: [-72, 240], l: 'Desvío frente al plan' },
       { k: 'duration', re: /.*/, t: 'ratio', good: 'down', plaus: [0.25, 72], def: true },
     ],
     ferm: [
@@ -381,11 +382,11 @@
     if ((m = new RegExp('\\b(?:del|desde el|desde|entre el|entre)\\s+' + D + '\\s+(?:de\\s+' + '(' + MON_RE + ')\\s+)?(?:al|a|hasta el|hasta|y el|y)\\s+' + D + '\\s+de\\s+(' + MON_RE + ')(?:\\s+(?:de|del)?\\s*(\\d{4}))?\\b').exec(q))) {
       const m2 = monIdx(m[4]), m1 = m[2] ? monIdx(m[2]) : m2, y = yearOfMonth(m2, ref, yr(m[5]));
       const from = new Date(m1 > m2 ? y - 1 : y, m1, +m[1]).getTime(), to = eod(new Date(y, m2, +m[3]).getTime());
-      cut(m[0]); return { p: P(from, to, 'del ' + rangeTxt(from, to), 'range'), q: rest };
+      cut(m[0]); return { p: P(from, to, m1 === m2 ? 'del ' + m[1] + ' al ' + m[3] + ' de ' + MESES[m2] + (y !== REF_YEAR ? ' de ' + y : '') : 'del ' + m[1] + ' de ' + MESES[m1] + ' al ' + m[3] + ' de ' + MESES[m2], 'range'), q: rest };
     }
     if ((m = new RegExp('\\b(?:del|desde el|entre el)\\s+' + D + '\\s+(?:al|a|y el|y|hasta el|hasta)\\s+' + D + '\\b(?!\\s*(?:de\\s+)?' + MON_RE + ')').exec(q)) && +m[1] <= 31 && +m[2] <= 31 && +m[1] < +m[2]) {
       const d = new Date(ref), from = new Date(d.getFullYear(), d.getMonth(), +m[1]).getTime(), to = eod(new Date(d.getFullYear(), d.getMonth(), +m[2]).getTime());
-      cut(m[0]); return { p: P(from, to, 'del ' + rangeTxt(from, to), 'range'), q: rest };
+      cut(m[0]); return { p: P(from, to, 'del ' + m[1] + ' al ' + m[2] + ' de ' + MESES[d.getMonth()], 'range'), q: rest };
     }
     // desde X (hasta Y)
     if ((m = new RegExp('\\b(?:desde|a partir de)\\s+(?:el\\s+)?(?:' + D + '\\s+de\\s+)?(' + MON_RE + ')(?:\\s+(?:de|del)?\\s*(\\d{4}))?(?:\\s+(?:hasta|a)\\s+(?:el\\s+)?(?:' + D + '\\s+de\\s+)?(' + MON_RE + ')(?:\\s+(?:de|del)?\\s*(\\d{4}))?)?\\b').exec(q))) {
@@ -417,13 +418,13 @@
       const y = m[4] ? +m[4] : new Date(ref).getFullYear(), from = new Date(y, (qn - 1) * 3, 1).getTime(), to = eod(new Date(y, qn * 3, 0).getTime());
       cut(m[0]); return { p: P(from, Math.min(to, R0), qn + 'º trimestre' + (y !== REF_YEAR ? ' de ' + y : ''), 'quarter', { partial: R0 < to, qn, y }), q: rest };
     }
-    if ((m = /\b(?:este trimestre|trimestre actual|del trimestre|el trimestre|en el trimestre|en lo que va del trimestre)\b/.exec(q))) {
-      const d = new Date(ref), qn = Math.floor(d.getMonth() / 3) + 1; cut(m[0]);
-      return { p: P(new Date(d.getFullYear(), (qn - 1) * 3, 1).getTime(), R0, 'este trimestre', 'quarter', { partial: true, qn, y: d.getFullYear() }), q: rest };
-    }
     if ((m = /\btrimestre\s+(?:pasado|anterior)\b|\bultimo trimestre\b/.exec(q))) {
       const d = new Date(ref); let qn = Math.floor(d.getMonth() / 3) + 1 - 1, y = d.getFullYear(); if (qn < 1) { qn = 4; y--; }
       cut(m[0]); return { p: P(new Date(y, (qn - 1) * 3, 1).getTime(), eod(new Date(y, qn * 3, 0).getTime()), 'trimestre pasado (' + qn + 'º)', 'quarter', { qn, y }), q: rest };
+    }
+    if ((m = /\b(?:este trimestre|trimestre actual|del trimestre|el trimestre|en el trimestre|en lo que va del trimestre)\b/.exec(q))) {
+      const d = new Date(ref), qn = Math.floor(d.getMonth() / 3) + 1; cut(m[0]);
+      return { p: P(new Date(d.getFullYear(), (qn - 1) * 3, 1).getTime(), R0, 'este trimestre', 'quarter', { partial: true, qn, y: d.getFullYear() }), q: rest };
     }
     // meses calendario
     if ((m = /\b(?:mes pasado|mes anterior|pasado mes|ultimo mes calendario)\b/.exec(q))) {
@@ -485,6 +486,16 @@
     const f = p.from - len;
     return P(f, p.from - 1, 'el periodo anterior (' + rangeTxt(f, p.from - 1) + ')', 'rolling');
   }
+  function currentOf(p, ref) {
+    const d = new Date(ref);
+    if (!p) return null;
+    if (p.kind === 'month') { const q = monthPeriod(d.getFullYear(), d.getMonth(), ref); q.label = 'este mes (' + MESES[d.getMonth()] + ')'; return q; }
+    if (p.kind === 'week') return P(mondayOf(ref), eod(ref), 'esta semana', 'week', { partial: true });
+    if (p.kind === 'day') return dayPeriod(ref, 'hoy (' + fd(ref) + ')');
+    if (p.kind === 'year') return P(new Date(d.getFullYear(), 0, 1).getTime(), eod(ref), 'en lo que va de ' + d.getFullYear(), 'year', { partial: true, y: d.getFullYear() });
+    if (p.kind === 'quarter') { const qn = Math.floor(d.getMonth() / 3) + 1; return P(new Date(d.getFullYear(), (qn - 1) * 3, 1).getTime(), eod(ref), 'este trimestre', 'quarter', { partial: true, qn }); }
+    return null;
+  }
   const inP = (r, p) => r.t != null && r.t >= p.from && r.t <= p.to;
 
   /* ---------------------------------------------------------------- entidades */
@@ -541,7 +552,7 @@
     chart: /\b(graficame|grafica|graficar|graficas|graficos?|grafiquen?|visualiza\w*|dibuja\w*|plot|diagrama|barras|lineas|torta|pastel|curva|evolucion|tendencia|serie de tiempo|a traves del tiempo|como ha (cambiado|evolucionado|variado|ido|venido)|historico de|comportamiento)\b/,
     compare: /\b(vs|versus|frente a|frente al|comparad[oa]s?|compar\w+|contra|diferencia entre|respecto a|respecto al|en comparacion|comparando)\b/,
     cause: /\bpor que\b|\bcausas? de que\b|\ba que se (debe|deben)\b|\bque paso con\b|\bque provoco\b|\bque origino\b|\bque (esta )?(pasando|afectando|explica|influyo|influye)\b|\bexplica\w*\b|\bculpable\b|\bcausa\b.*\b(subi\w*|baj\w*|aument\w*|disminu\w*|cambi\w*|alz\w*|cay\w*|crec\w*|empeor\w*)|\b(subi\w*|baj\w*|aument\w*|disminu\w*|cay\w*|crec\w*|empeor\w*)\b.*\b(causa|motivo|razon)\b|\bmotivo\b|\brazon\b/,
-    forecast: /\b(proyecci\w+|pronostic\w+|predic\w+|vamos a (gastar|consumir|perder|recuperar|hacer|cerrar|producir|terminar|llegar)|va a (gastar|consumir|cerrar|terminar)|cerrar\w* (el )?mes|cerraremos|terminaremos|fin de mes|(proximo|siguiente) (mes|semana|ano|trimestre)|proxima semana|estimad[oa] (de|para)|a este ritmo|al ritmo actual|tendencia futura|gastaremos|consumiremos|perderemos|recuperaremos|que esperar\w*|cuanto (nos falta|llevamos para))\b/,
+    forecast: /\b(proyecci\w+|pronostic\w+|predic\w+|vamos a (gastar|consumir|perder|recuperar|hacer|cerrar|producir|terminar|llegar)|va a (gastar|consumir|cerrar|terminar)|cerrar\w* (el )?mes|\bcier(ra|re|rr)\w* (el |de )?(mes|ano)|cerraremos|terminaremos|fin de mes|(proximo|siguiente) (mes|semana|ano|trimestre)|proxima semana|estimad[oa] (de|para)|a este ritmo|al ritmo actual|tendencia futura|gastaremos|consumiremos|perderemos|recuperaremos|que esperar\w*|cuanto (nos falta|llevamos para))\b/,
     whatif: /\bsi (bajamos|reducimos|disminuimos|subimos|aumentamos|logramos|llevamos|pasamos|cumplimos|hacemos|el \d+|todos|dejamos|eliminamos|elimin\w+|mejoramos|cortamos|ahorramos|bajaramos|redujeramos|se hace|se reduce|baja|sube|la merma|el consumo|las recuperaciones|los trasiegos|los aseos|bajara|llegamos|llegara|lo llevamos)\b|\bque pasaria si\b|\bque pasa si\b|\bque ganamos\b|\bcuanto (ahorr\w+|ganar\w+|recuper\w+|bajar\w+) si\b|\bsimul\w+|\bescenario\b|\bsupon\w+ que\b|\by si (bajamos|reducimos|el|la|los|las)\b/,
     anom: /\b(raro|rara|raros|raras|rarezas?|anomali\w+|atipic\w+|outliers?|fuera de (lo )?(normal|rango|limite\w*|meta|control)|inusual\w*|extran\w+|sospechos\w+|disparad\w+|se salio|se salen|picos?|anormal\w*|desviad\w+|alarmante\w*|problema\w*)\b/,
     reco: /\bque (deberia|deberiamos|debo|debemos|tengo que|hay que|conviene|toca|reviso|revisar|revisamos|atiendo|atendemos|corrijo|corregimos)\b|\bdeberia\w* revisar\b|\bprioridad\w*|\brecomien\w+|\bsugier\w+|\bpor donde empiezo\b|\bpendientes?\b|\blo mas importante\b|\blo importante\b|\bque urge\b|\burgente\w*|\bque (esta )?pasando hoy\b|\bque hay que mirar\b|\bpuntos de atencion\b|\brevisar hoy\b|\bque miro\b|\balertas?\b/,
@@ -571,7 +582,7 @@
 
   const DSRX = {
     agua: [[/\b(agua|aguas|hidric\w*|consumo|consumos|gasto|gastos|gastamos|gastado|gastar|gasta|consumimos|consumido|consume|consumen|m3|pisos|gea)\b/, 2], [/\bhl procesad|\bpor hl\b|\bhl\/hl\b/, 1], [/\bturnos?\b/, 0.7]],
-    aseos: [[/\b(aseos?|limpieza|lavado|lavados|enjuague|enjuagues)\b/, 3.2], [/\bcip\b/, 1.2], [/\b(operarios?|caveros?)\b/, 1], [/\b(centrifuga|red de|redes|anillo|autolizador)\b/, 0.9], [/\bcaudal\b/, 1]],
+    aseos: [[/\b(aseos?|limpiez\w+|lavad\w+|lavado|enjuagu\w+)\b/, 3.2], [/\bcip\b/, 1.2], [/\b(operarios?|caveros?)\b/, 1], [/\b(centrifuga|red de|redes|anillo|autolizador)\b/, 0.9], [/\bcaudal\b/, 1]],
     merma: [[/\b(merma|mermas|perdida|perdidas|perdimos|perdemos|pierde|pierden|perdio|faltante|kge)\b/, 3.2], [/\blotes? cerrad\w+|\bcerramos\b.*\blotes?\b/, 2.5], [/\bpurgas?\b/, 1.5], [/\bsaldo negativo|saldos negativos\b/, 1.5]],
     recuperacion: [[/\brecuper\w+/, 3.2], [/\butk\b/, 2], [/\bcerveza recuperada\b/, 2]],
     trasiego: [[/\b(trasiego|trasiegos|trasegad\w+|trasegar|programa de trasiego|traslado)\b/, 3.2], [/\bdesvios?\b|\bretrasos?\b|\batrasos?\b/, 1.6], [/\bprogramad\w+/, 1]],
@@ -678,6 +689,7 @@
     if (/\btrasiegos?\b/.test(w) && !/\bcip\b/.test(w)) X.kind = 'Trasiego';
     for (const kw of CAUSE_KW) if (w.includes(kw) && /\bcausa\b|\bpor\b|\bdebido\b|\bmotivo\b|\bdesvio\b/.test(w)) { X.cause = kw; break; }
 
+    if (X.shifts.length) { dsw.agua += 2.2; bestDs.splice(0, bestDs.length, ...Object.entries(dsw).sort((a, b) => b[1] - a[1])); }
     // periodo
     let pr = null;
     let split = null;
@@ -822,9 +834,8 @@
     const Fw = { max: RXF.max.test(w), min: RXF.min.test(w), rank: RXF.rank.test(w) };
     const rankish = F.rank || Fw.rank || !!topN;
     if (F.median) spec.how = 'median'; else if (F.mean && !rankish) spec.how = 'mean'; else if (F.sum) spec.how = 'sum'; else if (Fw.max && !rankish) spec.how = 'max'; else if (Fw.min && !rankish) spec.how = 'min';
-    if (/\b(diario|por dia|al dia|cada dia|diaria)\b/.test(q) && F.mean) spec.perDay = true;
     // dimensiones
-    const noun = /\b(?:que|cual(?:es)?|cuales|quien(?:es)?)\s+(?:\w+\s+){0,2}?(turno|marca|tanque|unitanque|equipo|operario|utk|causa|generacion|familia|dia|semana|mes|actividad|etapa|fase)s?\b/.exec(q) || /\b(?:top\s*\d*|los\s+\d+|\d+)\s+(turno|marca|tanque|unitanque|equipo|operario|utk|causa|generacion|familia|dia|semana|mes|actividad)(?:s|es)?\b/.exec(q);
+    const noun = /\b(?:que|cual(?:es)?|cuales|quien(?:es)?)\s+(?:\w+\s+){0,2}?(turno|marca|tanque|unitanque|equipo|operario|utk|causa|generacion|familia|dia|semana|mes|actividad|etapa|fase)s?\b/.exec(q) || /\b(?:top\s*\d*|los\s+\d+|\d+)\s+(turno|marca|tanque|unitanque|equipo|operario|utk|causa|generacion|familia|dia|semana|mes|actividad)(?:s|es)?\b/.exec(w) || /\b(?:mejor|peor|mayor|menor|mas)\s+(turno|marca|tanque|equipo|operario|utk|causa|generacion|familia|dia|semana|mes)(?:s|es)?\b/.exec(w);
     let by = detectBy(q);
     if (!by && noun) { const n = noun[1]; by = { turno: 'shift', marca: 'brand', tanque: 'tq', unitanque: 'tq', equipo: 'eq', operario: 'operator', utk: 'utk', causa: 'cause', generacion: 'gen', familia: 'fam', dia: 'day', semana: 'week', mes: 'month', actividad: 'kind', etapa: 'phase', fase: 'phase' }[n]; }
     if (!by && /\b(diario|diaria|diarios|cada dia)\b/.test(q)) by = 'day'; else if (!by && /\b(semanal|semanales|cada semana)\b/.test(q)) by = 'week'; else if (!by && /\b(mensual|mensuales|mensualmente|cada mes)\b/.test(q)) by = 'month';
@@ -832,6 +843,7 @@
     if (!by && /\bcomponentes?\b/.test(q) && ds === 'agua') spec.cmp = { kind: 'component', items: ['pisos', 'cip', 'gea'] };
     if (by === 'cip' || (by && !(TIMEKEYS.includes(by) || (DIMS[ds] && DIMS[ds][by] !== undefined) || by === 'component'))) by = null;
     if (by === 'component') { by = null; spec.cmp = { kind: 'component', items: ['pisos', 'cip', 'gea'] }; }
+    if (F.mean && TIMEKEYS.includes(by) && !F.chart && !rankish && !F.compare && !F.forecast && !F.cause) { spec.perUnit = by; by = null; }
     if (by === 'tq' && ds === 'aseos') by = 'eq';
     if (by === 'eq' && ds !== 'aseos') by = null;
     if (by === 'shift' && ds !== 'agua') by = null;
@@ -852,13 +864,19 @@
     if (/\bfuera de (rango|meta|limite\w*|especificacion)\b/.test(q) && ds === 'aseos' && /\bph\b/.test(q)) { spec.conds = [{ op: 'out', k: 'ph', v: A.Metas.get('aseos.phMin', 6), v2: A.Metas.get('aseos.phMax', 8) }]; }
     if (/\bfuera de (rango|meta|limite\w*)\b/.test(q) && ds === 'recuperacion' && !spec.conds.length) spec.conds = [{ op: '>', k: 'hours', v: A.Metas.get('recuperacion.maximoH', 96) }];
     if (/\bsaldos? negativos?\b/.test(q) && ds === 'merma') spec.conds = [{ op: '<', k: 'loss', v: 0 }];
+    if (/\bfuera de (meta|rango|limite\w*)\b/.test(q) && ds === 'aseos' && !/\bph\b/.test(q) && !spec.conds.length) spec.conds = [{ op: '>', k: 'm3', v: A.Metas.get('agua.aseoM3', 10) }];
+    spec.flt = [];
+    if (/\bsin operario\b|\bsin responsable\b/.test(q) && ds === 'aseos') spec.flt.push('sinOperario');
+    if (/\bsin causa\b/.test(q) && ds === 'trasiego') spec.flt.push('sinCausa');
+    if (/\bsin marca\b/.test(q) && (ds === 'trasiego' || ds === 'recuperacion')) spec.flt.push('sinMarca');
+    if (spec.flt.length && !F.count && !F.chart) spec.intentHint = 'list';
     // ¿comparación?
     if (F.compare) {
       if (split && (split.a || split.b)) {
         const a = split.a || period || defaultPeriod(ds, ref);
         const b = split.b || prevPeriod(a, ref);
         if (split.a && split.b) { spec.cmp = { kind: 'period', a, b }; spec.period = a; }
-        else if (split.b) { spec.cmp = { kind: 'period', a: (S.mem.last && S.mem.last.period) || defaultPeriod(ds, ref), b: split.b }; spec.period = spec.cmp.a; }
+        else if (split.b) { spec.cmp = { kind: 'period', a: currentOf(split.b, ref) || (S.mem.last && S.mem.last.ds === ds && S.mem.last.period && !S.mem.last.periodDefault ? S.mem.last.period : null) || defaultPeriod(ds, ref), b: split.b }; spec.period = spec.cmp.a; }
         else { spec.cmp = { kind: 'period', a, b: prevPeriod(a, ref) }; spec.period = a; }
       } else if (X.brands.length >= 2) spec.cmp = { kind: 'brand', items: X.brands };
       else if (X.shifts.length >= 2) spec.cmp = { kind: 'shift', items: X.shifts };
@@ -895,6 +913,7 @@
     else if (F.dist && !F.rank) intent = 'dist';
     else if ((rankish || (noun && /\b(mas|menos|mayor|menor|mejor|peor|lento|rapido|largo|corto)\b/.test(w))) && !F.cause) intent = 'rank';
     else if (F.count && spec.metric === '__n' && !by && (spec.conds.length || X.tanks.length || X.brands.length || X.ops.length || X.eqTerms.length || !F.chart)) intent = 'count';
+    else if (spec.intentHint === 'list') intent = 'list';
     else if (F.list || (rowNoun && !F.sum && !F.mean && !F.count && !F.chart && (spec.conds.length || X.tanks.length || X.eqTerms.length || X.ops.length || X.brands.length || spec.period && !spec.periodDefault) && (!spec.metricExplicit || (spec.conds.length && spec.conds.every((c) => c.k === spec.metric))) && !by && !F.compare)) intent = 'list';
     else if (F.chart || (by && TIMEKEYS.includes(by))) intent = 'trend';
     else if (by) intent = 'stat';
@@ -916,7 +935,7 @@
     // los temas ferm/lev sin cifras ni contexto de análisis los dejamos al motor anterior
     if ((ds === 'ferm' || ds === 'lev') && !followUp) {
       const analytic = period || F.mean || F.sum || F.count || F.rank || F.compare || F.chart || F.dist || F.corr || by || spec.conds.length || topN || F.cause || F.forecast || F.whatif || F.median || F.max || F.min || F.list;
-      const strong = /\b(fermentaciones|atenuacion|h ?75|h ?15|e ?72|cosechas|viabilidad|consistencia|generacion(es)?|familia|etanol)\b/.test(q);
+      const strong = /\b(fermentaciones|fermenta\w*|atenuacion|h ?75|h ?15|e ?72|cosechas|viabilidad|consistencia|generacion(es)?|familia|etanol)\b/.test(q);
       if (!analytic && !strong) { plan.intent = 'legacy'; plan.why = 'old-ferm'; return plan; }
     }
     return plan;
@@ -967,6 +986,7 @@
       for (const t of spec.eqTerms || []) rows = rows.filter((r) => normS(r.activity).includes(t));
     }
     if (ds === 'lev' && spec.state) rows = rows.filter((r) => r.state === spec.state);
+    for (const f of spec.flt || []) rows = rows.filter((r) => (f === 'sinOperario' ? !r.operator : f === 'sinCausa' ? r.cause === 'Sin causa registrada' : !r.brand || r.brand === '(sin marca)'));
     for (const c of spec.conds || []) rows = rows.filter((r) => condPass(c, r, ds));
     return rows;
   }
@@ -981,7 +1001,7 @@
     if (m.t === 'add') return how === 'sum' ? m.l : h + ' de ' + m.l.charAt(0).toLowerCase() + m.l.slice(1);
     return (how === 'mean' ? 'Promedio de ' : h + ' de ') + m.l.charAt(0).toLowerCase() + m.l.slice(1);
   }
-  const brandTxt = (spec) => { const b = (spec.brands || []).filter((x) => x !== '*'); return b.length ? ' · ' + b.map((x) => x.charAt(0) + x.slice(1).toLowerCase()).join(', ') : ''; };
+  const brandTxt = (spec) => { const b = (spec.brands || []).filter((x) => x !== '*'); return b.length ? ' · ' + b.map((x) => titleCase(x)).join(', ') : ''; };
   function filtTxt(spec) {
     const out = [];
     for (const t of spec.tanks || []) out.push(t.kind === 'COLECTOR' ? 'colector ' + t.n : t.kind + ' ' + t.n);
@@ -991,6 +1011,7 @@
     if (spec.cause) out.push('causa «' + spec.cause + '»');
     if (spec.state) out.push(spec.state);
     if (spec.kind) out.push(spec.kind);
+    for (const f of spec.flt || []) out.push({ sinOperario: 'sin operario', sinCausa: 'sin causa registrada', sinMarca: 'sin marca' }[f]);
     for (const c of spec.conds || []) out.push(condTxt(c, spec.ds));
     return out.join(' · ');
   }
@@ -1036,7 +1057,7 @@
   Resp.prototype = {
     h(title, sub) { this.parts.push('<div class="cf-h"><b>' + title + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + '</div>'); this.txt.push(tagsOut(title) + (sub ? '. ' + tagsOut(sub) : '')); return this; },
     p(html, cls) { if (!html) return this; this.parts.push('<p class="cf-p' + (cls ? ' ' + cls : '') + '">' + html + '</p>'); this.txt.push(tagsOut(html)); return this; },
-    kpis(list) { const l = list.filter(Boolean); if (!l.length) return this; this.parts.push('<div class="cf-kpis">' + l.map((k) => CH().kpi(k)).join('') + '</div>'); this.txt.push(l.map((k) => k.label + ': ' + k.value + (k.unit ? ' ' + k.unit : '')).join('; ')); return this; },
+    kpis(list) { const l = list.filter(Boolean); if (!l.length) return this; this.parts.push('<div class="cf-kpis">' + l.map((k) => CH().kpi(k)).join('') + '</div>'); this.txt.push(l.map((k) => k.label + ': ' + String(k.value).replace(/\u2060/g, '') + (k.unit ? ' ' + k.unit : '')).join('; ')); return this; },
     chart(html, caption) { if (!html) return this; this.parts.push('<div class="cf-chart">' + html + '</div>'); this.hasChart = true; if (caption) this.txt.push(caption); return this; },
     note(html, tone) { if (!html) return this; this.parts.push('<div class="cf-note' + (tone ? ' ' + tone : '') + '">' + html + '</div>'); this.txt.push(tagsOut(html)); return this; },
     src(html) { if (!html) return this; this.parts.push('<div class="cf-src">' + html + '</div>'); this.txt.push(tagsOut(html)); return this; },
@@ -1062,10 +1083,13 @@
       acts.push('<button type="button" class="cf-act cf-copy" data-cf-copy="1" title="Copiar la respuesta como texto">Copiar</button>');
       const html = '<div class="cf-ans">' + this.parts.join('') + '<div class="cf-acts">' + acts.join('') + '</div></div>';
       if (this.exp) S.lastExp = { spec: this.spec, exp: this.exp };
-      return { h: html, opts: this.chips.slice(0, 6), intent: this.intent, conf: this.conf, texto: this.txt.join(' ').replace(/\s+/g, ' ').trim(), html, hasChart: !!this.hasChart, hasTable: !!this.hasTable, spec: this.spec };
+      return { h: html, valor: this.valor, opts: this.chips.slice(0, 6), intent: this.intent, conf: this.conf, texto: this.txt.join(' ').replace(/\s+/g, ' ').trim(), html, hasChart: !!this.hasChart, hasTable: !!this.hasTable, spec: this.spec };
     },
   };
-  const kpi = (label, value, unit, extra) => Object.assign({ label, value: value == null || (typeof value === 'number' && !Number.isFinite(value)) ? '—' : typeof value === 'number' ? fa(value) : value, unit: unit || '' }, extra || {});
+  // Los valores se envían ya formateados; si el texto pareciera un número con punto decimal («1.514») se protege para que el gráfico no lo reinterprete.
+  const kpiVal = (v) => { const s = v == null || (typeof v === 'number' && !Number.isFinite(v)) ? '—' : typeof v === 'number' ? fa(v) : String(v); return /^-?\d+\.\d+$/.test(s) ? '\u2060' + s : s; };
+  const kd = (m, cur, prev) => { if (cur == null || prev == null || !Number.isFinite(cur) || !Number.isFinite(prev)) return undefined; if (m.u === '%' && m.t === 'ratio') { const d = cur - prev; return Math.abs(d) < 0.05 ? undefined : (d > 0 ? '+' : '−') + fmt(Math.abs(d), 1) + ' pts'; } const d = deltaPct(cur, prev); return d != null && Math.abs(d) >= 0.05 ? d : undefined; };
+  const kpi = (label, value, unit, extra) => Object.assign({ label, value: kpiVal(value), unit: unit || '' }, extra || {});
 
   /* ---------------------------------------------------------------- gráficos */
   const CW = 420;
@@ -1081,8 +1105,12 @@
   const trendBy = (p) => { const d = (p.to - p.from) / DAY; return d <= 45 ? 'day' : d <= 200 ? 'week' : 'month'; };
   // Serie temporal agregada: [{k,label,t,v,n}]
   function series(spec, rows, m, how, by) {
-    const g = groupRows(spec.ds, rows, by);
-    return g.map((x) => { const a = aggregate(x.rows, m, how === 'count' ? 'count' : how); return { k: x.k, label: x.label, t: x.t, v: a.v, n: a.n, rows: x.rows }; }).filter((x) => x.v != null).sort((a, b) => a.t - b.t);
+    let g = groupRows(spec.ds, rows, by);
+    let dropped = 0;
+    if (spec.ds === 'agua' && by === 'day' && (m.t === 'add' || m.k === '__n') && ['total', 'pisos', 'cip', 'gea'].includes(m.k)) { const before = g.length; g = g.filter((x) => x.rows.filter((r) => r[m.k] != null).length >= 3); dropped = before - g.length; }
+    const out = g.map((x) => { const a = aggregate(x.rows, m, how === 'count' ? 'count' : how); return { k: x.k, label: x.label, t: x.t, v: a.v, n: a.n, rows: x.rows }; }).filter((x) => x.v != null).sort((a, b) => a.t - b.t);
+    out.dropped = dropped;
+    return out;
   }
   function timeChart(ser, m, how, o = {}) {
     if (ser.length < 2) return '';
@@ -1120,7 +1148,7 @@
     const nn = a ? a.n : tot;
     const noun = DSNOUN[ds][nn === 1 ? 0 : 1];
     let s = 'Fuente: ' + dsLabel(ds) + ' · ' + spec.period.label + (spec.period.txt ? ' (' + spec.period.txt + ')' : '') + ' · ';
-    s += a && nn < tot ? nn + ' de ' + tot + ' ' + DSNOUN[ds][1] + ' con dato válido' : tot + ' ' + DSNOUN[ds][tot === 1 ? 0 : 1];
+    s += a && nn < tot ? fmt(nn, 0) + ' de ' + fmt(tot, 0) + ' ' + DSNOUN[ds][1] + ' con dato válido' : fmt(tot, 0) + ' ' + DSNOUN[ds][tot === 1 ? 0 : 1];
     if (spec.periodDefault) s += ' (no indicaste periodo: usé lo que va del año)';
     return esc(s);
   }
@@ -1224,6 +1252,13 @@
 
   /* ---------------------------------------------------------------- estadística de un valor (stat) */
   const H = {};
+  // El periodo anterior solo es comparable si tiene una densidad de registros parecida (evita comparar contra años casi vacíos)
+  function comparable(rows, prows, p, pp) {
+    if (!pp || !prows.length) return false;
+    const d1 = Math.max(1, (Math.min(p.to, capT()) - p.from) / DAY + 1), d2 = Math.max(1, (pp.to - pp.from) / DAY + 1);
+    const r1 = rows.length / d1, r2 = prows.length / d2;
+    return r1 === 0 ? true : r2 / r1 >= 0.4 && r2 / r1 <= 2.5;
+  }
   function latestWithValue(spec, m) {
     const rows = select(Object.assign({}, spec, { period: P(0, capT(), 'todo', 'all') }));
     for (let i = rows.length - 1; i >= 0; i--) { if (m.k === '__n' || vals([rows[i]], m).length) return rows[i].t; }
@@ -1265,19 +1300,23 @@
     if (a.v == null) return emptyAnswer(spec);
     const R = new Resp(spec, 'stat');
     let main = a.v, mainRow = null;
-    if (spec.perDay && how === 'mean' && m.t === 'add') { const ds2 = series(spec, rows, m, 'sum', 'day'); if (ds2.length) main = sum(ds2.map((x) => x.v)) / ds2.length; }
+    const perU = spec.perUnit && (m.t === 'add' || m.k === '__n') ? spec.perUnit : null;
+    const perVal = (rs) => { const s2 = series(spec, rs, m, m.k === '__n' ? 'count' : 'sum', perU); return s2.length ? sum(s2.map((x) => x.v)) / s2.length : null; };
+    if (perU) { const v0 = perVal(rows); if (v0 != null) main = v0; }
     if ((how === 'max' || how === 'min') && m.k !== '__n') mainRow = extremeRow(rows, m, how);
     const prevP = prevPeriod(spec.period, ref);
     let pa = null, prevRows = [];
-    if (prevP && spec.period.kind !== 'all') { prevRows = select(spec, { period: prevP }); pa = aggregate(prevRows, m, spec.perDay ? 'mean' : how); if (spec.perDay && how === 'mean' && m.t === 'add') { const p2 = series(spec, prevRows, m, 'sum', 'day'); pa = { v: p2.length ? sum(p2.map((x) => x.v)) / p2.length : null, n: p2.length }; } }
+    let incomparable = false;
+    if (prevP && spec.period.kind !== 'all') { prevRows = select(spec, { period: prevP }); pa = aggregate(prevRows, m, how); if (perU) pa = { v: perVal(prevRows), n: prevRows.length }; if (prevRows.length && !comparable(rows, prevRows, spec.period, prevP)) { incomparable = true; pa = null; } }
     const d = pa && pa.v != null ? deltaPct(main, pa.v) : null;
-    const title = metTitle(m, how) + (spec.perDay ? ' (promedio diario)' : '');
+    const title = perU ? 'Promedio de ' + (m.k === '__n' ? DSNOUN[ds][1] : m.l.toLowerCase()) + ' por ' + TIMEDIM[perU] : metTitle(m, how);
     R.h(esc(title) + ': ' + vFmt(m, main).replace(/^/, '<span class="cf-big">') + '</span>', esc(spec.period.label) + (spec.period.txt && spec.period.kind !== 'day' ? ' (' + esc(spec.period.txt) + ')' : '') + esc(brandTxt(spec)) + (filtTxt(spec) ? ' · ' + esc(filtTxt(spec)) : ''));
     R.kpis([
-      kpi(m.k === '__n' ? m.l : metTitle(m, how), main, m.k === '__n' ? '' : m.u, { delta: d != null && Math.abs(d) >= 0.05 ? d : undefined, deltaGood: m.good === 'down' ? 'down' : 'up', help: prevP && pa && pa.v != null ? 'vs ' + prevP.label + ': ' + vFmt(m, pa.v) : '' }),
+      kpi(perU ? 'Promedio por ' + TIMEDIM[perU] : m.k === '__n' ? m.l : metTitle(m, how), main, m.k === '__n' ? '' : m.u, { delta: pa && pa.v != null ? kd(m, main, pa.v) : undefined, deltaGood: m.good === 'down' ? 'down' : 'up', help: prevP && pa && pa.v != null ? 'vs ' + prevP.label + ': ' + vFmt(m, pa.v) : '' }),
       secondaryKpi(spec, rows, m, how, a),
       kpi('Registros usados', a.n, ''),
     ]);
+    R.valor = main;
     if (mainRow) R.p((how === 'max' ? 'Ocurrió' : 'Ocurrió') + ' en <b>' + esc(rowLabel(ds, mainRow.r)) + '</b>.');
     if (note) R.note(note, 'warn');
     if (pa && pa.v != null && prevP) {
@@ -1287,7 +1326,8 @@
         const sa = series(spec, rows, m, how, 'day').map((x) => x.v), sb = series(spec, prevRows, m, how, 'day').map((x) => x.v);
         if (sa.length >= 5 && sb.length >= 5) { const sg = sigSentence(sa, sb); if (sg) R.p(esc(sg.replace('La diferencia', 'Comparando día a día, la diferencia'))); }
       }
-    } else if (prevP && spec.period.kind !== 'all' && !spec.period.dflt) R.p('No hay datos en ' + esc(prevP.label) + ' para comparar.');
+    } else if (incomparable) R.p('No comparo con ' + esc(prevP.label) + ' porque tiene muchos menos registros (' + fmt(prevRows.length, 0) + ') y la comparación no sería justa.');
+    else if (prevP && spec.period.kind !== 'all' && !spec.period.dflt) R.p('No hay datos en ' + esc(prevP.label) + ' para comparar.');
     const ins = insights(spec, rows, m, how);
     if (ins.length) R.list(ins);
     if (ds === 'agua' && m.k !== '__n' && spec.period.to - spec.period.from < 40 * DAY && m.k === 'total') {
@@ -1328,6 +1368,7 @@
       const sers = spec.brands.map((b) => ({ name: titleCase(b), points: series(spec, select(spec, { brands: [b] }), m, hw, by).map((x) => ({ x: x.t, y: Math.round(x.v * 1000) / 1000 })) })).filter((s) => s.points.length);
       R.chart(CH().line({ title: m.l + ' por ' + TIMEDIM[by], subtitle: 'por marca', xType: 'time', series: sers, unit: m.u, w: CW, h: 230, toolbar: true, refs: refsFor(ds, m, how) }));
     } else R.chart(timeChart(ser, m, how, { title: m.l + ' por ' + TIMEDIM[by], subtitle: spec.period.label, refs: refsFor(ds, m, how) }));
+    if (ser.dropped) R.note('Excluí ' + ser.dropped + ' ' + plural(ser.dropped, 'día') + ' con lecturas incompletas (menos de 3 turnos) para no subestimar el consumo.', 'warn');
     R.p('En el periodo, el valor más alto fue <b>' + vFmt(m, peak.v) + '</b> (' + esc(peak.label) + ') y el más bajo <b>' + vFmt(m, low.v) + '</b> (' + esc(low.label) + '). ' + (first.v ? 'Pasó de ' + vFmt(m, first.v) + ' en ' + esc(first.label) + ' a ' + vFmt(m, last.v) + ' en ' + esc(last.label) + '.' : ''));
     const ts = trendSentence(vs, m.u);
     if (ts) R.p(esc(ts));
@@ -1408,15 +1449,17 @@
   H.rank = function (spec) {
     const ds = spec.ds, m = metOf(ds, spec.metric), how = howOf(spec, m);
     if (spec.by && !TIMEKEYS.includes(spec.by)) { const s2 = Object.assign({}, spec, { topN: spec.topN || (spec.by === 'tq' ? 5 : null) }); return byDim(s2); }
-    if (spec.by && TIMEKEYS.includes(spec.by) && spec.topN) {
+    if (spec.by && TIMEKEYS.includes(spec.by)) {
+      spec = Object.assign({}, spec, { topN: spec.topN || 1 });
       // «top 5 días con más consumo»
       const rows = select(spec); if (!rows.length) return emptyAnswer(spec);
       const ser = series(spec, rows, m, m.k === '__n' ? 'count' : how === 'wmean' ? 'wmean' : (m.t === 'add' ? 'sum' : how), spec.by);
       const ord = orderOf(spec, m); ser.sort((a, b) => (ord === 'asc' ? a.v - b.v : b.v - a.v));
       const top = ser.slice(0, spec.topN || 5);
       const R = new Resp(spec, 'rank');
-      R.h('Top ' + top.length + ' ' + TIMEDIM[spec.by] + 's con ' + (ord === 'asc' ? 'menor ' : 'mayor ') + esc(m.l.toLowerCase()), esc(spec.period.label) + esc(brandTxt(spec)));
-      R.kpis([kpi('Mayor', top[0].v, m.u, { help: top[0].label }), kpi('Promedio de la serie', sum(ser.map((x) => x.v)) / ser.length, m.u), kpi(TIMEDIM[spec.by] + 's con datos', ser.length, '')]);
+      R.h(top.length === 1 ? 'El ' + TIMEDIM[spec.by] + ' con ' + (ord === 'asc' ? 'menor ' : 'mayor ') + esc(m.l.toLowerCase()) + ': ' + esc(top[0].label) : 'Top ' + top.length + ' ' + TIMEDIM[spec.by] + 's con ' + (ord === 'asc' ? 'menor ' : 'mayor ') + esc(m.l.toLowerCase()), esc(spec.period.label) + esc(brandTxt(spec)));
+      R.kpis([kpi(ord === 'asc' ? 'Menor' : 'Mayor', top[0].v, m.u, { help: top[0].label }), kpi('Promedio de la serie', sum(ser.map((x) => x.v)) / ser.length, m.u), kpi(TIMEDIM[spec.by] + 's con datos', ser.length, '')]);
+      if (ser.dropped) R.note('Excluí ' + ser.dropped + ' ' + plural(ser.dropped, 'día') + ' con lecturas incompletas (menos de 3 turnos) para no subestimar el consumo.', 'warn');
       R.p('El ' + TIMEDIM[spec.by] + ' con ' + (ord === 'asc' ? 'menor' : 'mayor') + ' valor fue <b>' + esc(top[0].label) + '</b> con ' + vFmt(m, top[0].v) + ' (el promedio de la serie es ' + vFmt(m, sum(ser.map((x) => x.v)) / ser.length) + ').');
       R.chart(barsH(top.map((x) => ({ label: x.label, v: x.v })), { title: 'Top ' + top.length + ' ' + TIMEDIM[spec.by] + 's', subtitle: spec.period.label, unit: m.u }));
       R.table([{ k: 'label', t: TIMEDIM[spec.by].charAt(0).toUpperCase() + TIMEDIM[spec.by].slice(1) }, { k: 'v', t: m.l, num: 1, f: (v) => fmt(v, autoDec(v)) }, { k: 'n', t: 'Registros', num: 1 }], top, { max: 10 });
@@ -1469,6 +1512,8 @@
     const unit = m.t === 'add' || m.k === '__n' ? ' (comparando día a día)' : '';
     return cg.significant ? 'La diferencia es estadísticamente significativa' + unit + ' (p ' + ps + '): es poco probable que sea casualidad.' : 'La diferencia no es concluyente' + unit + ' (p ' + ps + '): con estos datos podría ser variación normal.';
   }
+  const deDe = (l) => (/^el /i.test(l) ? 'del <b>' + esc(l.slice(3)) + '</b>' : 'de <b>' + esc(l) + '</b>');
+  const lenDiff = (groups) => { if (!groups[0].p || !groups[1].p) return false; const a = groups[0].p.to - groups[0].p.from + 1, b = groups[1].p.to - groups[1].p.from + 1; return Math.abs(a - b) / Math.max(a, b) > 0.15; };
   function compareGroups(spec) {
     const ds = spec.ds, m = metOf(ds, spec.metric), how = howOf(spec, m), c = spec.cmp, ref = refTime();
     let groups = [], kindTxt = '', R;
@@ -1514,17 +1559,23 @@
     R = new Resp(spec, 'compare');
     R.h(esc(m.k === '__n' ? m.l : metTitle(m, how)) + ': ' + groups.map((g) => esc(g.label)).join(' vs '), (c.kind === 'period' ? '' : esc(spec.period.label) + (spec.period.txt ? ' (' + esc(spec.period.txt) + ')' : '')) + (filtTxt(spec) && c.kind !== 'period' ? ' · ' + esc(filtTxt(spec)) : '') + (c.kind !== 'brand' ? esc(brandTxt(spec)) : ''));
     const base = aggs[0];
-    R.kpis(aggs.slice(0, 4).map((x, i) => kpi(x.g.label.length > 26 ? x.g.label.slice(0, 25) + '…' : x.g.label, x.v, m.k === '__n' ? '' : m.u, i && base.v != null && x.v != null ? { delta: deltaPct(x.v, base.v), deltaGood: m.good === 'down' ? 'down' : 'up', help: 'frente a ' + base.g.label } : { help: x.n + ' registros' })));
+    const isP = c.kind === 'period', refI = isP ? 1 : 0;
+    const refA = aggs[refI];
+    R.kpis(aggs.slice(0, 4).map((x, i) => kpi(x.g.label.length > 26 ? x.g.label.slice(0, 25) + '…' : x.g.label, x.v, m.k === '__n' ? '' : m.u, i !== refI && refA.v != null && x.v != null && !(isP && how === 'sum' && lenDiff(groups))
+      ? { delta: kd(m, x.v, refA.v), deltaGood: m.good === 'down' ? 'down' : 'up', help: 'frente a ' + refA.g.label } : { help: x.n + ' registros' })));
     // frase de lectura
     const ok = aggs.filter((x) => x.v != null);
     if (ok.length >= 2) {
-      const x0 = ok[0], x1 = ok[1], d = deltaPct(x1.v, x0.v);
-      let phr = '<b>' + esc(x1.g.label) + '</b> ' + (d == null ? 'registra ' + vFmt(m, x1.v) : (d > 0 ? 'está ' + fmt(Math.abs(d), 1) + ' % por encima' : d < 0 ? 'está ' + fmt(Math.abs(d), 1) + ' % por debajo' : 'es igual') + ' de <b>' + esc(x0.g.label) + '</b> (' + vFmt(m, x1.v) + ' vs ' + vFmt(m, x0.v) + ')') + '.';
+      const x0 = isP ? ok[1] : ok[0], x1 = isP ? ok[0] : ok[1];
+      let dv0 = x0.v, dv1 = x1.v, per = '';
+      if (isP && how === 'sum' && lenDiff(groups)) { const dA = Math.max(1, Math.round((groups[0].p.to - groups[0].p.from + 1) / DAY)), dB = Math.max(1, Math.round((groups[1].p.to - groups[1].p.from + 1) / DAY)); dv1 = x1.v / dA; dv0 = x0.v / dB; per = ' por día'; }
+      const d = deltaPct(dv1, dv0);
+      let phr = '<b>' + esc(x1.g.label) + '</b> ' + (d == null ? 'registra ' + vFmt(m, x1.v) : (d > 0 ? 'está ' + fmt(Math.abs(d), 1) + ' % por encima' : d < 0 ? 'está ' + fmt(Math.abs(d), 1) + ' % por debajo' : 'es igual') + ' ' + deDe(x0.g.label) + ' (' + vFmt(m, dv1) + ' vs ' + vFmt(m, dv0) + per + ')') + '.';
       if (d != null && m.good && Math.abs(d) >= 0.5) phr += ' ' + ((m.good === 'down') !== (d > 0) ? 'Es un resultado favorable.' : 'Conviene revisarlo.');
       R.p(phr);
-      if (c.kind === 'period' && (m.t === 'add' || m.k === '__n') && how === 'sum') {
+      if (isP && (m.t === 'add' || m.k === '__n') && how === 'sum' && lenDiff(groups)) {
         const dA = Math.max(1, Math.round((groups[0].p.to - groups[0].p.from + 1) / DAY)), dB = Math.max(1, Math.round((groups[1].p.to - groups[1].p.from + 1) / DAY));
-        if (dA !== dB && x0.v != null && x1.v != null) R.p('Como los periodos no tienen los mismos días (' + dA + ' vs ' + dB + '), por día promedian ' + fa(x0.v / dA) + ' vs ' + fa(x1.v / dB) + ' ' + esc(m.u) + '.');
+        R.p('Ojo: los periodos no tienen los mismos días (' + dA + ' vs ' + dB + '), por eso comparo el promedio por día: ' + esc(groups[0].label) + ' ' + fa(aggs[0].v / dA) + ' y ' + esc(groups[1].label) + ' ' + fa(aggs[1].v / dB) + ' ' + esc(m.u) + '.');
       }
       const sg = sigGroups(spec, groups.filter((g) => g.rows.length), m);
       if (sg) R.p(esc(sg));
@@ -1555,15 +1606,24 @@
   H.compare = function (spec) { return compareGroups(spec); };
 
   /* ---------------------------------------------------------------- listar / contar / proporción */
+  function dayFallback(spec) {
+    if (spec.period.kind !== 'day') return null;
+    const all = select(Object.assign({}, spec, { period: P(0, capT(), 'todo', 'all') }));
+    if (!all.length) return null;
+    const t = all[all.length - 1].t;
+    return { period: dayPeriod(t, 'el último día con datos (' + fd(t) + ')'), old: spec.period.label };
+  }
   H.list = function (spec) {
     const ds = spec.ds, ref = refTime(), m = metOf(ds, spec.metric === '__n' ? ({ aseos: 'm3', agua: 'total', merma: 'loss', recuperacion: 'volume', trasiego: 'delay', ferm: 'h75', lev: 'viab' })[ds] : spec.metric);
-    const rows = select(spec);
+    let rows = select(spec), fbNote = '';
+    if (!rows.length) { const fb = dayFallback(spec); if (fb) { spec = Object.assign({}, spec, { period: fb.period }); rows = select(spec); fbNote = 'No hay registros para ' + esc(fb.old) + '. Te muestro el último día con datos.'; } }
     if (!rows.length) return emptyAnswer(spec);
     const sorted = rows.slice().sort((a, b) => b.t - a.t);
     const R = new Resp(spec, 'list');
     R.h(rows.length + ' ' + DSNOUN[ds][rows.length === 1 ? 0 : 1] + (spec.conds.length ? (rows.length === 1 ? ' que cumple' : ' que cumplen') : ''), esc(spec.period.label) + (spec.period.txt && spec.period.kind !== 'day' ? ' (' + esc(spec.period.txt) + ')' : '') + esc(brandTxt(spec)) + (filtTxt(spec) ? ' · ' + esc(filtTxt(spec)) : ''));
     const a = aggregate(rows, m, defaultHow(m));
     const k = [kpi('Registros', rows.length, ''), a.v != null ? kpi(metTitle(m, defaultHow(m)), a.v, m.u) : null, kpi('Más reciente', fd(sorted[0].t), '')];
+    if (fbNote) R.note(fbNote, 'warn');
     R.kpis(k);
     const first = sorted[0], lastR = sorted[sorted.length - 1];
     R.p('Van del <b>' + fd(lastR.t) + '</b> al <b>' + fd(first.t) + '</b>. ' + (a.v != null ? 'En conjunto: ' + esc(metTitle(m, defaultHow(m)).toLowerCase()) + ' <b>' + vFmt(m, a.v) + '</b>.' : ''));
@@ -1582,15 +1642,20 @@
 
   H.count = function (spec) {
     const ds = spec.ds, ref = refTime(), m = metOf(ds, '__n');
-    const rows = select(spec);
+    let rows = select(spec), fbNote = '';
+    if (!rows.length) { const fb = dayFallback(spec); if (fb) { spec = Object.assign({}, spec, { period: fb.period }); rows = select(spec); fbNote = 'No hay registros para ' + esc(fb.old) + '. Te muestro el último día con datos.'; } }
     { const e0 = DL().extent(ds); if (!rows.length && e0 && e0.to < spec.period.from) return emptyAnswer(spec, 'Todavía no hay registros de ' + esc(dsLabel(ds).toLowerCase()) + ' en ' + esc(spec.period.label) + ': los datos llegan hasta el <b>' + fd(e0.to) + '</b>.'); }
     const R = new Resp(spec, 'count');
+    R.valor = rows.length;
     const base = (spec.conds.length || (spec.tanks || []).length || (spec.eqTerms || []).length || (spec.ops || []).length || (spec.brands || []).length) ? select(Object.assign({}, spec, { conds: [], tanks: [], eqTerms: [], eqTypes: [], ops: [], brands: [], cause: null, state: null, kind: null })) : null;
-    const prevP = prevPeriod(spec.period, ref), prev = prevP ? select(spec, { period: prevP }) : [];
+    const prevP = prevPeriod(spec.period, ref);
+    let prev = prevP ? select(spec, { period: prevP }) : [];
+    if (prev.length && !comparable(rows, prev, spec.period, prevP)) prev = [];
     R.h(fmt(rows.length, 0) + ' ' + DSNOUN[ds][rows.length === 1 ? 0 : 1], esc(spec.period.label) + (spec.period.txt && spec.period.kind !== 'day' ? ' (' + esc(spec.period.txt) + ')' : '') + esc(brandTxt(spec)) + (filtTxt(spec) ? ' · ' + esc(filtTxt(spec)) : ''));
     const days = Math.max(1, Math.round((Math.min(spec.period.to, capT()) - spec.period.from + 1) / DAY));
     const d = prev.length ? deltaPct(rows.length, prev.length) : null;
     R.kpis([kpi('Cantidad', rows.length, '', { delta: d != null && Math.abs(d) > 0.05 ? d : undefined, deltaGood: 'up', help: prevP && prev.length ? 'vs ' + prevP.label + ': ' + prev.length : '' }), base && base.length ? kpi('Del total del periodo', (rows.length / base.length) * 100, '%', { help: rows.length + ' de ' + base.length }) : kpi('Promedio por día', rows.length / days, ''), days >= 14 ? kpi('Promedio por semana', (rows.length / days) * 7, '') : null]);
+    if (fbNote) R.note(fbNote, 'warn');
     if (!rows.length) R.p('No hay ' + DSNOUN[ds][1] + ' con esas condiciones' + (base && base.length ? ', de los ' + base.length + ' del periodo.' : ' en el periodo.'));
     else {
       let t = 'Contando todos los registros de ese periodo' + (base && base.length ? ', <b>' + rows.length + ' de ' + base.length + '</b> (' + fmt((rows.length / base.length) * 100, 1) + ' %) cumplen lo que pediste.' : ': <b>' + rows.length + '</b>.');
@@ -1625,6 +1690,7 @@
     let pshare = null;
     if (prevP) { const pb = select(Object.assign({}, spec, { conds: [] }), { period: prevP }).filter((r) => vals([r], m).length); if (pb.length >= 3) pshare = (pb.filter((r) => condPass(c, r, ds)).length / pb.length) * 100; }
     const R = new Resp(spec, 'share');
+    R.valor = share;
     R.h(fmt(share, 1) + ' % cumple: ' + esc(condTxt(c, ds)), esc(spec.period.label) + (spec.period.txt ? ' (' + esc(spec.period.txt) + ')' : '') + esc(brandTxt(spec)));
     R.kpis([kpi('Cumplen', share, '%', { delta: pshare != null ? deltaPct(share, pshare) : undefined, deltaGood: 'up', help: prevP && pshare != null ? 'vs ' + prevP.label + ': ' + fmt(pshare, 1) + ' %' : '' }), kpi('Registros que cumplen', pass.length, ''), kpi('Registros evaluados', base.length, '')]);
     R.chart(CH().donut({ title: 'Cumplen / no cumplen', subtitle: condTxt(c, ds), data: [{ label: 'Cumplen', value: pass.length }, { label: 'No cumplen', value: base.length - pass.length }], w: CW, h: 160, toolbar: true }));
@@ -1729,14 +1795,20 @@
   };
 
   /* ---------------------------------------------------------------- causas: ¿por qué subió/bajó? */
+  const y0 = (t) => new Date(t).getFullYear();
   const CAUSE_DIMS = { agua: ['shift'], aseos: ['eqType', 'eq', 'tipo'], merma: ['brand', 'phase', 'tq'], recuperacion: ['utk', 'brand'], trasiego: ['cause', 'brand', 'kind'], ferm: ['brand', 'fam', 'gen'], lev: ['brand', 'gen', 'fam'] };
   H.cause = function (spec) {
     const ds = spec.ds, m0 = metOf(ds, spec.metric), m = m0.k === '__n' && ds !== 'aseos' && ds !== 'trasiego' ? metOf(ds, MET[ds].find((x) => x.def).k) : m0, ref = refTime();
     const how = m.k === '__n' ? 'count' : howOf(spec, m);
     let cur = spec.period;
     if (spec.periodDefault) { const d = new Date(ref); cur = monthPeriod(d.getFullYear(), d.getMonth(), ref); cur.label = 'este mes (' + MESES[d.getMonth()] + ')'; }
+    let causeNote = '';
+    let rC = select(spec, { period: cur });
+    if (spec.periodDefault && rC.length < 3) {
+      for (let k = 1; k <= 12; k++) { const dd = new Date(y0(ref), new Date(ref).getMonth() - k, 1), pm = monthPeriod(dd.getFullYear(), dd.getMonth(), ref), rr = select(spec, { period: pm }); if (rr.length >= 3) { causeNote = 'En ' + cur.label + ' todavía no hay registros suficientes; analicé el último mes con datos (' + MESES[dd.getMonth()] + ').'; cur = pm; cur.label = MESES[dd.getMonth()] + (dd.getFullYear() !== REF_YEAR ? ' de ' + dd.getFullYear() : ''); rC = rr; break; } }
+    }
     const prev = prevPeriod(cur, ref);
-    const rC = select(spec, { period: cur }), rP = prev ? select(spec, { period: prev }) : [];
+    const rP = prev ? select(spec, { period: prev }) : [];
     const aC = aggregate(rC, m, how), aP = aggregate(rP, m, how);
     if (aC.v == null || aP.v == null) return emptyAnswer(spec, 'Para explicar un cambio necesito datos en los dos periodos (' + esc(cur.label) + ': ' + rC.length + ' registros; ' + esc(prev ? prev.label : 'anterior') + ': ' + rP.length + ').');
     const d = deltaPct(aC.v, aP.v);
@@ -1744,6 +1816,7 @@
     const qn = norm(spec.raw || ''), askedUp = /subi|aument|alz|crec|empeor|mas alt/.test(qn), askedDown = /baj|disminu|cay|reduj|mejor/.test(qn);
     const up = d != null && d > 0;
     R.h('¿Qué cambió en ' + esc(m.l.toLowerCase()) + '?', esc(cur.label) + ' vs ' + esc(prev.label));
+    if (causeNote) R.note(esc(causeNote), 'warn');
     R.kpis([kpi(cur.label.length > 24 ? 'Periodo actual' : cur.label, aC.v, m.u, { delta: d != null ? d : undefined, deltaGood: m.good === 'down' ? 'down' : 'up' }), kpi(prev.label.length > 24 ? 'Periodo anterior' : prev.label, aP.v, m.u), kpi('Cambio', aC.v - aP.v, m.u)]);
     let lead = vFmt(m, aC.v) + ' frente a ' + vFmt(m, aP.v) + ' (' + (d == null ? 'sin %' : (d > 0 ? '+' : '') + fmt(d, 1) + ' %') + ').';
     if (d != null && Math.abs(d) < 2) lead = 'Prácticamente no cambió: ' + lead;
@@ -1830,7 +1903,7 @@
     const R = new Resp(spec, 'forecast');
     const lastDay = ser[ser.length - 1].t;
     let horizon, label, mtd = 0, mtdDays = 0, start, skip = 0, nmDays = 0;
-    if (mode === 'month') { const eom = new Date(y, mo + 1, 0).getDate(); horizon = Math.max(1, eom - d0.getDate()); label = 'cierre de ' + MESES[mo]; const cur = select(spec, { period: P(new Date(y, mo, 1).getTime(), eod(ref), '', 'month') }); mtd = add ? aggregate(cur, m, m.k === '__n' ? 'count' : 'sum').v || 0 : 0; mtdDays = d0.getDate(); }
+    if (mode === 'month') { const eom = new Date(y, mo + 1, 0).getDate(), ms0 = new Date(y, mo, 1).getTime(); const inMonth = ser.filter((x) => x.t >= ms0); mtdDays = inMonth.length; mtd = add ? sum(inMonth.map((x) => x.v)) : 0; horizon = Math.max(1, eom - mtdDays); label = 'cierre de ' + MESES[mo]; }
     else if (mode === 'week') { horizon = 7; label = 'los próximos 7 días'; }
     else if (mode === 'nextmonth') { const nm = new Date(y, mo + 1, 1), dn = new Date(y, mo + 2, 0).getDate(), rem0 = Math.max(0, new Date(y, mo + 1, 0).getDate() - d0.getDate()); horizon = rem0 + dn; skip = rem0; nmDays = dn; label = MESES[nm.getMonth()]; start = nm; }
     else { horizon = Math.max(1, Math.round((new Date(y, 11, 31).getTime() - sod(ref)) / DAY)); label = 'cierre de ' + y; mtd = add ? aggregate(select(spec, { period: P(new Date(y, 0, 1).getTime(), eod(ref), '', 'year') }), m, m.k === '__n' ? 'count' : 'sum').v || 0 : 0; }
@@ -1848,11 +1921,12 @@
     const unit = m.k === '__n' ? DSNOUN[ds][1] : m.u;
     if (add) {
       const prevTot = mode === 'month' ? (() => { const pm = monthPeriod(mo === 0 ? y - 1 : y, (mo + 11) % 12, ref); pm.partial = false; const r = select(spec, { period: pm }); return aggregate(r, m, m.k === '__n' ? 'count' : 'sum'); })() : null;
-      R.h('Proyección: ' + fmt(est, est > 100 ? 0 : 1) + ' ' + esc(unit), esc(label) + esc(brandTxt(spec)) + (filtTxt(spec) ? ' · ' + esc(filtTxt(spec)) : ''));
+      R.valor = est;
+    R.h('Proyección: ' + fmt(est, est > 100 ? 0 : 1) + ' ' + esc(unit), esc(label) + esc(brandTxt(spec)) + (filtTxt(spec) ? ' · ' + esc(filtTxt(spec)) : ''));
       const lo = Math.max(mtd, est - 1.96 * sdTot), hi = est + 1.96 * sdTot;
       R.kpis([kpi('Proyectado', est, unit, { delta: prevTot && prevTot.v ? deltaPct(est, prevTot.v) : undefined, deltaGood: m.good === 'down' ? 'down' : 'up', help: prevTot && prevTot.v ? 'vs mes pasado: ' + fa(prevTot.v) : '' }), mode !== 'week' && mode !== 'nextmonth' ? kpi('Ya acumulado', mtd, unit, { help: mtdDays ? mtdDays + ' días' : '' }) : null, kpi('Rango probable (95 %)', fa(lo) + ' – ' + fa(hi), unit)]);
       const phr = { month: 'al ' + label, year: 'al ' + label, week: 'en ' + label, nextmonth: 'en ' + label }[mode];
-      R.p('A este ritmo, ' + esc(phr) + ' serían <b>' + fa(est) + ' ' + esc(unit) + '</b>' + (mode === 'month' || mode === 'year' ? ' (' + fa(mtd) + ' ya acumulados + ' + fa(remaining) + ' proyectados en los ' + h + ' días que faltan)' : mode === 'nextmonth' ? ' (' + nmDays + ' días)' : ' (' + fa(remaining) + ' en ' + h + ' días)') + '. Con un 95 % de confianza quedaría entre ' + fa(lo) + ' y ' + fa(hi) + '.');
+      R.p('A este ritmo, ' + esc(phr) + ' serían <b>' + fa(est) + ' ' + esc(unit) + '</b>' + (mode === 'month' || mode === 'year' ? ' (' + fa(mtd) + ' ya acumulados en ' + (mode === 'month' ? mtdDays + ' días con dato' : 'el año') + ' + ' + fa(remaining) + ' proyectados para los ' + h + ' días restantes o sin lectura)' : mode === 'nextmonth' ? ' (' + nmDays + ' días)' : ' (' + fa(remaining) + ' en ' + h + ' días)') + '. Con un 95 % de confianza quedaría entre ' + fa(lo) + ' y ' + fa(hi) + '.');
       if (prevTot && prevTot.v) R.p(esc(deltaSentence(m, est, prevTot.v, 'el mes pasado', 'sum')));
     } else {
       const meanNext = sum(pts.slice(0, Math.min(h, pts.length)).map((p) => p.y)) / Math.min(h, pts.length);
@@ -1883,7 +1957,7 @@
     const rows = select(spec);
     const days = Math.max(1, Math.round((Math.min(spec.period.to, capT()) - Math.max(spec.period.from, rows.length ? Math.min(...rows.map((r) => r.t)) : spec.period.from)) / DAY) + 1);
     const annual = (x) => (days >= 20 ? x * (365 / days) : null);
-    const finish = (title, sub) => { R.note('Es un escenario hecho con tus datos del periodo, no una promesa: asume que lo demás se mantiene igual.', ''); R.src(esc('Fuente: ' + dsLabel(ds) + ' · ' + spec.period.label + ' · ' + rows.length + ' registros')); goBtns(R, spec); R.conf = 0.8; return R; };
+    const finish = (title, sub) => { R.note('Es un escenario hecho con tus datos del periodo, no una promesa: asume que lo demás se mantiene igual.', ''); R.src(esc('Fuente: ' + dsLabel(ds) + ' · ' + spec.period.label + ' · ' + fmt(rows.length, 0) + ' registros')); goBtns(R, spec); R.conf = 0.8; return R; };
     const pctRed = /\b(reducimos|bajamos|disminuimos|reduc\w+|baj\w+|disminu\w+|recortamos|cortamos)\b.*?(\d+(?:\.\d+)?)\s*%/.exec(q);
     if (ds === 'aseos' || (ds === 'agua' && /por aseo/.test(q))) {
       const t = (ns.find((n) => n.u === 'm3') || ns.find((n) => !n.u && n.v < 100) || {}).v;
@@ -1897,7 +1971,7 @@
       const s1 = Math.max(0, (mean - target) * mv.length), s2 = sum(mv.map((r) => Math.max(0, r.m3 - target)));
       R.kpis([kpi('Hoy (promedio por aseo)', mean, 'm³'), kpi('Ahorro si el promedio llega a la meta', s1, 'm³', { help: 'sobre ' + mv.length + ' aseos' }), kpi('Ahorro si ningún aseo la supera', s2, 'm³')]);
       const over = mv.filter((r) => r.m3 > target).length;
-      R.p('Hoy cada aseo usa en promedio <b>' + fmt(mean, 2) + ' m³</b> (' + fmt(tot, 0) + ' m³ en ' + mv.length + ' aseos). ' + (mean <= target ? 'Ya estás por debajo de esa meta en promedio; el ahorro solo vendría de los ' + over + ' aseos que la superan: <b>' + fmt(s2, 0) + ' m³</b>.' : 'Llevar el promedio a ' + fmt(target, 1) + ' m³ ahorraría <b>' + fmt(s1, 0) + ' m³</b> (' + fmt((s1 / tot) * 100, 0) + ' % del agua de aseos). Si en cambio se logra que ' + 'ningún aseo supere ese valor, el ahorro es de <b>' + fmt(s2, 0) + ' m³</b>, porque ' + over + ' aseos (' + fmt((over / mv.length) * 100, 0) + ' %) hoy lo superan.'));
+      R.p('Hoy cada aseo usa en promedio <b>' + fmt(mean, 2) + ' m³</b> (' + fmt(tot, 0) + ' m³ en ' + fmt(mv.length, 0) + ' aseos). ' + (mean <= target ? 'Ya estás por debajo de esa meta en promedio; el ahorro solo vendría de los ' + over + ' aseos que la superan: <b>' + fmt(s2, 0) + ' m³</b>.' : 'Llevar el promedio a ' + fmt(target, 1) + ' m³ ahorraría <b>' + fmt(s1, 0) + ' m³</b> (' + fmt((s1 / tot) * 100, 0) + ' % del agua de aseos). Si en cambio se logra que ' + 'ningún aseo supere ese valor, el ahorro es de <b>' + fmt(s2, 0) + ' m³</b>, porque ' + fmt(over, 0) + ' aseos (' + fmt((over / mv.length) * 100, 0) + ' %) hoy lo superan.'));
       const a1 = annual(s2); if (a1) R.p('Si el ritmo de aseos se mantiene, eso equivale a unos <b>' + fmt(a1, 0) + ' m³ al año</b> (estimación simple a partir de ' + days + ' días).');
       R.chart(CH().histogram({ title: 'Agua por aseo y la meta', subtitle: spec.period.label, values: mv.map((r) => r.m3), unit: 'm³', w: CW, h: 220, toolbar: true, refs: [{ x: target, label: 'Meta ' + fmt(target, 1) }] }));
       R.chip('Aseos que superan la meta', 'aseos que superan ' + fmt(target, 1).replace(',', '.') + ' m3').chip('¿Qué equipos gastan más?', 'qué equipos tienen más consumo de agua por aseo');
@@ -2095,7 +2169,7 @@
 
   H.revisar = function (spec) {
     const ref = refTime();
-    const period = spec.period && !spec.periodDefault ? spec.period : P(sod(addDays(ref, -13)), eod(ref), 'últimos 14 días', 'rolling');
+    const period = spec.period && !spec.periodDefault && spec.period.kind !== 'day' ? spec.period : P(sod(addDays(ref, -13)), eod(ref), 'últimos 14 días', 'rolling');
     const fs = scan(period, spec.ds);
     const hall = analisisHallazgos().filter((h) => h.sev === 'alta' || h.sev === 'media');
     let old = [];
@@ -2106,7 +2180,7 @@
     for (const f of fs.filter((x) => x.sev !== 'info').slice(0, 5)) items.push({ sev: f.sev, html: '<b>' + esc(f.area) + '</b> · ' + esc(f.titulo) + '<br><span class="cf-mut">' + esc(f.detalle) + '</span>', q: f.q });
     for (const h of hall.slice(0, 3)) if (!items.some((i) => i.html.includes(esc(h.titulo).slice(0, 25)))) items.push({ sev: h.sev, html: '<b>' + esc(h.area || h.tab) + '</b> · ' + esc(h.titulo) + (h.detalle ? '<br><span class="cf-mut">' + esc(h.detalle) + '</span>' : '') });
     for (const a of old) items.push({ sev: a.color === 'red' ? 'alta' : 'media', html: '<b>Tanques y levadura</b> · ' + esc(a.label) + (a.help ? '<br><span class="cf-mut">' + esc(a.help) + '</span>' : '') });
-    R.h(spec.periodDefault || !spec.period ? 'Para revisar hoy' : 'Lo más importante · ' + esc(period.label), 'datos al ' + fdt(ref) + ' · revisé ' + esc(period.label));
+    R.h(spec.periodDefault || !spec.period || spec.period.kind === 'day' ? 'Para revisar hoy' : 'Lo más importante · ' + esc(period.label), 'datos al ' + fdt(ref) + ' · revisé ' + esc(period.label));
     if (!items.length && !prog.length) { R.p('No veo nada urgente: las áreas que monitoreo están dentro de metas y de su comportamiento habitual en los últimos 14 días.'); R.chip('Resumen de la semana', 'resumen de la semana').chip('Dónde puedo ahorrar', 'dónde puedo ahorrar'); R.conf = 0.8; return R; }
     items.sort((a, b) => ({ alta: 0, media: 1, info: 2 }[a.sev] - { alta: 0, media: 1, info: 2 }[b.sev]));
     R.kpis([kpi('Prioridad alta', items.filter((i) => i.sev === 'alta').length, ''), kpi('Para revisar', items.filter((i) => i.sev !== 'alta').length, ''), kpi('Programados hoy/mañana', prog.length, '')]);
@@ -2164,11 +2238,11 @@
     const both = (ds, fn) => { const cur = select(sp(ds)); const pr = prevP ? select(sp(ds), { period: prevP }) : []; return fn(cur, pr); };
     both('agua', (cur, pr) => { const m = metOf('agua', 'total'), a = aggregate(cur, m, 'sum'); if (a.v == null) return; const b = aggregate(pr, m, 'sum'); const sp2 = series(sp('agua'), cur, m, 'sum', 'day').map((x) => x.v); cards.push({ ds: 'agua', k: kpi('Agua', a.v, 'm³', { delta: b.v ? deltaPct(a.v, b.v) : undefined, deltaGood: 'down', spark: sp2.length >= 3 ? sp2 : undefined, help: a.n + ' turnos con lectura' }), line: 'Consumo de agua <b>' + vFmt(m, a.v) + '</b>' + (b.v ? ' (' + (a.v >= b.v ? '+' : '') + fmt(deltaPct(a.v, b.v), 0) + ' % vs ' + esc(prevP.label) + ')' : '') }); });
     both('aseos', (cur, pr) => { if (!cur.length) return; const m = metOf('aseos', 'm3'), a = aggregate(cur, m, 'sum'), meta = metaG('agua.aseoM3', 10), over = cur.filter((r) => r.m3 != null && r.m3 > meta && r.m3 <= 200).length; cards.push({ ds: 'aseos', k: kpi('Aseos', cur.length, '', { delta: pr.length ? deltaPct(cur.length, pr.length) : undefined, deltaGood: 'up', help: a.v != null ? fa(a.v) + ' m³ de agua' + (over ? ' · ' + over + ' sobre la meta' : '') : '' }), line: cur.length + ' aseos' + (a.v != null ? ' con ' + vFmt(m, a.v) + ' de agua' : '') + (over ? ' (' + over + ' sobre la meta de ' + meta + ' m³)' : '') }); });
-    both('merma', (cur, pr) => { const m = metOf('merma', 'lossPct'), a = aggregate(cur, m, 'wmean'); if (a.v == null) return; const b = aggregate(pr, m, 'wmean'); cards.push({ ds: 'merma', k: kpi('Merma', a.v, '%', { delta: b.v ? deltaPct(a.v, b.v) : undefined, deltaGood: 'down', help: a.n + ' lotes cerrados' }), line: 'Merma <b>' + fmt(a.v, 2) + ' %</b> en ' + a.n + ' lotes cerrados' }); });
+    both('merma', (cur, pr) => { const m = metOf('merma', 'lossPct'), a = aggregate(cur, m, 'wmean'); if (a.v == null) return; const b = aggregate(pr, m, 'wmean'); cards.push({ ds: 'merma', k: kpi('Merma', a.v, '%', { delta: b.v != null ? kd(m, a.v, b.v) : undefined, deltaGood: 'down', help: a.n + ' lotes cerrados' }), line: 'Merma <b>' + fmt(a.v, 2) + ' %</b> en ' + a.n + ' lotes cerrados' }); });
     both('recuperacion', (cur, pr) => { const m = metOf('recuperacion', 'volume'), a = aggregate(cur, m, 'sum'); if (a.v == null) return; const h = aggregate(cur, metOf('recuperacion', 'hours'), 'mean'); const b = aggregate(pr, m, 'sum'); cards.push({ ds: 'recuperacion', k: kpi('Cerveza recuperada', a.v, 'Hl', { delta: b.v ? deltaPct(a.v, b.v) : undefined, deltaGood: 'up', help: h.v != null ? fmt(h.v, 0) + ' h en promedio' : '' }), line: 'Recuperados <b>' + vFmt(m, a.v) + '</b>' + (h.v != null ? ' en ' + fmt(h.v, 0) + ' h promedio' : '') }); });
     both('trasiego', (cur, pr) => { const done = cur.filter((r) => r.actualEnd != null); if (!done.length) return; const dly = aggregate(done, metOf('trasiego', 'delay'), 'mean'); cards.push({ ds: 'trasiego', k: kpi('Trasiegos y CIP', done.length, '', { delta: pr.length ? deltaPct(done.length, pr.filter((r) => r.actualEnd != null).length) : undefined, deltaGood: 'up', help: dly.v != null ? 'desvío medio ' + fmt(dly.v, 1) + ' h' : '' }), line: done.length + ' actividades terminadas' + (dly.v != null ? ', desvío medio ' + fmt(dly.v, 1) + ' h' : '') }); });
     both('ferm', (cur, pr) => { if (!cur.length) return; const h = aggregate(cur, metOf('ferm', 'h75'), 'mean'); cards.push({ ds: 'ferm', k: kpi('Fermentaciones', cur.length, '', { delta: pr.length ? deltaPct(cur.length, pr.length) : undefined, deltaGood: 'up', help: h.v != null ? 'h75 medio ' + fmt(h.v, 0) + ' h' : '' }), line: cur.length + ' fermentaciones' + (h.v != null ? ' con h75 medio de ' + fmt(h.v, 0) + ' h' : '') }); });
-    both('lev', (cur, pr) => { const m = metOf('lev', 'viab'), a = aggregate(cur, m, 'mean'); if (a.v == null) return; const b = aggregate(pr, m, 'mean'); cards.push({ ds: 'lev', k: kpi('Viabilidad', a.v, '%', { delta: b.v ? deltaPct(a.v, b.v) : undefined, deltaGood: 'up', help: a.n + ' cosechas' }), line: 'Viabilidad media <b>' + fmt(a.v, 1) + ' %</b> en ' + a.n + ' cosechas' }); });
+    both('lev', (cur, pr) => { const m = metOf('lev', 'viab'), a = aggregate(cur, m, 'mean'); if (a.v == null) return; const b = aggregate(pr, m, 'mean'); cards.push({ ds: 'lev', k: kpi('Viabilidad', a.v, '%', { delta: b.v != null ? kd(m, a.v, b.v) : undefined, deltaGood: 'up', help: a.n + ' cosechas' }), line: 'Viabilidad media <b>' + fmt(a.v, 1) + ' %</b> en ' + a.n + ' cosechas' }); });
     return cards;
   }
   function resumenTurno(spec) {
@@ -2301,7 +2375,8 @@
     R.h(esc(g.t), 'glosario del proceso');
     R.p(g.texto);
     try { const d = GLOSDYN[g.k] && GLOSDYN[g.k](); if (d) R.p(d); } catch (e) { /* dato opcional */ }
-    const rel = { merma: ['Merma por marca', '¿Qué tanque tiene más merma?'], h75: ['Distribución del h75', '¿Qué marca fermenta más rápido?'], viabilidad: ['Viabilidad por generación', 'Cosechas con viabilidad menor a 95 %'], cip: ['¿Cuántos aseos superan 10 m³?', 'Top 10 aseos con más consumo de agua'], desvio: ['Principales causas de desvío en los trasiegos', 'Desvío promedio por marca'], recuperacion: ['Horas promedio de recuperación', 'Recuperación por UTK'], atenuacion: ['Atenuación promedio de Light', 'Compara la atenuación de Club Colombia vs Light'] }[g.k] || ['¿Qué sabes hacer?'];
+    const RELQ = { merma: ['Merma por marca', '¿Qué tanque tiene más merma?'], h75: ['Distribución del h75', '¿Qué marca fermenta más rápido?'], viabilidad: ['Viabilidad por generación', 'Cosechas con viabilidad menor a 95 %'], cip: ['¿Cuántos aseos superan 10 m³?', 'Top 10 aseos con más consumo de agua'], desvio: ['Principales causas de desvío en los trasiegos', 'Desvío promedio por marca'], recuperacion: ['Horas promedio de recuperación', 'Recuperación por UTK'], atenuacion: ['Atenuación promedio de Light', 'Compara la atenuación de Club Colombia vs Light'] };
+    const rel = Object.prototype.hasOwnProperty.call(RELQ, g.k) ? RELQ[g.k] : ['¿Qué sabes hacer?'];
     rel.forEach((x) => R.chip(x, x));
     R.conf = plan.conf || 0.85;
     return R;
@@ -2311,7 +2386,8 @@
     R.h(esc(it.t), 'guía de la plataforma');
     R.p(it.texto);
     if (it.ruta) R.go_('Ir a ' + (NAVLABEL[it.ruta.split('/')[0]] || 'la sección') + (it.ruta.includes('/') ? ' · ' + it.ruta.split('/')[1] : ''), it.ruta, {});
-    const next = { cargar: ['¿Cómo capturo datos como en Excel?', '¿Dónde registro el agua?'], captura: ['¿Cómo cargo un Excel?', '¿Dónde registro un aseo?'], exportar: ['¿Cómo descargo una gráfica?', 'Dame un reporte'], agua: ['¿Cuánta agua gastamos este mes?', '¿Cómo cargo un Excel?'], aseo: ['¿Cuántos aseos hicimos este mes?', '¿Cómo cambio la meta de consumo por aseo?'], metas: ['¿Qué debería revisar hoy?'], ia: ['¿Qué sabes hacer?'] }[it.k] || ['¿Qué sabes hacer?', '¿Qué puedo preguntarte?'];
+    const NEXTQ = { cargar: ['¿Cómo capturo datos como en Excel?', '¿Dónde registro el agua?'], captura: ['¿Cómo cargo un Excel?', '¿Dónde registro un aseo?'], exportar: ['¿Cómo descargo una gráfica?', 'Dame un reporte'], agua: ['¿Cuánta agua gastamos este mes?', '¿Cómo cargo un Excel?'], aseo: ['¿Cuántos aseos hicimos este mes?', '¿Cómo cambio la meta de consumo por aseo?'], metas: ['¿Qué debería revisar hoy?'], ia: ['¿Qué sabes hacer?'] };
+    const next = Object.prototype.hasOwnProperty.call(NEXTQ, it.k) ? NEXTQ[it.k] : ['¿Qué sabes hacer?', '¿Qué puedo preguntarte?'];
     next.forEach((x) => R.chip(x, x));
     R.conf = plan.conf || 0.88;
     return R;
@@ -2403,7 +2479,7 @@
   };
   H.nav = function (plan) {
     const R = new Resp({ intent: 'nav' }, 'nav'), n = plan.nav, last = S.mem.last;
-    R.p('Te llevo a <b>' + esc(n.label) + '</b>' + (plan.fromMem && last ? ' con el mismo periodo y marcas de tu última consulta' : '') + '.');
+    R.p('Te llevo a <b>' + esc(n.label) + '</b>' + (plan.fromMem && last ? ' con el mismo periodo y marcas de tu última consulta' : '') + '. Si prefieres ver la cifra aquí mismo, pídeme el dato (por ejemplo «' + esc(DSEXAMPLE[({ agua: 'agua', aseos: 'aseos', merma: 'merma', recuperacion: 'recuperacion', programa: 'trasiego' })[n.ruta.split('/')[0]]] || 'resumen de la semana') + ' este mes»).');
     R.go_('Abrir ' + n.label, n.ruta, plan.fromMem && last ? { ds: last.ds } : {});
     R.after = () => goTo(n.ruta, plan.fromMem ? last : null);
     R.chip('¿Qué sabes hacer?', '¿Qué sabes hacer?');
@@ -2482,7 +2558,7 @@
     const plan = understand(texto);
     if (plan.spec && !plan.spec.raw) plan.spec.raw = plan.raw;
     if (plan.intent === 'vacio') return null;
-    if (plan.intent === 'legacy') return { legacy: true, plan };
+    if (plan.intent === 'legacy' || plan.intent === 'aclarar') return { legacy: true, plan };
     // varias preguntas en un mensaje
     const sp = /\bsi\b.*\b(a|un|el|la)\b/.test(norm(texto)) && !/\?\s+¿?\w/.test(texto) ? null : splitQuestion(texto);
     if (sp && !S.inSplit) {
@@ -2561,7 +2637,7 @@
         resolve({ texto: out.texto, html: out.html, intent: 'aclarar', confianza: 0.2, opts: out.opts, ms: performance.now() - t0 }); return;
       }
       bump(texto, r.plan, r.out);
-      resolve({ texto: r.out.texto, html: r.out.html, intent: r.out.intent, confianza: r.out.conf, opts: r.out.opts, hasChart: r.out.hasChart, hasTable: r.out.hasTable, spec: r.out.spec, corregido: r.out.corregido || null, ms: performance.now() - t0 });
+      resolve({ texto: r.out.texto, html: r.out.html, valor: r.out.valor, intent: r.out.intent, confianza: r.out.conf, opts: r.out.opts, hasChart: r.out.hasChart, hasTable: r.out.hasTable, spec: r.out.spec, corregido: r.out.corregido || null, ms: performance.now() - t0 });
     });
   }
 
@@ -2637,7 +2713,7 @@
     const el = panelEl(); if (!el) return;
     const m = $q('#botM', el); if (!m) return;
     const n = m.querySelectorAll('.bm:not(.typing)').length, hasUser = !!m.querySelector('.bm.u');
-    const empty = !hasUser && n <= 1;
+    const empty = !hasUser && n <= 3;
     el.classList.toggle('cf-empty', empty);
     const w = $q('#cfWelcome', el);
     if (w) { w.hidden = !empty; if (empty && (w.dataset.r !== location.hash || !w.innerHTML)) { renderWelcome(); w.dataset.r = location.hash; } }
