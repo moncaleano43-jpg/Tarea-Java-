@@ -1,0 +1,61 @@
+/* ============================================================
+   v42 · Diseño neutro y minimalista
+   Papel cálido, tinta negra, un solo verde apagado para lo positivo.
+   Referencias: Linear, Stripe, Vercel, Notion.
+   ============================================================ */
+:root,:root[data-theme="light"]{
+  --bg:#fafaf9; --surface:#ffffff; --surface-2:#f6f6f4; --sunken:#eeeeea;
+  --ink:#171717; --ink-2:#3d3d3a; --muted:#6b6b66; --faint:#c9c9c3;
+  --line:#e6e6e1; --line-2:#f0f0ec;
+  --accent:#171717; --accent-ink:#ffffff; --accent-soft:#efefea;
+  --st-espera:#8a8a84;  --st-espera-bg:#f0f0ec;
+  --st-prox:#a26a14;    --st-prox-bg:#f8efdc;
+  --st-lista:#3b7a59;   --st-lista-bg:#e5f0e9;
+  --st-vence:#a26a14;   --st-vence-bg:#f8efdc;
+  --st-vencida:#b0442e; --st-vencida-bg:#f6e3dd;
+  --st-sin:#8a8a84;     --st-sin-bg:#f0f0ec;
+  --est:#5d6f8c; --proy:#a26a14;
+  --side:#171717; --side-2:#232321; --side-ink:#ecece8; --side-mute:#9a9a94;
+  --r-sm:8px; --r:12px; --r-lg:16px;
+  --sh:0 1px 2px rgba(23,23,23,.04);
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+  --a-red:#b0442e; --a-orange:#a26a14; --a-green:#3b7a59; --a-yellow:#a26a14;
+  --apple-shadow-1:0 1px 2px rgba(23,23,23,.04),0 6px 20px -6px rgba(23,23,23,.07);
+  --apple-shadow-2:0 1px 2px rgba(23,23,23,.05),0 16px 40px -12px rgba(23,23,23,.14);
+  --pos:#3b7a59; --warn:#a26a14; --neg:#b0442e;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c0c0b; --surface:#151514; --surface-2:#1a1a19; --sunken:#222220;
+  --ink:#f4f4f1; --ink-2:#dcdcd7; --muted:#9b9b94; --faint:#4a4a46;
+  --line:#2a2a27; --line-2:#1f1f1d;
+  --accent:#f4f4f1; --accent-ink:#0c0c0b; --accent-soft:#242421;
+  --st-espera:#9b9b94; --st-espera-bg:#222220;
+  --st-prox:#d9a441;   --st-prox-bg:#2e2615;
+  --st-lista:#6fb48f;  --st-lista-bg:#162a20;
+  --st-vence:#d9a441;  --st-vence-bg:#2e2615;
+  --st-vencida:#e0795f;--st-vencida-bg:#33191a;
+  --st-sin:#9b9b94;    --st-sin-bg:#222220;
+  --est:#8da2c4; --proy:#d9a441;
+  --side:#0c0c0b; --side-2:#151514;
+  --a-red:#e0795f; --a-orange:#d9a441; --a-green:#6fb48f; --a-yellow:#d9a441;
+  --pos:#6fb48f; --warn:#d9a441; --neg:#e0795f;
+}}
+:root[data-theme="dark"]{
+  --bg:#0c0c0b; --surface:#151514; --surface-2:#1a1a19; --sunken:#222220;
+  --ink:#f4f4f1; --ink-2:#dcdcd7; --muted:#9b9b94; --faint:#4a4a46;
+  --line:#2a2a27; --line-2:#1f1f1d;
+  --accent:#f4f4f1; --accent-ink:#0c0c0b; --accent-soft:#242421;
+  --st-espera:#9b9b94; --st-espera-bg:#222220;
+  --st-prox:#d9a441;   --st-prox-bg:#2e2615;
+  --st-lista:#6fb48f;  --st-lista-bg:#162a20;
+  --st-vence:#d9a441;  --st-vence-bg:#2e2615;
+  --st-vencida:#e0795f;--st-vencida-bg:#33191a;
+  --st-sin:#9b9b94;    --st-sin-bg:#222220;
+  --est:#8da2c4; --proy:#d9a441;
+  --side:#0c0c0b; --side-2:#151514;
+  --a-red:#e0795f; --a-orange:#d9a441; --a-green:#6fb48f; --a-yellow:#d9a441;
+  --pos:#6fb48f; --warn:#d9a441; --neg:#e0795f;
+}
+html,body{background:var(--bg)!important;color:var(--ink)!important;font-family:var(--sans)!important}
+:root[data-theme="light"] body{background:var(--bg)!important}
+body{font-feature-settings:"cv11","ss01";letter-spacing:-.005em}
