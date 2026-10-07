@@ -243,3 +243,104 @@ summary::-webkit-details-marker{display:none}
 .seg button{white-space:nowrap}
 .controls--2{justify-content:space-between}
 @media (max-width:760px){.controls--2{margin-top:0}}
+
+/* ===== Mejoras visuales v2 ===== */
+.progress{position:fixed;top:0;left:0;right:0;height:3px;z-index:60;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));transform-origin:0 50%;transform:scaleX(0)}
+
+/* Fondo con degradados animados */
+.mesh{position:absolute;inset:-60px auto auto 50%;width:100vw;margin-left:-50vw;height:640px;overflow:hidden;z-index:-1;pointer-events:none;-webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent)}
+.mesh i{position:absolute;border-radius:50%;filter:blur(80px);opacity:.42;animation:drift 16s ease-in-out infinite alternate}
+.mesh i:nth-child(1){width:420px;height:420px;left:12%;top:40px;background:var(--accent)}
+.mesh i:nth-child(2){width:360px;height:360px;right:14%;top:10px;background:var(--accent2);animation-delay:-5s}
+.mesh i:nth-child(3){width:300px;height:300px;left:42%;top:200px;background:var(--accent3);opacity:.28;animation-delay:-9s}
+@keyframes drift{to{transform:translate(50px,40px) scale(1.12)}}
+:root[data-theme="dark"] .mesh i{opacity:.28}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .mesh i{opacity:.28}}
+.hero::before{display:none}
+
+/* Dispositivo 3D */
+.stagewrap{position:relative;max-width:900px;margin:70px auto 0}
+.stagewrap .device{margin:0}
+.tilt{transform:perspective(1600px) rotateX(var(--tilt,10deg));transform-origin:50% 0;will-change:transform}
+.device{box-shadow:0 50px 100px -20px rgba(30,40,120,.35),0 0 0 1px var(--line)}
+.floaty{position:absolute;display:flex;align-items:center;gap:10px;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:16px;padding:12px 16px;box-shadow:var(--shadow);font-size:13px;text-align:left;animation:float 6s ease-in-out infinite;z-index:2}
+.floaty b{display:block;font-size:15px}.floaty small{display:block;color:var(--muted);font-size:12px}
+.floaty b.up{color:#1fa971;font-size:20px;letter-spacing:-.02em}
+.f1{left:-96px;top:250px}.f2{right:-96px;bottom:60px;animation-delay:-3s}
+.okdot{width:10px;height:10px;border-radius:50%;background:#1fa971;box-shadow:0 0 0 4px rgba(31,169,113,.2)}
+@keyframes float{50%{transform:translateY(-10px)}}
+@media (max-width:1100px){.floaty{display:none}}
+
+/* La gráfica del hero se dibuja sola */
+.chart.draw .ln{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.8s .3s cubic-bezier(.4,0,.2,1) forwards}
+.chart.draw polygon,.chart.draw .pt,.chart.draw .pt-p,.chart.draw .ln-p{animation:fadein .9s 1.5s both}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fadein{from{opacity:0}}
+
+/* Franja de formatos */
+.formats{max-width:1080px;margin:-20px auto 0;padding:0 20px;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.formats b{font-weight:500;color:var(--text);background:var(--soft);border:1px solid var(--line);border-radius:99px;padding:7px 14px}
+
+/* Íconos con degradado */
+.ico{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;margin-bottom:56px;color:#fff;font-size:0;box-shadow:0 8px 20px -6px rgba(0,0,0,.3)}
+.ico svg{width:24px;height:24px}
+.i1{background:linear-gradient(135deg,#0a84ff,#5e5ce6)}.i2{background:linear-gradient(135deg,#32ade6,#0a84ff)}
+.i3{background:linear-gradient(135deg,#bf5af2,#ff375f)}.i4{background:linear-gradient(135deg,#ff9f0a,#ff375f)}
+
+/* Luz que sigue al cursor */
+.spot{position:relative;overflow:hidden;isolation:isolate}
+.spot::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(360px circle at var(--mx,50%) var(--my,50%),rgba(10,132,255,.14),transparent 65%);opacity:0;transition:opacity .3s;pointer-events:none}
+.spot:hover::before{opacity:1}
+.tile--dark.spot::before{background:radial-gradient(360px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.12),transparent 65%)}
+
+/* Bento v2 */
+.bars i{height:0;transition:height 1.1s cubic-bezier(.2,.7,.2,1)}
+.tile.in .bars i{height:var(--h)}
+.tile.in .bars i:nth-child(2){transition-delay:.08s}.tile.in .bars i:nth-child(3){transition-delay:.16s}.tile.in .bars i:nth-child(4){transition-delay:.24s}.tile.in .bars i:nth-child(5){transition-delay:.32s}.tile.in .bars i:nth-child(6){transition-delay:.4s}
+.tile__svg path:nth-of-type(3){animation:march 1.2s linear infinite}
+@keyframes march{to{stroke-dashoffset:-28}}
+.sheet{position:absolute;right:-18px;bottom:-14px;width:78%;display:grid;grid-template-columns:30px repeat(3,1fr);font-size:12px;border-radius:12px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.15);transform:rotate(-4deg);background:var(--surface);border:1px solid var(--line)}
+.sheet i,.sheet b{font-style:normal;padding:7px 10px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.sheet i{background:var(--soft);color:var(--muted);text-align:center;font-weight:500}
+.sheet b{font-weight:500;font-variant-numeric:tabular-nums}
+.sheet b.sel{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-soft,rgba(0,113,227,.1));color:var(--accent)}
+.lock{position:absolute;right:48px;bottom:34px;width:84px;height:84px;display:grid;place-items:center;color:#fff}
+.lock svg{width:36px;height:36px;position:relative}
+.lock::after{content:"";position:absolute;inset:0;border-radius:26px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 14px 40px -6px var(--accent2);z-index:0}
+.lock svg{z-index:1}
+.lock span{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);animation:ring 3s ease-out infinite}
+.lock span:nth-child(2){animation-delay:1s}.lock span:nth-child(3){animation-delay:2s}
+@keyframes ring{from{transform:scale(1);opacity:.8}to{transform:scale(3.2);opacity:0}}
+
+/* Precios */
+.billing{display:flex;width:max-content;margin:-30px auto 34px;background:var(--soft);padding:4px;border-radius:99px}
+.billing button{font:500 14px var(--font);color:var(--muted);background:none;border:0;padding:8px 20px;border-radius:99px;cursor:pointer;transition:all .2s}
+.billing button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 5px rgba(0,0,0,.15)}
+.billing em{font-style:normal;color:#1fa971;font-weight:600;font-size:12px;margin-left:4px}
+.amt{display:inline-block;transition:opacity .15s,transform .15s}
+.amt.swap{opacity:0;transform:translateY(-8px)}
+
+/* Plantillas */
+.templates{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.templates span{font-size:12px;color:var(--muted);margin-right:2px}
+.templates button{font:500 12px var(--font);color:var(--text);background:var(--soft);border:1px solid var(--line);border-radius:99px;padding:5px 11px;cursor:pointer;transition:all .2s}
+.templates button:hover{border-color:var(--accent);color:var(--accent)}
+.templates button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* Pie de página */
+.footer{padding:56px 20px 30px;text-align:left;display:block}
+.footer__in{max-width:1080px;margin:auto;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:30px}
+.footer__in h4{font-size:12px;color:var(--text);margin-bottom:12px;letter-spacing:.02em}
+.footer__in a{display:block;color:var(--muted);font-size:13px;margin-bottom:8px}
+.footer__in a:hover{color:var(--text)}
+.footer__in .logo{font-size:19px;color:var(--text);margin-bottom:10px;display:flex}
+.footer__in p{color:var(--muted);font-size:13px}
+.footer__copy{max-width:1080px;margin:36px auto 0;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+@media (max-width:640px){.footer__in{grid-template-columns:1fr 1fr}.billing{margin-top:-30px}}
+@media (prefers-reduced-motion:reduce){.mesh i,.floaty,.lock span,.tile__svg path{animation:none!important}.chart.draw .ln{animation:none;stroke-dashoffset:0}.tilt{transform:none}}
+
+html,body{overflow-x:clip}
+
+/* Recuadro oscuro visible también en modo oscuro */
+:root[data-theme="dark"] .tile--dark{background:linear-gradient(160deg,#16162a,#0a0a14);box-shadow:inset 0 0 0 1px var(--line)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tile--dark{background:linear-gradient(160deg,#16162a,#0a0a14);box-shadow:inset 0 0 0 1px var(--line)}}

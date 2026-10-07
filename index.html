@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<div class="progress" id="progress" aria-hidden="true"></div>
 
 <header class="nav" id="nav">
   <div class="nav__inner">
@@ -30,6 +31,7 @@
 <main>
   <!-- HERO -->
   <section class="hero">
+    <div class="mesh" aria-hidden="true"><i></i><i></i><i></i></div>
     <p class="eyebrow reveal">Nuevo · Cifra Proyecciones</p>
     <h1 class="display reveal">Tus datos,<br>con <span class="grad">visión de futuro.</span></h1>
     <p class="lead reveal">Ingresa tus números, analízalos y proyecta lo que viene. Gráficas claras para decidir con seguridad.</p>
@@ -38,7 +40,9 @@
       <a href="#funciones" class="link">Ver cómo funciona ›</a>
     </div>
 
-    <div class="device reveal" aria-hidden="true">
+    <div class="stagewrap reveal">
+    <div class="tilt" id="tilt">
+    <div class="device" aria-hidden="true">
       <div class="device__bar"><i></i><i></i><i></i><span>cifra.app/ventas-2026</span></div>
       <div class="device__main">
         <div class="card-row">
@@ -46,8 +50,12 @@
           <div class="mini"><small>Crecimiento</small><strong class="up">+86%</strong></div>
           <div class="mini"><small>Proyección Dic</small><strong>$95K</strong></div>
         </div>
-        <div class="chart" id="heroChart"></div>
+        <div class="chart draw" id="heroChart"></div>
       </div>
+    </div>
+    </div>
+    <div class="floaty f1" aria-hidden="true"><b class="up">▲ +18%</b><small>vs. mes anterior</small></div>
+    <div class="floaty f2" aria-hidden="true"><span class="okdot"></span><div><b>Proyección lista</b><small>Ajuste R² 0,96</small></div></div>
     </div>
   </section>
 
@@ -59,14 +67,18 @@
     <div class="reveal"><strong><span data-count="40">0</span></strong><span>países</span></div>
   </section>
 
+  <section class="formats reveal" aria-label="Formatos">
+    <span>Funciona con tus archivos</span><b>Pegar desde Excel</b><b>Importar CSV</b><b>Exportar CSV</b><b>Descargar PNG</b><b>Descargar SVG</b>
+  </section>
+
   <!-- FUNCIONES -->
   <section class="section" id="funciones">
     <h2 class="title reveal">De los datos a la decisión.<br><span class="muted">En cuatro pasos.</span></h2>
     <div class="features">
-      <article class="feature reveal"><div class="ico">📥</div><h3>Ingreso ágil</h3><p>Escribe en la tabla, pega desde Excel o importa un CSV.</p></article>
-      <article class="feature reveal"><div class="ico">🔍</div><h3>Análisis al instante</h3><p>Totales, promedios y tendencias calculados mientras escribes.</p></article>
-      <article class="feature reveal"><div class="ico">📈</div><h3>Proyecciones</h3><p>Estima los próximos periodos con su rango de confianza.</p></article>
-      <article class="feature reveal"><div class="ico">📊</div><h3>Gráficas hermosas</h3><p>Líneas y barras listas para presentar o exportar.</p></article>
+      <article class="feature reveal"><div class="ico i1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></div><h3>Ingreso ágil</h3><p>Escribe en la tabla, pega desde Excel o importa un CSV.</p></article>
+      <article class="feature reveal"><div class="ico i2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4M8.5 12.5l2-2.5 1.5 1.5 2-3"/></svg></div><h3>Análisis al instante</h3><p>Totales, promedios y tendencias calculados mientras escribes.</p></article>
+      <article class="feature reveal"><div class="ico i3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg></div><h3>Proyecciones</h3><p>Estima los próximos periodos con su rango de confianza.</p></article>
+      <article class="feature reveal"><div class="ico i4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V10M12 21V4M19 21v-8"/></svg></div><h3>Gráficas hermosas</h3><p>Líneas y barras listas para presentar o exportar.</p></article>
     </div>
   </section>
 
@@ -82,6 +94,7 @@
             <button class="tool" id="export" type="button">Exportar</button>
           </div>
         </div>
+        <div class="templates" role="group" aria-label="Plantillas de datos"><span>Plantillas</span><button type="button" data-tpl="ventas">Ventas</button><button type="button" data-tpl="produccion">Producción</button><button type="button" data-tpl="temperatura">Temperatura</button><button type="button" data-tpl="visitas">Visitas</button></div>
         <table class="grid-table">
           <thead><tr><th>Periodo</th><th>Valor</th><th></th></tr></thead>
           <tbody id="rows"></tbody>
@@ -143,18 +156,19 @@
         </svg>
       </div>
       <div class="tile reveal"><h3>Analítica</h3><p>Entiende tu negocio de un vistazo.</p><div class="bars"><i style="--h:40%"></i><i style="--h:65%"></i><i style="--h:50%"></i><i style="--h:85%"></i><i style="--h:70%"></i><i style="--h:95%"></i></div></div>
-      <div class="tile reveal"><h3>Excel y CSV</h3><p>Importa y exporta tus tablas sin fricción.</p><div class="tile__art art2"></div></div>
-      <div class="tile tile--wide tile--dark reveal"><h3>Seguro y privado</h3><p>Cifrado de extremo a extremo. Tus datos son solo tuyos.</p><div class="tile__art art3"></div></div>
+      <div class="tile reveal"><h3>Excel y CSV</h3><p>Pega o importa tus tablas sin fricción.</p><div class="sheet" aria-hidden="true"><i></i><i>A</i><i>B</i><i>C</i><i>1</i><b>Ene</b><b>32</b><b>38</b><i>2</i><b>Feb</b><b class="sel">41</b><b>47</b><i>3</i><b>Mar</b><b>45</b><b>55</b><i>4</i><b>Abr</b><b>61</b><b>66</b></div></div>
+      <div class="tile tile--wide tile--dark reveal"><h3>Seguro y privado</h3><p>En esta demo todo se procesa en tu navegador. Nada sale de tu equipo.</p><div class="lock" aria-hidden="true"><span></span><span></span><span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 018 0v3"/></svg></div></div>
     </div>
   </section>
 
   <!-- PRECIOS -->
   <section class="section" id="precios">
     <h2 class="title reveal">Elige tu plan.</h2>
+    <div class="billing reveal" role="group" aria-label="Facturación"><button type="button" class="on" data-b="m">Mensual</button><button type="button" data-b="a">Anual <em>−20%</em></button></div>
     <div class="pricing">
       <div class="plan reveal"><h3>Gratis</h3><div class="price">$0</div><ul><li>3 tableros</li><li>1.000 registros</li><li>Gráficas básicas</li></ul><a class="btn btn--ghost" href="#demo">Empezar</a></div>
-      <div class="plan plan--pro reveal"><span class="badge">Popular</span><h3>Pro</h3><div class="price">$15<small>/mes</small></div><ul><li>Tableros ilimitados</li><li>Proyecciones</li><li>Importar y exportar</li></ul><a class="btn" href="#demo">Probar 14 días</a></div>
-      <div class="plan reveal"><h3>Empresas</h3><div class="price">$39<small>/mes</small></div><ul><li>Todo en Pro</li><li>Colaboración en equipo</li><li>API y roles</li></ul><a class="btn btn--ghost" href="#demo">Contactar</a></div>
+      <div class="plan plan--pro reveal"><span class="badge">Popular</span><h3>Pro</h3><div class="price">$<span class="amt" data-m="15" data-a="12">15</span><small>/mes</small></div><ul><li>Tableros ilimitados</li><li>Proyecciones</li><li>Importar y exportar</li></ul><a class="btn" href="#demo">Probar 14 días</a></div>
+      <div class="plan reveal"><h3>Empresas</h3><div class="price">$<span class="amt" data-m="39" data-a="31">39</span><small>/mes</small></div><ul><li>Todo en Pro</li><li>Colaboración en equipo</li><li>API y roles</li></ul><a class="btn btn--ghost" href="#demo">Contactar</a></div>
     </div>
   </section>
 
@@ -175,8 +189,13 @@
 </main>
 
 <footer class="footer">
-  <p>© 2026 Cifra. Todos los derechos reservados.</p>
-  <p><a href="#">Privacidad</a> · <a href="#">Términos</a> · <a href="#">Contacto</a></p>
+  <div class="footer__in">
+    <div><a href="#" class="logo"><span class="logo__dot"></span>Cifra</a><p>Ingresa, analiza, proyecta.</p></div>
+    <div><h4>Producto</h4><a href="#funciones">Funciones</a><a href="#demo">Pruébalo</a><a href="#precios">Precios</a></div>
+    <div><h4>Recursos</h4><a href="#faq">Ayuda</a><a href="#bento">Plataforma</a><a href="#">Contacto</a></div>
+    <div><h4>Legal</h4><a href="#">Privacidad</a><a href="#">Términos</a></div>
+  </div>
+  <p class="footer__copy">© 2026 Cifra. Todos los derechos reservados.</p>
 </footer>
 
 <div class="palette" id="palette" hidden>

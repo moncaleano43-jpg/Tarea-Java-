@@ -163,7 +163,7 @@ function drawChart(el, data, { mode = 'line', ahead = 4, model = 'lineal', scen 
         }
         g += `<polyline class="ln-p" points="${x(n - 1)},${y(vals[n - 1])} ${proj.map((v, j) => `${x(n + j)},${y(v)}`).join(' ')}"/>`;
       }
-      g += `<polyline class="ln" points="${pts.join(' ')}"/>`;
+      g += `<polyline class="ln" pathLength="1" points="${pts.join(' ')}"/>`;
       vals.forEach((v, i) => { g += `<circle class="pt" cx="${x(i)}" cy="${y(v)}" r="4"/>`; });
       proj.forEach((v, j) => { g += `<circle class="pt-p" cx="${x(n + j)}" cy="${y(v)}" r="4"/>`; });
     }
@@ -525,3 +525,51 @@ document.getElementById('png').addEventListener('click', () => {
   };
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s.text);
 });
+
+/* ---------- Efectos visuales ---------- */
+const progress = document.getElementById('progress');
+const tilt = document.getElementById('tilt');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function onScroll() {
+  const max = document.documentElement.scrollHeight - innerHeight;
+  progress.style.transform = `scaleX(${max > 0 ? Math.min(scrollY / max, 1) : 0})`;
+  if (!reduce) tilt.style.setProperty('--tilt', `${(10 * (1 - Math.min(scrollY / 420, 1))).toFixed(2)}deg`);
+}
+addEventListener('scroll', onScroll, { passive: true });
+onScroll();
+setTimeout(() => heroChart.classList.remove('draw'), 3200);   // la animación de dibujo se ejecuta una sola vez
+
+// Luz que sigue al cursor sobre tarjetas
+document.querySelectorAll('.feature, .tile, .plan, .kpi').forEach((el) => {
+  el.classList.add('spot');
+  el.addEventListener('pointermove', (e) => {
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--mx', `${e.clientX - r.left}px`);
+    el.style.setProperty('--my', `${e.clientY - r.top}px`);
+  });
+});
+
+// Facturación mensual / anual
+document.querySelectorAll('.billing button').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('.billing button').forEach((o) => o.classList.toggle('on', o === b));
+  document.querySelectorAll('.amt').forEach((el) => {
+    el.classList.add('swap');
+    setTimeout(() => { el.textContent = el.dataset[b.dataset.b]; el.classList.remove('swap'); }, 150);
+  });
+}));
+
+/* ---------- Plantillas de datos ---------- */
+const TEMPLATES = {
+  ventas:      { name: 'Ventas',      model: 'lineal', data: [120, 135, 128, 150, 162, 158, 175, 190] },
+  produccion:  { name: 'Producción',  model: 'lineal', data: [820, 790, 860, 910, 880, 950, 990, 1040] },
+  temperatura: { name: 'Temperatura', model: 'media',  data: [18, 19, 22, 26, 29, 31, 30, 27] },
+  visitas:     { name: 'Visitas',     model: 'exp',    data: [1200, 1500, 1900, 2400, 3100, 3900, 5000, 6200] },
+};
+document.querySelectorAll('.templates button').forEach((b) => b.addEventListener('click', () => {
+  const t = TEMPLATES[b.dataset.tpl], prev = snap();
+  state.data = t.data.map((value, i) => ({ label: MONTHS[i], value }));
+  state.model = t.model;
+  document.querySelectorAll('.templates button').forEach((o) => o.classList.toggle('on', o === b));
+  renderRows(); syncControls(); update();
+  toast(`Plantilla «${t.name}» cargada`, prev);
+}));
