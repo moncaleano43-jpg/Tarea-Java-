@@ -223,9 +223,10 @@
       row.v = v; row.st = null;
     }
     function recalc(desde) {
-      const ini = desde == null ? 0 : desde;
-      if (opts.cadena || desde == null) for (let i = ini; i < rows.length; i++) evalRow(i);
-      else evalRow(Math.min(ini, rows.length - 1));
+      if (opts.cadena || desde == null) {
+        rows.forEach((r) => { r.v = Object.assign({}, r.d); });   // entradas al día para fórmulas que miran otras filas
+        for (let i = 0; i < rows.length; i++) evalRow(i);
+      } else evalRow(Math.min(desde, rows.length - 1));
     }
     function defectos() {
       if (typeof opts.nuevaFila !== 'function') return;
@@ -267,7 +268,11 @@
       const v = valorDe(row, col);
       if (blank(v)) return '';
       const b = col.base;
-      if (b === 'numero') return isNum(v) ? nf(col).format(v) : String(v);
+      if (b === 'numero') {
+        if (!isNum(v)) return String(v);
+        if (col.porcentaje) return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(v * 100) + ' %';
+        return nf(col).format(v);
+      }
       if (TIPOS_FECHA.includes(b)) return fmtFecha(v, b);
       if (b === 'lista') { const o = opcionesDe(col, row).find((x) => x.v === v); return o ? o.t : String(v); }
       return String(v);
@@ -416,7 +421,7 @@
     };
     function trasCambio(idxs, todo, cambios) {
       if (todo || !idxs) recalc(0);
-      else if (opts.cadena) recalc(Math.min(...idxs));
+      else if (opts.cadena) recalc(null);
       else [...new Set(idxs)].forEach((i) => { if (rows[i]) evalRow(i); });
       asegurarFinal();
       if (act.r >= rows.length) act.r = rows.length - 1;
@@ -452,7 +457,7 @@
         colX[c] = x;
         if (oculta(c)) {
           const g = grupoOf(c), first = cols.findIndex((k) => k.grupo === g);
-          if (first === c) { colW[c] = 96; stubs.set(c, g); } else colW[c] = 0;
+          if (first === c) { colW[c] = 132; stubs.set(c, g); } else colW[c] = 0;
         } else colW[c] = col.ancho;
         x += colW[c];
       });
@@ -569,11 +574,12 @@
       const col = cols[act.c], cell = cellEl(act.r, act.c);
       if (!col || !cell || !editable(act.r, act.c)) return;
       let t = null;
-      if (col.base === 'lista') t = '▾'; else if (TIPOS_FECHA.includes(col.base)) t = 'Ahora';
+      if (col.base === 'lista') t = '▾';
+      else if (TIPOS_FECHA.includes(col.base) && blank(valorDe(rows[act.r], col))) t = col.base === 'fecha' ? 'Hoy' : 'Ahora';
       if (!t) return;
       const b = document.createElement('button');
-      b.type = 'button'; b.tabIndex = -1; b.className = 'hoja-c__btn'; b.textContent = t; b.dataset.k = t === 'Ahora' ? 'ahora' : 'lista';
-      b.setAttribute('aria-label', t === 'Ahora' ? 'Poner fecha y hora actuales' : 'Abrir lista de opciones');
+      b.type = 'button'; b.tabIndex = -1; b.className = 'hoja-c__btn'; b.textContent = t; b.dataset.k = t === '▾' ? 'lista' : 'ahora';
+      b.setAttribute('aria-label', t === '▾' ? 'Abrir lista de opciones' : 'Poner la fecha u hora actual');
       cell.appendChild(b);
     }
     function visible(c) { return colW[c] > 0 && !stubs.has(c); }
@@ -684,11 +690,15 @@
     function mover(dr, dc, extend) { ir(act.r + dr, dc ? colSig(act.c, dc) : act.c, extend); }
     /** Tab / Shift+Tab: devuelve false si el foco debe salir de la hoja */
     function tab(shift) {
-      const c = colSig(act.c, shift ? -1 : 1);
-      if (c !== act.c) { ir(act.r, c); return true; }
-      const r = act.r + (shift ? -1 : 1);
+      const dir = shift ? -1 : 1;
+      const bloqueada = (c) => cols[c].tipo === 'calc' && !cols[c].anulable;
+      let c = colSig(act.c, dir);
+      while (c !== act.c && bloqueada(c)) { const n = colSig(c, dir); if (n === c) { c = act.c; break; } c = n; }
+      if (c !== act.c && !bloqueada(c)) { ir(act.r, c); return true; }
+      const r = act.r + dir;
       if (r < 0 || r >= rows.length) return false;
-      let cc = shift ? cols.length - 1 : 0; if (!visible(cc)) cc = colSig(cc, shift ? -1 : 1);
+      let cc = shift ? cols.length - 1 : 0; if (!visible(cc)) cc = colSig(cc, dir);
+      while (bloqueada(cc)) { const n = colSig(cc, dir); if (n === cc) break; cc = n; }
       ir(r, cc); return true;
     }
     function teclaEdicion(e) {
@@ -721,7 +731,7 @@
     /* ---------- Lista desplegable ---------- */
     function itemsPop(col, row, txt) {
       const os = opcionesDe(col, row), n = norm(txt);
-      let items = n ? [...os.filter((o) => norm(o.t).startsWith(n)), ...os.filter((o) => !norm(o.t).startsWith(n) && norm(o.t).includes(n))] : os;
+      let items = n ? [...os.filter((o) => norm(o.t) === n), ...os.filter((o) => norm(o.t) !== n && norm(o.t).startsWith(n)), ...os.filter((o) => !norm(o.t).startsWith(n) && norm(o.t).includes(n))] : os;
       items = items.slice(0, 60);
       if (col.libre && txt.trim() && !os.some((o) => norm(o.t) === n)) items.push({ v: txt.trim(), t: '＋ Agregar «' + txt.trim() + '» como valor nuevo', nuevo: true });
       return items;

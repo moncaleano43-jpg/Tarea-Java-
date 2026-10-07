@@ -214,7 +214,7 @@
 
   const minuto = (s) => Math.round(s * 1440);
   const tieneDatos = (tipo, c) => {
-    if (tipo === 'agua') return [4, 9, 14, 18, 19, 20, 21, 22, 26].some((i) => isNum(c[i]));
+    if (tipo === 'agua') return [4, 9, 14].some((i) => isNum(c[i]) && c[i] > 0);
     if (tipo === 'recuperacion') return [1, 2, 4, 38].some((i) => c[i] != null && c[i] !== '');
     if (tipo === 'programa') return c[1] != null && c[4] != null;
     return Object.keys(c).length >= 3;
@@ -275,12 +275,14 @@
     return null;
   }
 
+  // Las celdas con error de Excel (#DIV/0!, #REF!…) no cuentan como dato: el lector las entrega vacías.
+  const esErr = (v) => typeof v === 'string' && ERR_RE.test(v.trim());
   const iguales = (a, b) => {
-    const ka = Object.keys(a), kb = Object.keys(b);
+    const ka = Object.keys(a).filter((k) => !esErr(a[k])), kb = Object.keys(b).filter((k) => !esErr(b[k]));
     if (ka.length !== kb.length) return false;
     for (const k of ka) {
       const x = a[k], y = b[k];
-      if (y === undefined) return false;
+      if (y === undefined || esErr(y)) return false;
       if (isNum(x) && isNum(y)) { if (Math.abs(x - y) > 1e-9) return false; } else if (x !== y) return false;
     }
     return true;
@@ -371,6 +373,104 @@
     return { rows, formulas: {} };
   }
 
+  /* ---------- Lector rápido de hojas (.xlsx/.xlsm) ----------
+     App.BDM.leerLibro recorre cada <row> con DOMParser: en hojas con un millón de filas vacías con formato
+     (típico de los libros de aseos) tarda minutos. Este lector solo visita las celdas que tienen valor.
+     Mismo formato de salida que BDM.filas: array disperso [fila-1][columna-1]. Si algo falla se usa BDM. */
+  const decEnt = (s) => (s.indexOf('&') < 0 ? s : s.replace(/&(#x[0-9a-fA-F]+|#\d+|amp|lt|gt|quot|apos);/g, (m, e) => {
+    if (e[0] === '#') return String.fromCodePoint(e[1] === 'x' ? parseInt(e.slice(2), 16) : +e.slice(1));
+    return { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }[e];
+  }));
+  const colNum = (L) => { let n = 0; for (let i = 0; i < L.length; i++) n = n * 26 + L.charCodeAt(i) - 64; return n - 1; };
+  async function inflarRaw(u) {
+    const ds = new DecompressionStream('deflate-raw');
+    return new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(ds)).arrayBuffer());
+  }
+  function zipLeer(buf) {
+    const u = new Uint8Array(buf), dv = new DataView(buf);
+    let e = -1;
+    for (let i = u.length - 22; i >= Math.max(0, u.length - 70000); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
+    if (e < 0) throw new Error('FORMATO');
+    const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true);
+    const ent = {}, dec = new TextDecoder();
+    for (let i = 0; i < n; i++) {
+      if (dv.getUint32(p, true) !== 0x02014b50) throw new Error('FORMATO');
+      const met = dv.getUint16(p + 10, true), cs = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lo = dv.getUint32(p + 42, true);
+      ent[dec.decode(u.subarray(p + 46, p + 46 + nl))] = { met, cs, lo };
+      p += 46 + nl + xl + cl;
+    }
+    return async (name) => {
+      const x = ent[name]; if (!x) return null;
+      const lnl = dv.getUint16(x.lo + 26, true), lxl = dv.getUint16(x.lo + 28, true), st = x.lo + 30 + lnl + lxl, raw = u.subarray(st, st + x.cs);
+      return dec.decode(x.met === 0 ? raw : await inflarRaw(raw));
+    };
+  }
+  const atr = (tag, n) => { const m = new RegExp('\\b' + n + '="([^"]*)"').exec(tag); return m ? m[1] : null; };
+  async function libroRapido(buf) {
+    if (typeof DecompressionStream === 'undefined') throw new Error('NAVEGADOR');
+    const leer = zipLeer(buf);
+    const wb = await leer('xl/workbook.xml'), rels = (await leer('xl/_rels/workbook.xml.rels')) || '';
+    if (!wb) throw new Error('FORMATO');
+    const rmap = {};
+    for (const m of rels.matchAll(/<Relationship\b[^>]*>/g)) rmap[atr(m[0], 'Id')] = atr(m[0], 'Target');
+    const hojas = [...wb.matchAll(/<sheet\b[^>]*>/g)].map((m) => {
+      const rid = atr(m[0], 'r:id'); const t = (rmap[rid] || '').replace(/^\/?xl\//, '').replace(/^\//, '');
+      return { nombre: decEnt(atr(m[0], 'name') || ''), ruta: 'xl/' + t };
+    });
+    let ss = null;
+    const compartidas = async () => {
+      if (ss) return ss;
+      ss = [];
+      const x = await leer('xl/sharedStrings.xml');
+      if (x) for (const m of x.matchAll(/<si>([\s\S]*?)<\/si>|<si\/>/g)) {
+        let t = '';
+        if (m[1]) for (const q of m[1].matchAll(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g)) t += q[1];
+        ss.push(decEnt(t));
+      }
+      return ss;
+    };
+    const filas = async (nombre, lim = {}) => {
+      const hj = hojas.find((x) => x.nombre === nombre); if (!hj) return null;
+      const xml = await leer(hj.ruta); if (!xml) return null;
+      const S = await compartidas(), out = [], maxRow = lim.maxRow || 0, maxCol = lim.maxCol || 0;
+      let i = 0, cnt = 0;
+      while ((i = xml.indexOf('<c ', i)) >= 0) {
+        const e = xml.indexOf('>', i);
+        if (e < 0) break;
+        if (xml.charCodeAt(e - 1) === 47) { i = e; continue; } // <c .../> sin valor
+        const tag = xml.slice(i + 3, e), fin = xml.indexOf('</c>', e);
+        if (fin < 0) break;
+        const body = xml.slice(e + 1, fin); i = fin;
+        const rm = /\br="([A-Z]+)(\d+)"/.exec(tag); if (!rm) continue;
+        const fila = +rm[2], col = colNum(rm[1]);
+        if ((maxRow && fila > maxRow) || (maxCol && col + 1 > maxCol)) continue;
+        const t = atr(tag, 't');
+        let v = null;
+        if (t === 'inlineStr') { if (body.indexOf('<is>') < 0) continue; v = ''; for (const q of body.matchAll(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g)) v += q[1]; v = decEnt(v); }
+        else {
+          const a = body.indexOf('<v>'); if (a < 0) continue;
+          const b = body.indexOf('</v>', a); const raw = body.slice(a + 3, b < 0 ? undefined : b);
+          if (t === 's') v = S[+raw] == null ? null : S[+raw];
+          else if (t === 'b') v = raw === '1';
+          else if (t === 'e') v = null;
+          else if (t === 'str') v = decEnt(raw);
+          else v = Number(raw);
+        }
+        (out[fila - 1] || (out[fila - 1] = []))[col] = v; cnt++;
+        if (cnt % 20000 === 0) await new Promise((r) => setTimeout(r, 0));
+      }
+      return out;
+    };
+    return { hojas: hojas.map((h) => h.nombre), filas };
+  }
+  /** Abre el libro con BDM (nombres de hoja, errores conocidos) y lee las hojas con el lector rápido. */
+  async function abrirLibro(buf) {
+    const base = await A.BDM.leerLibro(buf);
+    let rapido = null;
+    try { rapido = await libroRapido(buf); } catch (e) { rapido = null; }
+    return { hojas: base.hojas, filas: async (n, l) => { if (rapido) { try { const r = await rapido.filas(n, l); if (r) return r; } catch (e) { /* usa BDM */ } } return base.filas(n, l); }, _rapido: !!rapido };
+  }
+
   /* ---------- Detección del tipo de archivo ---------- */
   function detectaPorHojas(hojas) {
     const n = hojas.map(norm), has = (x) => n.includes(norm(x));
@@ -459,7 +559,7 @@
   const hash = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
 
   A.Importador = Object.assign(A.Importador || {}, {
-    _p: { norm, letra, fechaTexto, horaTexto, numeroTexto, parseDelimitado, detectaSeparador, tipificar, detectaEncabezado, similitud, sugiereMapeo, claves, filaEncabezado, fusionarHoja, fusionarLibro, contarReemplazo, aHoja, detectaPorHojas, esAgua, resumen, validar, comoFecha, tieneDatos, dmy, dmyHm, iguales, hash },
+    _p: { norm, letra, fechaTexto, horaTexto, numeroTexto, parseDelimitado, detectaSeparador, tipificar, detectaEncabezado, similitud, sugiereMapeo, claves, filaEncabezado, fusionarHoja, fusionarLibro, contarReemplazo, aHoja, detectaPorHojas, esAgua, resumen, libroRapido, validar, comoFecha, tieneDatos, dmy, dmyHm, iguales, hash },
   });
 
   if (typeof document === 'undefined' || !A.U) return;
@@ -664,6 +764,7 @@
     const sec = s.seccion;
     Object.assign(s, nuevoEstado(sec), { paso: 2, archivo: file, nombre: file.name, tam: file.size });
     s.t0 = performance.now();
+    s.cargando = { texto: 'Abriendo archivo…', pct: null, bloquea: true };
     pintar(w);
     try {
       const e = ext(file.name);
@@ -677,7 +778,7 @@
         await pausa();
         const buf = await file.arrayBuffer();
         s.buf = buf;
-        try { s.libro = await A.BDM.leerLibro(buf); } catch (er) {
+        try { s.libro = await abrirLibro(buf); } catch (er) {
           throw new Error(er && er.message === 'NAVEGADOR' ? 'Este navegador no puede abrir archivos .xlsx. Guarda la hoja como CSV e inténtalo de nuevo.' : 'No se pudo abrir el libro: ' + (er && er.message || er));
         }
         s.hojas = s.libro.hojas.slice();
@@ -699,7 +800,7 @@
     const s = w.s;
     if (!String(texto).trim()) { A.U.toast('Pega primero el contenido copiado de Excel.'); return; }
     Object.assign(s, nuevoEstado(s.seccion), { paso: 2, nombre: 'Texto pegado', tam: texto.length, texto: true });
-    s.t0 = performance.now(); pintar(w);
+    s.t0 = performance.now(); s.cargando = { texto: 'Leyendo texto…', pct: null, bloquea: true }; pintar(w);
     try { await prepararTexto(w, texto, 'Pegado'); } catch (er) { s.error = er; }
     s.cargando = null; pintar(w);
   }

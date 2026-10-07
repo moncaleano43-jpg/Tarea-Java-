@@ -82,6 +82,12 @@
   };
   const DOW = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
   An1.dow = DOW;
+  /** Quita el último periodo (semana/mes) si quedó a medias, para que no distorsione la tendencia. */
+  An1.recorta = (per, by) => {
+    if (by === 'day' || per.length < 4) return per;
+    const n = per.slice(0, -1).map((p) => p.rows.length).sort((a, b) => a - b), mdn = n[n.length >> 1];
+    return per[per.length - 1].rows.length < 0.5 * mdn ? per.slice(0, -1) : per;
+  };
   An1.periodoTxt = (by) => (by === 'day' ? 'día' : by === 'week' ? 'semana' : 'mes');
   An1.srcRange = (rows) => {
     const nums = rows.map((r) => { const m = /fila (\d+)/.exec(r.source || ''); return m ? +m[1] : null; }).filter((x) => x != null);
@@ -95,8 +101,22 @@
   const pTxt = (p) => (p == null ? '' : p < 0.001 ? 'p < 0,001' : 'p = ' + fmtP(p));
   An1.pTxt = pTxt;
   /** «diferencia real, no azar» / «puede ser casualidad» */
-  An1.sig = (p, alfa = 0.05) => (p == null ? { ok: null, txt: 'no hay datos suficientes para saber si es real' }
-    : p < alfa ? { ok: true, txt: `diferencia real, no azar (${pTxt(p)})` } : { ok: false, txt: `puede ser casualidad (${pTxt(p)})` });
+  An1.sig = (p, alfa = 0.05) => (p == null ? { ok: null, txt: 'no hay datos suficientes para saber si es real', frase: 'no hay datos suficientes para saber si la diferencia es real' }
+    : p < alfa ? { ok: true, txt: `diferencia real, no azar (${pTxt(p)})`, frase: `la diferencia es real, no azar (${pTxt(p)})` } : { ok: false, txt: `puede ser casualidad (${pTxt(p)})`, frase: `la diferencia puede ser casualidad (${pTxt(p)})` });
+  /** Resultado de comparar grupos: manda Kruskal-Wallis (robusta a lotes extremos) y se avisa si el ANOVA discrepa. */
+  An1.difGrupos = (c) => {
+    if (!c) return null;
+    const k = c.kruskal, a = c.anova, p = k ? k.p : a ? a.p : c.p, s = An1.sig(p);
+    const det = k && a && (a.p < 0.05) !== (k.p < 0.05) ? ` (el ANOVA clásico da ${pTxt(a.p)}; se prefiere Kruskal-Wallis porque no se deja llevar por datos extremos)` : '';
+    return { p, ok: s.ok, frase: s.frase + det, txt: s.txt, test: k ? 'Kruskal-Wallis' : a ? 'ANOVA' : 't de Welch' };
+  };
+  An1.wins = (v, lo = 0.05, hi = 0.95) => { const a = S.quantile(v, lo), b = S.quantile(v, hi); return v.map((x) => Math.min(b, Math.max(a, x))); };
+  /** Datos de caja con los valores extremos fuera de [lo, hi] sin dibujar (para que la caja se pueda leer). */
+  An1.boxData = (label, values, lo, hi) => {
+    const b = S.boxStats(values); if (!b) return null;
+    const out = b.outliers.filter((x) => x >= lo && x <= hi);
+    return { label, q1: b.q1, med: b.med, q3: b.q3, lo: b.lo, hi: b.hi, outliers: out, n: b.n, ocultos: b.outliers.length - out.length };
+  };
   An1.fuerza = (r) => { const s = S.strength(r); return s === 'nula' ? 'casi nula' : s; };
   An1.trend = (values, { unit = '', dec = 2, porPeriodo = 'periodo' } = {}) => {
     const v = values.filter((x) => typeof x === 'number' && Number.isFinite(x));
@@ -106,8 +126,14 @@
     if (mk.p < 0.05) return { txt: `Tendencia ${mk.trend === 'sube' ? 'al alza' : 'a la baja'} sostenida (${pTxt(mk.p)}): cambia cerca de ${fmt(Math.abs(sen), dec)} ${unit} por ${porPeriodo}.`, dir: mk.trend === 'sube' ? 1 : -1, p: mk.p, sen };
     return { txt: `Sin tendencia clara (${pTxt(mk.p)}): lo que se ve es variación normal.`, dir: 0, p: mk.p, sen };
   };
-  An1.cmpTxt = (cur, prev, { unit = '', dec = 1, bueno = 'baja', nombre = 'el periodo anterior' } = {}) => {
-    if (cur == null || prev == null || !prev) return '';
+  An1.cmpTxt = (cur, prev, { unit = '', dec = 1, bueno = 'baja', nombre = 'el periodo anterior', pp = false } = {}) => {
+    if (cur == null || prev == null) return '';
+    if (pp) {
+      const d = cur - prev, up = d > 0;
+      if (Math.abs(d) < 0.05) return `Igual que ${nombre} (${fmt(prev, dec)} ${unit}).`;
+      return `${up ? 'Subió' : 'Bajó'} ${fmt(Math.abs(d), 2)} puntos frente a ${nombre} (${fmt(prev, dec)} ${unit}), ${(bueno === 'baja') === !up ? 'a favor' : 'en contra'}.`;
+    }
+    if (!prev) return '';
     const d = rel(cur, prev), up = d > 0;
     if (Math.abs(d) < 0.5) return `Igual que ${nombre} (${fmt(prev, dec)}${unit ? ' ' + unit : ''}).`;
     const good = (bueno === 'baja') === !up;
@@ -123,14 +149,16 @@
     let delta = '';
     if (o.v != null && o.p != null && Number.isFinite(o.v) && Number.isFinite(o.p)) {
       if (o.pp) { const d = o.v - o.p; if (Math.abs(d) >= 0.05) delta = (d > 0 ? '+' : '−') + fmt(Math.abs(d), 1) + ' pp'; }
+      else if (o.abs) { const d = o.v - o.p; if (Math.abs(d) >= 0.05) delta = (d > 0 ? '+' : '−') + fmt(Math.abs(d), 1) + ' ' + (o.unit || ''); }
       else if (o.p !== 0) { const d = Math.round(rel(o.v, o.p) * 10) / 10; delta = d; }
     }
-    const inner = C.kpi({ label: o.label, value: o.v == null ? '—' : fmt(o.v, o.dec == null ? 1 : o.dec), unit: o.unit, delta, deltaGood: o.bueno === 'sube' ? 'up' : 'down', spark: o.spark, help: o.help });
+    const vs = o.v == null ? '—' : fmt(o.v, o.dec == null ? 1 : o.dec);
+    const inner = C.kpi({ label: o.label, value: /^[\d.]+$/.test(vs) ? vs + '\u200b' : vs, unit: o.unit, delta, deltaGood: o.bueno === 'sube' ? 'up' : 'down', spark: o.spark, help: o.help });
     return o.tab ? `<a class="an-kpi-a" href="#/analisis/${o.tab}">${inner}</a>` : inner;
   };
   An1.sev = (alta, media) => (alta ? 'alta' : media ? 'media' : 'info');
   An1.chips = (items) => `<div class="an-chiplist">${items.map((t) => `<span class="an-badge ${t[1] || ''}">${esc(t[0])}</span>`).join('')}</div>`;
-  An1.stat = (label, value, sub, tono) => `<div class="an-stat ${tono || ''}"><span>${esc(label)}</span><b>${esc(value)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</div>`;
+  An1.stat = (label, value, sub, tono) => `<div class="an-stat ${tono ? 't-' + tono : ''}"><span>${esc(label)}</span><b>${esc(value)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</div>`;
   An1.stats = (items) => `<div class="an-stats">${items.join('')}</div>`;
   An1.metodo = (titulo, html) => `<details class="an-metodo"><summary>${esc(titulo)}</summary><div>${html}</div></details>`;
   An1.sinDatos = (UI, titulo, msg) => UI.card(titulo, '', UI.vacio(msg));
@@ -212,7 +240,7 @@
     try { if (An1.fermR) { const R = An1.fermR(ctx); if (R.n) add({ tab: 'fermentacion', label: 'Tiempo a 75 % de atenuación', unit: 'h', v: R.h75.med, p: R.h75.medPrev, dec: 1, bueno: 'baja', spark: R.h75.spark, help: `Mediana de ${R.h75.n} fermentaciones` }); } } catch (e) { warn('kpi ferm', e); }
     try { if (An1.levR) { const R = An1.levR(ctx); if (R.n) add({ tab: 'levadura', label: 'Viabilidad de levadura', unit: '%', v: R.viab.mean, p: R.viab.prev, dec: 1, bueno: 'sube', pp: true, spark: R.viab.spark, help: `${R.n} cosechas · meta ≥ ${fmt(R.meta, 0)} %` }); } } catch (e) { warn('kpi lev', e); }
     const rc = recupR(ctx); if (rc.n) add({ tab: 'recuperacion', label: 'Cerveza recuperada', unit: 'Hl', v: rc.hl, p: rc.hlPrev, dec: 0, bueno: 'sube', spark: rc.spark, help: `${rc.n} recuperaciones${rc.rend != null ? ' · rinde ' + fmt(rc.rend, 0) + ' % de la levadura' : ''}` });
-    const tr = trasR(ctx); if (tr.n) add({ tab: 'operacion', label: 'Desvío de trasiego', unit: 'h', v: tr.med, p: tr.medPrev, dec: 1, bueno: 'baja', spark: tr.spark, help: `Mediana frente al plan · ${tr.n} actividades` });
+    const tr = trasR(ctx); if (tr.n) add({ tab: 'operacion', label: 'Desvío de trasiego', unit: 'h', v: tr.med, p: tr.medPrev, dec: 1, bueno: 'baja', abs: true, spark: tr.spark, help: `Mediana frente al plan · ${tr.n} actividades` });
     const as = aseosR(ctx); if (as.cumple != null) add({ tab: 'operacion', label: 'Aseos con pH en rango', unit: '%', v: as.cumple, p: as.cumplePrev, dec: 0, bueno: 'sube', pp: true, spark: as.spark, help: `${as.n} aseos · pH ${fmt(ctx.metas.get('aseos.phMin', 6), 0)}–${fmt(ctx.metas.get('aseos.phMax', 8), 0)}` });
     return out;
   }
@@ -247,7 +275,7 @@
     const items = Object.keys(DS_INFO).map((ds) => {
       const c = An1.cobertura(ds), enPer = ctx.rows(ds).length;
       const stale = c.dias != null && c.dias > 14 && ds !== 'aseos';
-      const tono = !c.n ? 'bad' : stale || (c.completo != null && c.completo < 60) ? 'warn' : 'ok';
+      const tono = !c.n ? 't-bad' : stale || (c.completo != null && c.completo < 60) ? 't-warn' : 't-ok';
       return `<a class="an-cob-i ${tono}" href="#/analisis/calidad" title="Ver detalle en Calidad de datos"><span>${esc(c.label)}</span><b>${fmt(enPer, 0)}<small> en el periodo</small></b>
         <div class="an-bar"><i style="width:${Math.max(2, Math.min(100, c.completo || 0))}%"></i></div>
         <em>${c.completo != null ? fmt(c.completo, 0) + ' % completos' : 'sin datos'} · ${c.last ? 'último dato ' + fmtDate(c.last) : '—'}</em></a>`;

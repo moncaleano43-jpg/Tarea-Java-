@@ -15,7 +15,7 @@ const P = win.App.Importador._p;
 test('CSV: comillas, saltos de línea y separadores', () => {
   const r = P.parseDelimitado('a;b;c\n"x;1";"di ""hola""";3\n"l1\nl2";,;z\n');
   assert.equal(r.sep, ';');
-  assert.deepEqual(r.rows[1], ['x;1', 'di "hola"', '3']);
+  assert.equal(JSON.stringify(r.rows[1]), JSON.stringify(['x;1', 'di "hola"', '3']));
   assert.equal(r.rows[2][0], 'l1\nl2');
   assert.equal(P.parseDelimitado('a\tb\n1\t2').sep, '\t');
   assert.equal(P.parseDelimitado('a,b,c\n1,2,3').sep, ',');
@@ -104,15 +104,15 @@ test('aseos: clave hoja+equipo+inicio y conflicto con edición propia', () => {
   const act = hoja([[46301.3, 'RED MOSTO', 6.5], [46301.4, 'FV 12', 7]]);
   const inc = hoja([[46301.3, 'RED MOSTO', 6.5], [46301.4, 'FV 12', 7.5], [46301.5, 'FV 13', 6]]);
   const r = P.fusionarLibro('aseos', act, inc, '02.', {});
-  assert.deepEqual([r.total.nuevas, r.total.actualizadas, r.total.iguales, r.total.conflictos], [1, 1, 1, 0]);
+  assert.equal(JSON.stringify([r.total.nuevas, r.total.actualizadas, r.total.iguales, r.total.conflictos]), '[1,1,1,0]');
   const r2 = P.fusionarLibro('aseos', act, inc, '02.', { '02.|1. Cada uso|11': { revisions: [] } });
-  assert.deepEqual([r2.total.nuevas, r2.total.actualizadas, r2.total.conflictos], [1, 0, 1]);
+  assert.equal(JSON.stringify([r2.total.nuevas, r2.total.actualizadas, r2.total.conflictos]), '[1,0,1]');
 });
 test('recuperación y programa: claves', () => {
   const rec = { rows: [{ row: 11, cells: { 0: 'Consecutivo' } }, { row: 12, cells: { 0: 5, 1: 'UTK 1', 2: 46301 } }, { row: 13, cells: { 0: 5, 1: 'UTK 1' } }], formulas: {} };
-  assert.deepEqual(P.claves('recuperacion', 'Control Recuperada', rec.rows, rec.rows[0]), [null, 'C5', 'C5#2']);
+  assert.equal(JSON.stringify(P.claves('recuperacion', 'Control Recuperada', rec.rows, rec.rows[0])), '[null,"C5","C5#2"]');
   const pr = [{ row: 8, cells: { 1: 'Proceso' } }, { row: 9, cells: { 1: 'TRASIEGO UTQ_16', 4: 46301.5 } }, { row: 10, cells: { 1: 'CIP' } }];
-  assert.deepEqual(P.claves('programa', 'CONTROL TRASIEGO', pr, pr[0]), [null, 'Ptrasiego utq 16|' + Math.round(46301.5 * 1440), null]);
+  assert.equal(JSON.stringify(P.claves('programa', 'CONTROL TRASIEGO', pr, pr[0])), JSON.stringify([null, 'Ptrasiego utq 16|' + Math.round(46301.5 * 1440), null]));
 });
 test('validación: fechas imposibles, errores y valores desproporcionados', () => {
   const lab = { 1: 'FECHA', 5: 'CONSUMO PISOS (m3)' };

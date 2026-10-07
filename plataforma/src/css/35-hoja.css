@@ -22,14 +22,14 @@
 
 /* Zona desplazable */
 .hoja-vp{position:relative;overflow:auto;flex:1 1 auto;min-height:160px;height:var(--hoja-alto,60vh);background:var(--surface);outline:none;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-.hoja-vp:focus-visible{box-shadow:inset 0 0 0 2px var(--accent)}
+.hoja-vp:focus,.hoja-vp:focus-visible{outline:none;box-shadow:none}
 .hoja-cab{position:sticky;top:0;z-index:6;background:var(--surface-2)}
 .hoja-hr{display:flex}
 .hoja-h{flex:none;display:flex;flex-direction:column;justify-content:center;padding:4px 8px;font-size:12px;font-weight:600;color:var(--ink-2);background:var(--surface-2);border-right:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;min-height:44px;line-height:1.2}
 .hoja-h--g{min-height:26px;flex-direction:row;align-items:center;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:2px 8px;white-space:nowrap}
 .hoja-h--vacio{background:var(--surface-2)}
 .hoja-h-t{white-space:normal;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.hoja-h small{font-weight:400;color:var(--muted);font-size:11px;white-space:nowrap}
+.hoja-h small{text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted);font-size:11px;white-space:nowrap}
 .hoja-h--req .hoja-h-t::after{content:" *";color:var(--neg)}
 .hoja-h-fx{position:absolute;right:5px;top:3px;font-size:10px;font-style:normal;color:var(--muted);opacity:.7}
 .hoja-h--c{position:relative}
