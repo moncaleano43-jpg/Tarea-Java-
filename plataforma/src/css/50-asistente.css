@@ -70,7 +70,7 @@
 .cf-kpis .ch-kpi{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
 .cf-kpis .ch-kpi-n{font-size:1.28rem}
 .cf-kpis .ch-kpi-l{font-size:.7rem}
-.cf-chart{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:8px 8px 4px;overflow:hidden}
+.cf-chart{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:8px 8px 4px;overflow:hidden;max-width:560px}
 .cf-chart figure.ch{margin:0}
 .cf-chart .ch-svg{width:100%;height:auto;display:block}
 .cf-tag{display:inline-block;font-size:.66rem;font-weight:600;letter-spacing:.02em;text-transform:uppercase;padding:2px 7px;border-radius:999px;margin-right:6px;vertical-align:1px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}

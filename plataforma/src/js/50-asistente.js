@@ -57,6 +57,7 @@
     t = t.replace(/(\d)\s*(minutos?|mins?)\b/g, '$1 min');
     t = t.replace(/\b(fv|sv|utq|utk|ypt|tq|col|colector|propagador|tanque|sem|semana|lote|ciclo)\s*_?\s*0*(\d+)/g, '$1 $2');
     t = t.replace(/\b(fv|sv|utq|utk)(\d)/g, '$1 $2');
+    t = t.replace(/\bcips\b/g, 'cip');
     t = t.replace(/\bxq\b|\bporq\b|\bpq\b|\bporque\b|\bpor q\b/g, 'por que');
     t = t.replace(/\bq\b/g, 'que').replace(/\bx\b/g, 'por').replace(/\bk\b/g, 'que');
     t = t.replace(/[^a-z0-9%<>=.\/ ]/g, ' ');
@@ -65,9 +66,9 @@
     return t;
   }
 
-  const STOP = new Set(('para pero como esta este esto estos estas solo todo toda todos todas muy mas menos cada casa caso cuando donde quien cual cuales sobre entre desde hasta bajo tiene tienen tengo hace hacer hicimos hizo hubo hay hemos fue fueron sido vamos queda quedo dentro fuera segun otra otro otros otras mismo misma algo nada alguno alguna tambien ademas ahora aqui alli luego antes despues durante mientras nuestro nuestra nuestros nuestras mejor peor mayor menor primer primera segundo tercer cuarto quinto sexto planta cerveza cervezas volumen hectolitros litros horas hora minutos minuto dato datos valor valores cifra cifras numero numeros lote lotes tanque tanques fecha fechas registro registros nombre nombres hacemos bajamos reducimos subimos aumentamos disminuimos logramos llevamos pasamos cumplimos dejamos eliminamos mejoramos cortamos ahorramos perdimos tuvimos cerramos recuperamos produjimos sacamos revisamos hicieron estamos estan estoy estuvo estuvieron esta quiero quieres puedo puedes podemos puede pueden dime dame muestrame necesito favor porfa porfavor gracias hola buenas buenos buen tardes noches dias tarde noche manana ayer hoy anteayer siempre nunca casi aqui dos tres cuatro cinco seis siete ocho nueve diez veces vez parte partes forma tipo tipos clase lado lados punto puntos nivel niveles caudal ritmo grado grados plato brix tema temas area areas seccion secciones pantalla pantallas pagina vista menu opcion opciones boton botones carga cargar subir bajar abrir cerrar guardar borrar editar nuevo nueva nuevos nuevas viejo vieja gran grande grandes pequeno pequena poco pocos poca pocas mucho muchos mucha muchas bien mal bueno buena buenos buenas malo mala malos malas ultima ultimo estaba estaban estado estados tuvimos tuvo tuvieron teniamos tenemos tenga tengan seria serian sera seran podria podrian deberia deberian debemos debe deben iba iban unos unas unas haya hayan tambien tampoco incluso aunque mientras entonces porque pues sino sin con del las los una uno que cuyo cuya donde adonde quienes cuyos asi incluye incluir listo listos lista listas hecho hechos hecha hechas dentro afuera encima debajo alrededor cerca lejos junto junta juntos juntas ahi alla aca todavia aun ya recien apenas') .split(/\s+/));
+  const STOP = new Set(('para pero como esta este esto estos estas solo todo toda todos todas muy mas menos cada casa caso cuando donde quien cual cuales sobre entre desde hasta bajo tiene tienen tengo hace hacer hicimos hizo hubo hay hemos fue fueron sido vamos queda quedo dentro fuera segun otra otro otros otras mismo misma algo nada alguno alguna tambien ademas ahora aqui alli luego antes despues durante mientras nuestro nuestra nuestros nuestras mejor peor mayor menor primer primera segundo tercer cuarto quinto sexto planta cerveza cervezas volumen hectolitros litros horas hora minutos minuto dato datos valor valores cifra cifras numero numeros lote lotes tanque tanques fecha fechas registro registros nombre nombres hacemos falta tarda tardan llegar llega llegan baja bajan sube suben dura duran duraron demoran gastan pierden recuperan fermentan siembro bajamos reducimos subimos aumentamos disminuimos logramos llevamos pasamos cumplimos dejamos eliminamos mejoramos cortamos ahorramos perdimos tuvimos cerramos recuperamos produjimos sacamos revisamos hicieron estamos estan estoy estuvo estuvieron esta quiero quieres puedo puedes podemos puede pueden dime dame muestrame necesito favor porfa porfavor gracias hola buenas buenos buen tardes noches dias tarde noche manana ayer hoy anteayer siempre nunca casi aqui dos tres cuatro cinco seis siete ocho nueve diez veces vez parte partes forma tipo tipos clase lado lados punto puntos nivel niveles caudal ritmo grado grados plato brix tema temas area areas seccion secciones pantalla pantallas pagina vista menu opcion opciones boton botones carga cargar subir bajar abrir cerrar guardar borrar editar nuevo nueva nuevos nuevas viejo vieja gran grande grandes pequeno pequena poco pocos poca pocas mucho muchos mucha muchas bien mal bueno buena buenos buenas malo mala malos malas ultima ultimo estaba estaban estado estados tuvimos tuvo tuvieron teniamos tenemos tenga tengan seria serian sera seran podria podrian deberia deberian debemos debe deben iba iban unos unas unas haya hayan tambien tampoco incluso aunque mientras entonces porque pues sino sin con del las los una uno que cuyo cuya donde adonde quienes cuyos asi incluye incluir listo listos lista listas hecho hechos hecha hechas dentro afuera encima debajo alrededor cerca lejos junto junta juntos juntas ahi alla aca todavia aun ya recien apenas') .split(/\s+/));
 
-  const VOCAB_STR = `agua aguas consumo consumos gasto gastos gastamos gastado gastar gasta consumimos consumido consume consumen aseo aseos limpieza lavado enjuague merma mermas perdida perdidas perdimos perdemos pierde faltante recuperacion recuperaciones recuperada recuperadas recuperamos recuperado recupera trasiego trasiegos traslado programa programado programados fermentacion fermentaciones fermenta fermentador fermentadores curva extracto atenuacion levadura levaduras viabilidad consistencia generacion generaciones cepa familia familias cosecha cosechas marca marcas turno turnos operario operarios causa causas desvio desvios retraso retrasos promedio media mediana maximo minimo total suma acumulado cuantos cuantas cuanto cuanta tanque tanques unitanque unitanques colector colectores propagador centrifuga siembra grafica grafico graficos graficas graficame muestrame muestra dame dime lista listame comparar compara comparame comparado compararlo frente contra versus tendencia evolucion distribucion histograma variabilidad dispersion correlacion relacion semana semanas semanal semanales mes meses mensual diario diaria dia dias ano anos anual trimestre hoy ayer anteayer ultimo ultima ultimos ultimas anterior pasado pasada actual enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre resumen reporte informe documento documentos pronostico proyeccion prediccion anomalia anomalias atipico atipicos raro rara rarezas inusual ahorrar ahorro ahorramos ahorraria optimizar revisar revisamos deberia debemos prioridad alerta alertas calidad faltan faltantes vacios invalidas invalidos ayuda explica explicame hectolitro produccion mosto cocina pisos turnos manana tarde noche light estandar club colombia azteca aguila poker presion temperatura duracion caudal minutos horas volumen hectolitros litros eficiencia rendimiento recoleccion recolectada recolectado destino estado descartada descartadas descartado vaciada utilizada inventario cervezas sensorial excel archivo cargar capturar capturo registro registrar registro registrar aseo analisis constructor configuracion metas meta objetivo semaforo grafica barras lineas torta pastel dispersion caja pareto control carta significativo significancia estadistica diferencia diferencias aumento aumentaron aumento bajo disminuyo cayo crecio empeoro mejoro esperado esperada proyectado proyectada pronosticar proximo proxima siguiente quincena fermento llenado llenar extractos atenuaciones lento lenta lentas lentos rapido rapida rapidos rapidas largo larga largos largas corto corta cortos cortas cuantos hicimos hicieron hacemos realizamos realizados tuvimos cerramos cerrados cerrada cerradas cerrado lotes lote saldo negativo negativos imposibles invalidez outliers outlier sospechosos sospechoso confiable confiables confiabilidad cobertura completitud tabla tablas listado reporte informe borra exporta exportar descarga descargar copiar copia grafico imprimir imagen imagenes png svg csv xlsx xlsm`;
+  const VOCAB_STR = `rata ritmo caida agua aguas consumo consumos gasto gastos gastamos gastado gastar gasta consumimos consumido consume consumen aseo aseos limpieza lavado enjuague merma mermas perdida perdidas perdimos perdemos pierde faltante recuperacion recuperaciones recuperada recuperadas recuperamos recuperado recupera trasiego trasiegos traslado programa programado programados fermentacion fermentaciones fermenta fermentador fermentadores curva extracto atenuacion levadura levaduras viabilidad consistencia generacion generaciones cepa familia familias cosecha cosechas marca marcas turno turnos operario operarios causa causas desvio desvios retraso retrasos promedio media mediana maximo minimo total suma acumulado cuantos cuantas cuanto cuanta tanque tanques unitanque unitanques colector colectores propagador centrifuga siembra grafica grafico graficos graficas graficame muestrame muestra dame dime lista listame comparar compara comparame comparado compararlo frente contra versus tendencia evolucion distribucion histograma variabilidad dispersion correlacion relacion semana semanas semanal semanales mes meses mensual diario diaria dia dias ano anos anual trimestre hoy ayer anteayer ultimo ultima ultimos ultimas anterior pasado pasada actual enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre resumen reporte informe documento documentos pronostico proyeccion prediccion anomalia anomalias atipico atipicos raro rara rarezas inusual ahorrar ahorro ahorramos ahorraria optimizar revisar revisamos deberia debemos prioridad alerta alertas calidad faltan faltantes vacios invalidas invalidos ayuda explica explicame hectolitro produccion mosto cocina pisos turnos manana tarde noche light estandar club colombia azteca aguila poker presion temperatura duracion caudal minutos horas volumen hectolitros litros eficiencia rendimiento recoleccion recolectada recolectado destino estado descartada descartadas descartado vaciada utilizada inventario cervezas sensorial excel archivo cargar capturar capturo registro registrar registro registrar aseo analisis constructor configuracion metas meta objetivo semaforo grafica barras lineas torta pastel dispersion caja pareto control carta significativo significancia estadistica diferencia diferencias aumento aumentaron aumento bajo disminuyo cayo crecio empeoro mejoro esperado esperada proyectado proyectada pronosticar proximo proxima siguiente quincena fermento llenado extractos atenuaciones lento lenta lentas lentos rapido rapida rapidos rapidas largo larga largos largas corto corta cortos cortas cuantos hicimos hicieron hacemos realizamos realizados tuvimos cerramos cerrados cerrada cerradas cerrado lotes lote saldo negativo negativos imposibles invalidez outliers outlier sospechosos sospechoso confiable confiables confiabilidad cobertura completitud tabla tablas listado reporte informe borra exporta exportar descarga descargar copiar copia grafico imprimir imagen imagenes png svg csv xlsx xlsm`;
   const VOCAB = new Set(VOCAB_STR.split(/\s+/).filter(Boolean));
   const VLIST = () => (VLIST.c && VLIST.n === VOCAB.size ? VLIST.c : ((VLIST.n = VOCAB.size), (VLIST.c = [...VOCAB])));
 
@@ -158,8 +159,9 @@
   // Operarios: se agrupan las variantes («LUIS B», «LJUIS B», «LUIIS B») por su nombre de pila
   let OPS = null;
   function operators() {
+    fresh();
+    if (OPS) return OPS;
     const src = DL().get('aseos');
-    if (OPS && OPS.src === src) return OPS;
     const cnt = new Map();
     const parts = (s) => String(s || '').split(/[\/,&+]|\s-\s|\sy\s|_/).map((x) => strip(x).replace(/[^a-z ]/g, ' ').trim().split(/\s+/)[0]).filter((x) => x && x.length >= 3);
     for (const r of src) for (const p of parts(r.operator)) cnt.set(p, (cnt.get(p) || 0) + 1);
@@ -194,20 +196,40 @@
     if (ds === 'agua') return Object.assign({}, r, { turno: r.shift });
     return r;
   }
+  // Caché propia (60 s, o hasta que cambie algo guardado): la capa de datos reconstruye sus tablas cada 4 s y eso cuesta ~300 ms.
+  const CACHE = { t0: 0, stamp: '' };
+  const stampNow = () => { try { return String((A.S && A.S.config && A.S.config.meta && A.S.config.meta.actualizado) || ''); } catch (e) { return ''; } };
+  function fresh() {
+    const now = Date.now(), st = stampNow();
+    if (now - CACHE.t0 > 60000 || st !== CACHE.stamp) { DECO.clear(); OPS = null; EXT.clear(); CACHE.t0 = now; CACHE.stamp = st; }
+  }
+  window.addEventListener('hashchange', () => { CACHE.t0 = 0; });
+  const EXT = new Map();
   function rowsOf(ds) {
-    const src = DL().get(ds), c = DECO.get(ds);
-    if (c && c.src === src) return c.rows;
-    const rows = src.map((r) => decorate(ds, r));
-    DECO.set(ds, { src, rows });
+    fresh();
+    const c = DECO.get(ds);
+    if (c) return c;
+    const rows = DL().get(ds).map((r) => decorate(ds, r));
+    DECO.set(ds, rows);
     return rows;
   }
+  function extentOf(ds) {
+    fresh();
+    if (EXT.has(ds)) return EXT.get(ds);
+    let mn = Infinity, mx = -Infinity, n = 0;
+    for (const r of rowsOf(ds)) if (r.t != null) { n++; if (r.t < mn) mn = r.t; if (r.t > mx) mx = r.t; }
+    const e = n ? { from: mn, to: mx, n } : null;
+    EXT.set(ds, e);
+    return e;
+  }
+  function brandsList() { const s = new Set(); for (const ds of ['ferm', 'merma', 'recuperacion', 'trasiego', 'lev']) for (const r of rowsOf(ds)) if (r.brand && r.brand !== '(sin marca)') s.add(r.brand); return [...s].sort(); }
 
   /* ---------------------------------------------------------------- «ahora» = último dato disponible */
   function refTime() {
     const now = Date.now();
     let best = null;
     for (const ds of ['agua', 'ferm', 'lev', 'recuperacion', 'aseos', 'trasiego']) {
-      const rows = DL().get(ds);
+      const rows = rowsOf(ds);
       for (let i = rows.length - 1; i >= 0; i--) { const t = rows[i].t; if (t != null && t <= now + 3600000) { if (best == null || t > best) best = t; break; } }
     }
     const ref = best == null ? now : Math.min(best, now + DAY);
@@ -228,7 +250,7 @@
       { k: 'total', re: /.*/, t: 'add', good: 'down', plaus: [0, 1000], def: true, l: 'Consumo de agua' },
     ],
     aseos: [
-      { k: 'durMin', re: /duracion|dura\b|tarda|demora|tiempo|minutos de aseo/, t: 'ratio', good: 'down', plaus: [1, 1440], l: 'Duración del aseo', u: 'min' },
+      { k: 'durMin', re: /duracion|dura\w*|tarda\w*|demora\w*|tiempo|minutos de aseo|largo|larga|corto|corta/, t: 'ratio', good: 'down', plaus: [1, 1440], l: 'Duración del aseo', u: 'min' },
       { k: 'flow', re: /caudal|flujo/, t: 'ratio', plaus: [0, 5000] },
       { k: 'minutes', re: /minutos de enjuague|enjuague|minutos/, t: 'ratio', plaus: [0, 1440] },
       { k: 'ph', re: /\bph\b/, t: 'ratio', plaus: [0, 14], l: 'pH del enjuague' },
@@ -243,7 +265,7 @@
       { k: 'lossPct', re: /.*/, t: 'ratio', w: ['loss', 'input'], good: 'down', plaus: [-100, 100], def: true, d: 2 },
     ],
     recuperacion: [
-      { k: 'hours', re: /horas|tiempo|demora|tarda|duracion|lenta|rapida/, t: 'ratio', good: 'down', plaus: [0, 400] },
+      { k: 'hours', re: /horas|tiempo|demora\w*|tarda\w*|duracion|lent\w+|rapid\w+/, t: 'ratio', good: 'down', plaus: [0, 400] },
       { k: 'yieldPct', re: /rendimiento|eficiencia|recuperado\s*\/\s*levadura/, t: 'ratio', w: ['volume', 'yeast'], good: 'up', plaus: [0, 200], d: 1 },
       { k: 'yeast', re: /levadura|recolectad|recolecci/, t: 'add', plaus: [0, 2000] },
       { k: 'waterHl', re: /agua/, t: 'add', plaus: [0, 2000] },
@@ -252,7 +274,7 @@
       { k: 'volume', re: /.*/, t: 'add', good: 'up', plaus: [0, 2000], def: true },
     ],
     trasiego: [
-      { k: 'duration', re: /duracion|\bdura\b|demora\w*|tarda\w*|cuanto tiempo|largo|larga|cuanto dura/, t: 'ratio', good: 'down', plaus: [0.25, 72] },
+      { k: 'duration', re: /duracion|\bdura\w*|demora\w*|tarda\w*|cuanto tiempo|largo|larga/, t: 'ratio', good: 'down', plaus: [0.25, 72] },
       { k: 'delay', re: /desvio|retraso|atraso/, t: 'add', good: 'down', plaus: [-72, 240], l: 'Desvío frente al plan' },
       { k: 'duration', re: /.*/, t: 'ratio', good: 'down', plaus: [0.25, 72], def: true },
     ],
@@ -361,15 +383,15 @@
   const dayPeriod = (t, label) => P(sod(t), eod(t), label || fd(t), 'day');
 
   // Devuelve {p, q} (q = texto sin la expresión de tiempo) o null
-  function parsePeriod(q, ref) {
+  function parsePeriod(q, ref, hint) {
     let m, rest = q;
     const cut = (re) => { rest = rest.replace(re, ' ').replace(/\s+/g, ' ').trim(); };
     const R0 = eod(ref);
     // últimos N …
-    if ((m = /\b(?:ultim[oa]s?|pasad[oa]s?|previ[oa]s?)\s+(\d{1,3})\s+(horas?|dias?|semanas?|meses|mes|anos?)\b/.exec(q))) {
+    if ((m = /\b(?:ultim[oa]s?|pasad[oa]s?|previ[oa]s?)\s+(\d{1,3})\s+(h|horas?|dias?|semanas?|meses|mes|anos?)\b/.exec(q))) {
       const n = +m[1], u = m[2];
       let from, label;
-      if (/hora/.test(u)) { from = ref - n * HOUR; label = 'últimas ' + n + ' horas'; }
+      if (/^h|hora/.test(u)) { from = ref - n * HOUR; label = 'últimas ' + n + ' horas'; }
       else if (/dia/.test(u)) { from = sod(addDays(ref, -(n - 1))); label = 'últimos ' + n + ' días'; }
       else if (/sem/.test(u)) { from = sod(addDays(ref, -(7 * n - 1))); label = 'últimas ' + n + ' ' + plural(n, 'semana'); }
       else if (/mes/.test(u)) { const d = new Date(ref); from = new Date(d.getFullYear(), d.getMonth() - n, d.getDate() + 1).getTime(); label = 'últimos ' + n + ' ' + plural(n, 'mes', 'meses'); }
@@ -385,7 +407,7 @@
       cut(m[0]); return { p: P(from, to, m1 === m2 ? 'del ' + m[1] + ' al ' + m[3] + ' de ' + MESES[m2] + (y !== REF_YEAR ? ' de ' + y : '') : 'del ' + m[1] + ' de ' + MESES[m1] + ' al ' + m[3] + ' de ' + MESES[m2], 'range'), q: rest };
     }
     if ((m = new RegExp('\\b(?:del|desde el|entre el)\\s+' + D + '\\s+(?:al|a|y el|y|hasta el|hasta)\\s+' + D + '\\b(?!\\s*(?:de\\s+)?' + MON_RE + ')').exec(q)) && +m[1] <= 31 && +m[2] <= 31 && +m[1] < +m[2]) {
-      const d = new Date(ref), from = new Date(d.getFullYear(), d.getMonth(), +m[1]).getTime(), to = eod(new Date(d.getFullYear(), d.getMonth(), +m[2]).getTime());
+      const d = hint ? new Date(hint.y, hint.m, 1) : new Date(ref), from = new Date(d.getFullYear(), d.getMonth(), +m[1]).getTime(), to = eod(new Date(d.getFullYear(), d.getMonth(), +m[2]).getTime());
       cut(m[0]); return { p: P(from, to, 'del ' + m[1] + ' al ' + m[2] + ' de ' + MESES[d.getMonth()], 'range'), q: rest };
     }
     // desde X (hasta Y)
@@ -501,7 +523,7 @@
   /* ---------------------------------------------------------------- entidades */
   let BR = null;
   function brandMap() {
-    const brands = DL().brands();
+    const brands = brandsList();
     const key = brands.join('|');
     if (BR && BR.key === key) return BR;
     const m = {};
@@ -553,18 +575,18 @@
     compare: /\b(vs|versus|frente a|frente al|comparad[oa]s?|compar\w+|contra|diferencia entre|respecto a|respecto al|en comparacion|comparando)\b/,
     cause: /\bpor que\b|\bcausas? de que\b|\ba que se (debe|deben)\b|\bque paso con\b|\bque provoco\b|\bque origino\b|\bque (esta )?(pasando|afectando|explica|influyo|influye)\b|\bexplica\w*\b|\bculpable\b|\bcausa\b.*\b(subi\w*|baj\w*|aument\w*|disminu\w*|cambi\w*|alz\w*|cay\w*|crec\w*|empeor\w*)|\b(subi\w*|baj\w*|aument\w*|disminu\w*|cay\w*|crec\w*|empeor\w*)\b.*\b(causa|motivo|razon)\b|\bmotivo\b|\brazon\b/,
     forecast: /\b(proyecci\w+|pronostic\w+|predic\w+|vamos a (gastar|consumir|perder|recuperar|hacer|cerrar|producir|terminar|llegar)|va a (gastar|consumir|cerrar|terminar)|cerrar\w* (el )?mes|\bcier(ra|re|rr)\w* (el |de )?(mes|ano)|cerraremos|terminaremos|fin de mes|(proximo|siguiente) (mes|semana|ano|trimestre)|proxima semana|estimad[oa] (de|para)|a este ritmo|al ritmo actual|tendencia futura|gastaremos|consumiremos|perderemos|recuperaremos|que esperar\w*|cuanto (nos falta|llevamos para))\b/,
-    whatif: /\bsi (bajamos|reducimos|disminuimos|subimos|aumentamos|logramos|llevamos|pasamos|cumplimos|hacemos|el \d+|todos|dejamos|eliminamos|elimin\w+|mejoramos|cortamos|ahorramos|bajaramos|redujeramos|se hace|se reduce|baja|sube|la merma|el consumo|las recuperaciones|los trasiegos|los aseos|bajara|llegamos|llegara|lo llevamos)\b|\bque pasaria si\b|\bque pasa si\b|\bque ganamos\b|\bcuanto (ahorr\w+|ganar\w+|recuper\w+|bajar\w+) si\b|\bsimul\w+|\bescenario\b|\bsupon\w+ que\b|\by si (bajamos|reducimos|el|la|los|las)\b/,
+    whatif: /\bsi (bajamos|reducimos|disminuimos|subimos|aumentamos|logramos|llevamos|pasamos|cumplimos|hacemos|el \d+|todos|dejamos|eliminamos|elimin\w+|mejoramos|cortamos|ahorramos|bajaramos|redujeramos|se hace|se reduce|baja|sube|la merma|el consumo|las recuperaciones|los trasiegos|los aseos|bajara|llegamos|llegara|lo llevamos)\b|\bque pasaria si\b|\bque pasa si\b|\bque ganamos\b|\bcuanto (ahorr\w+|ganar\w+|recuper\w+|bajar\w+) si\b|\bsimul\w+|\bescenario\b|\bsupon\w+ que\b|\by si (bajamos|reducimos|el|la|los|las)\b|\bsi \w+(amos|emos|imos)\b.*\b(a|un|el|la|\d+)\b/,
     anom: /\b(raro|rara|raros|raras|rarezas?|anomali\w+|atipic\w+|outliers?|fuera de (lo )?(normal|rango|limite\w*|meta|control)|inusual\w*|extran\w+|sospechos\w+|disparad\w+|se salio|se salen|picos?|anormal\w*|desviad\w+|alarmante\w*|problema\w*)\b/,
     reco: /\bque (deberia|deberiamos|debo|debemos|tengo que|hay que|conviene|toca|reviso|revisar|revisamos|atiendo|atendemos|corrijo|corregimos)\b|\bdeberia\w* revisar\b|\bprioridad\w*|\brecomien\w+|\bsugier\w+|\bpor donde empiezo\b|\bpendientes?\b|\blo mas importante\b|\blo importante\b|\bque urge\b|\burgente\w*|\bque (esta )?pasando hoy\b|\bque hay que mirar\b|\bpuntos de atencion\b|\brevisar hoy\b|\bque miro\b|\balertas?\b/,
     ahorro: /\bahorr\w+|\boptimiz\w+|\boportunidad\w*|\bdesperdicio\w*|\bdonde (puedo|podemos|se puede) (mejorar|bajar|reducir|recortar|disminuir)|\bpotencial\b|\brecortar\b/,
     summary: /\bresumen\b|\bresumeme\b|\bresumir\b|\bpanorama\b|\bbalance\b|\bcomo (vamos|va todo|estamos|andamos|nos fue|nos va|va el (dia|mes|turno|ano)|ha ido)\b|\bestado general\b|\bsituacion\b|\bnovedades?\b|\bque paso (hoy|ayer|esta semana|este mes|en el turno|en la semana|en el mes)\b|\bcuentame\b|\bponme al dia\b/,
-    quality: /\bcalidad de (los )?datos\b|\bdatos (faltantes|faltan|vacios|incompletos|inconsistentes|sucios|malos|dudosos|erroneos|incorrectos)\b|\bque (datos )?faltan\b|\blecturas? (invalid|faltan|erroneas|malas|incorrectas)\w*|\bconfiab\w+|\bconfio\b|\bvacios\b|\binconsistenc\w+|\bsin (dato|datos|causa|caudal|lectura|marca|registro|minutos)\b|\binvalid\w+|\bhuecos\b|\bcobertura\b|\bcompletitud\b|\bdesde cuando (hay|tenemos)\b|\bhasta (que|cuando) fecha\b|\bhasta donde llegan\b|\bcuantos registros\b|\bno (tienen|tiene|hay|registran|trae|traen) (caudal|minutos|causa|marca|dato|datos|lectura|lecturas|registro)\b|\bfaltan datos\b|\bque tan buenos\b|\bdatos imposibles\b|\bvalores imposibles\b/,
+    quality: /\bcalidad de (los )?datos\b|\bdatos (faltantes|faltan|vacios|incompletos|inconsistentes|sucios|malos|dudosos|erroneos|incorrectos)\b|\bque (datos )?faltan\b|\blecturas? (invalid|faltan|erroneas|malas|incorrectas)\w*|\bconfiab\w+|\bconfio\b|\bvacios\b|\binconsistenc\w+|\bsin (dato|datos|causa|caudal|lectura|marca|registro|minutos)\b|\binvalid\w+|\bhuecos\b|\bcobertura\b|\bcompletitud\b|\bdesde cuando (hay|tenemos)\b|\bhasta (que|cuando) fecha\b|\bhasta donde llegan\b|\bcuantos registros\b|\bno (tienen|tiene|hay|registran|trae|traen) (caudal|minutos|causa|marca|dato|datos|lectura|lecturas|registro)\b|\bfaltan datos\b|\bque tan (buenos|buenas|completa\w*|completo\w*|confiable\w*|limpi\w+)\b|\bultima fecha\b|\bfecha mas reciente\b|\bultimo dato\b|\bproblemas? (en|con) (los )?datos\b|\bhay datos (malos|erroneos|sucios|incorrectos)\b|\bdatos imposibles\b|\bvalores imposibles\b/,
     dist: /\b(distribuci\w+|histograma|variabilidad|dispersion|rango tipico|que tan (variable|estable)|estabilidad|desviacion estandar|cuartiles?|percentil\w*|boxplot|diagrama de caja|como se reparte|como se distribuye)\b/,
     corr: /\b(relacion|correlacion|correlaciona\w*|depende\w*|influye\w*|asociad[oa]|se relaciona\w*|afecta\w*|vinculo|impacto)\b/,
-    rank: /\b(top ?\d*|ranking|mejores|peores|mayores|menores|principales|primeros|que (\w+ ){0,2}(tiene|consume|gasta|pierde|recupera|fermenta|hace|registra|genera|tarda|demora|aporta|usa) (mas|menos|mejor|peor)|que (mas|menos|mejor|peor) \w+ (tiene|consume|gasta|pierde|recupera|fermenta|hace|registra|genera|tarda|demora|aporta|usa)|(el|la) \w+ que (mas|menos)|cual(es)? (es|son|fue|fueron) (el|la|los|las) (que )?(mas|menos|mayor|menor|peor|mejor)|quien\w* (hace|tiene|registra|consume|realiza) (mas|menos)|el (mayor|menor|peor|mejor)|la (mayor|menor|peor|mejor)|mas (alto|alta|bajo|baja|largo|larga|lento|lenta|rapido|rapida|corto|corta)|de (mayor|menor) |(mas|menos) (merma|consumo|desvio|gasto|aseos|trasiegos|recuperacion|viabilidad))\b/,
+    rank: /\b(top ?\d*|ranking|mejores|peores|mayores|menores|principales|primeros|que (\w+ ){0,2}(tiene|consume|gasta|pierde|recupera|fermenta|hace|registra|genera|tarda|demora|aporta|usa) (mas|menos|mejor|peor)|que (mas|menos|mejor|peor) \w+ (tiene|consume|gasta|pierde|recupera|fermenta|hace|registra|genera|tarda|demora|aporta|usa)|(el|la) \w+ que (mas|menos)|cual(es)? (es|son|fue|fueron) (el|la|los|las) (que )?(mas|menos|mayor|menor|peor|mejor)|quien\w* (hace|tiene|registra|consume|realiza) (mas|menos)|el (mayor|menor|peor|mejor)|la (mayor|menor|peor|mejor)|mas (alto|alta|bajo|baja|largo|larga|lento|lenta|rapido|rapida|corto|corta)s?|de (mayor|menor) |(mas|menos) (merma|consumo|desvio|gasto|aseos|trasiegos|recuperacion|viabilidad))\b/,
     list: /\b(lista\w*|listame|muestrame (los|las)|dame (los|las)|cuales (son|fueron|estan)|detalle de|detalla\w*|enumera\w*|ver (los|las)|filas|registros de)\b/,
     docs: /\b(documento\w*|procedimiento\w*|instructivo\w*|manual\w*|formato\w*|sop\b|politica\w*|norma\w*|guia\w* de)\b/,
-    nav: /\b(abre|abrir|abreme|llevame|ir a|ve a|navega\w*|muestrame la (seccion|pantalla|pagina|vista)|ver en analisis|en analisis|abrelo|quiero ver|llevame a)\b/,
+    nav: /\b(abre|abrir|abreme|llevame|mandame|enviame|ir al|ir a|ve al|ve a|navega\w*|muestrame la (seccion|pantalla|pagina|vista)|ver en analisis|en analisis|abrelo|quiero ver|llevame a)\b/,
     report: /\b(reporte|informe)\b/,
     exportar: /\b(exporta\w*|descarga\w*|bajame|bajalo|pasalo a excel|en excel|a excel|csv|sacar excel|guardalo|bajar excel|excel de eso)\b/,
     more: /\b(mas detalle|detalla\w*|profundiza\w*|ampli\w+|desglosa\w*|desglose|expande|dime mas|explicame mas|mas informacion|mas info|ver mas|mas datos|a fondo)\b/,
@@ -586,7 +608,7 @@
     merma: [[/\b(merma|mermas|perdida|perdidas|perdimos|perdemos|pierde|pierden|perdio|faltante|kge)\b/, 3.2], [/\blotes? cerrad\w+|\bcerramos\b.*\blotes?\b/, 2.5], [/\bpurgas?\b/, 1.5], [/\bsaldo negativo|saldos negativos\b/, 1.5]],
     recuperacion: [[/\brecuper\w+/, 3.2], [/\butk\b/, 2], [/\bcerveza recuperada\b/, 2]],
     trasiego: [[/\b(trasiego|trasiegos|trasegad\w+|trasegar|programa de trasiego|traslado)\b/, 3.2], [/\bdesvios?\b|\bretrasos?\b|\batrasos?\b/, 1.6], [/\bprogramad\w+/, 1]],
-    ferm: [[/\b(fermentacion|fermentaciones|fermenta|fermentan|fermentar|fermento|fermentador\w*|atenuacion|h ?75|h ?15|e ?72|rdf|extracto|extractos)\b/, 3], [/\b(eo|el)\b/, 0.5], [/\b(lento|lenta|lentas|lentos|rapid\w+)\b/, 0.8], [/\bfv\b/, 1.2], [/\bllenado\b/, 1.5]],
+    ferm: [[/\b(fermentacion|fermentaciones|fermenta|fermentan|fermentar|fermento|fermentador\w*|atenuacion|h ?75|h ?15|e ?72|rdf|extracto|extractos)\b/, 3], [/\b(eo|el)\b/, 0.5], [/\b(rata|ritmo) de caida\b/, 3], [/\brata\b/, 1.5], [/\b(lento|lenta|lentas|lentos|rapid\w+)\b/, 0.8], [/\bfv\b/, 1.2], [/\bllenado\b/, 1.5]],
     lev: [[/\b(levadura|levaduras|viabilidad|cosecha|cosechas|consistencia|cepa|cepas)\b/, 3], [/\bgeneracion(es)?\b|\bfamilias?\b/, 1.4], [/\betanol\b/, 1.5], [/\bdescartad\w+|vaciad\w+|utilizad\w+/, 1]],
   };
   const NEWSTRONG = /\b(agua|aseos?|merma|mermas|recuper\w+|trasiego\w*|desvios?|h ?75|h ?15|e ?72|atenuacion|fermentaciones|cosechas|kge|pisos|gea|hl procesado|lotes cerrados|programa de trasiego|consumo)\b/;
@@ -645,7 +667,8 @@
     return null;
   }
 
-  function understand(text) {
+  const ROUTE_DS = { agua: 'agua', aseos: 'aseos', merma: 'merma', recuperacion: 'recuperacion', programa: 'trasiego' };
+  function understand(text, ctxo) {
     const raw = String(text == null ? '' : text).trim();
     const q0 = norm(raw);
     const ref = refTime();
@@ -687,7 +710,7 @@
     if (/\bdescartad\w+/.test(w)) X.state = 'descartada'; else if (/\bvaciad\w+/.test(w)) X.state = 'vaciada'; else if (/\butilizad\w+/.test(w)) X.state = 'utilizada'; else if (/\ben inventario\b/.test(w)) X.state = 'inventario';
     if (/\bcips?\b.*\bcentrifuga|\bcip\b/.test(w) && /trasiego|programa|cuantos cip/.test(w)) X.kind = 'CIP';
     if (/\btrasiegos?\b/.test(w) && !/\bcip\b/.test(w)) X.kind = 'Trasiego';
-    for (const kw of CAUSE_KW) if (w.includes(kw) && /\bcausa\b|\bpor\b|\bdebido\b|\bmotivo\b|\bdesvio\b/.test(w)) { X.cause = kw; break; }
+    for (const kw of CAUSE_KW) if (w.includes(kw)) { X.cause = kw; break; }
 
     if (X.shifts.length) { dsw.agua += 2.2; bestDs.splice(0, bestDs.length, ...Object.entries(dsw).sort((a, b) => b[1] - a[1])); }
     // periodo
@@ -697,7 +720,7 @@
     if (F.compare && cmpCue) {
       const wi = (' ' + w + ' ').slice(1, -1), idx = (' ' + w + ' ').indexOf(cmpCue[0]) - 1;
       const left = wi.slice(0, Math.max(0, idx)), right = wi.slice(Math.max(0, idx) + cmpCue[0].length - 1);
-      const pa = parsePeriod(left, ref), pb = parsePeriod(right, ref);
+      const pa = parsePeriod(left, ref), pb = parsePeriod(right, ref, pa ? { y: new Date(pa.p.from).getFullYear(), m: new Date(pa.p.from).getMonth() } : null);
       if (pa && pb) split = { a: pa.p, b: pb.p };
       else if (pb && !pa) split = { a: null, b: pb.p };
       else if (pa && !pb) split = { a: pa.p, b: null };
@@ -724,10 +747,13 @@
       if (second > 0 && bestDs[0][1] - second < 1) plan.ambig = [bestDs[0][0], bestDs[1][0]];
     }
     if (F.corr && /\b(viabilidad|consistencia)\b/.test(q) && /\b(h ?75|h ?15|e ?72|atenuacion|rapid\w+|lent\w+|velocidad)\b/.test(q)) { ds = 'ferm'; dsConf = Math.max(dsConf, 3); }
+    if (/\bcip\b/.test(q) && (ds === 'aseos' || ds === 'trasiego') && !/\baseos?\b|\btrasiego|programa|centrifuga/.test(q) && !plan.ambig) plan.ambig = ['aseos', 'trasiego'];
     // métricas de componentes del agua
     const comps = ['pisos', 'cip', 'gea'].filter((c) => new RegExp('\\b' + c + '\\b').test(q));
     // seguimiento: sin tema nuevo
     const last = S.mem.last;
+    const rutaDs = ROUTE_DS[(ctxo && ctxo.ruta) || routeInfo().rt];
+    if (!ds && rutaDs && !(last && last.ds) && (F.count || F.sum || F.mean || F.chart || F.max || F.min || F.rank || F.dist || F.forecast || F.compare || F.cause || period)) { ds = rutaDs; dsConf = 1.2; plan.porRuta = true; }
     const yM = F.yMarker && ntok <= 9;
     let followUp = false;
     if (!ds && last && last.ds) followUp = true;
@@ -738,7 +764,7 @@
     if (!followUp && RXF.oldHint.test(q) && !newStrong && !F.summary && !F.reco) { plan.intent = 'legacy'; plan.why = 'old'; return plan; }
 
     // plataforma / glosario
-    const askHow = /\b(donde|como|para que sirve|que es|que son|que hay|cual es|puedo|se puede|sirve|eres|usas|funcionas|llamas|quien eres|que eres|que significa|significa|quiere decir|se calcula)\b/.test(q);
+    const askHow = /\b(donde|como|para que sirve|que es|que son|que hace|de que trata|que hay|cual es|puedo|se puede|sirve|eres|usas|funcionas|llamas|quien eres|que eres|que significa|significa|quiere decir|se calcula)\b/.test(q);
     const NOCUE = new Set(['cargar', 'captura', 'exportar', 'grafica', 'metas', 'nombre', 'ia', 'privacidad', 'pin']);
     const sect = /\b(seccion|pantalla|pagina|modulo|apartado|menu|boton|opcion)\b/.test(q);
     const defCue = /\b(que es|que son|que significa|significa|quiere decir|significado|define|definicion|como se (calcula|mide|saca|obtiene)|a que se refiere|que mide|para que sirve el|para que sirve la)\b/.test(q);
@@ -759,7 +785,7 @@
     // reporte / navegación
     const nt = navTarget(q);
     const giveRep = /\b(dame|damelo|genera\w*|arma\w*|quiero|necesito|prepara\w*|abre|abreme|crea|haz|hazme|saca\w*|imprime\w*|un|el|ver)\b/.test(q);
-    if (F.report && giveRep && !gl && !pl && ntok <= 8 && !F.summary) { plan.intent = 'reporte'; plan.conf = 0.9; return plan; }
+    if (F.report && (giveRep || ntok <= 3) && !gl && !pl && ntok <= 8 && !F.summary) { plan.intent = 'reporte'; plan.conf = 0.9; return plan; }
     if (F.nav && nt && !(F.sum || F.count || F.forecast)) { plan.intent = 'nav'; plan.nav = nt; plan.conf = 0.9; return plan; }
     if (F.nav && /\banalisis|constructor\b/.test(q) && last && !nt) { plan.intent = 'nav'; plan.nav = { ruta: 'analisis', label: 'Análisis' }; plan.fromMem = true; plan.conf = 0.8; return plan; }
 
@@ -770,7 +796,8 @@
     /* ---- inteligencia transversal ---- */
     const scoped = ds && dsConf >= 1.2 ? ds : null;
     if (F.programado && (ds === 'trasiego' || /\btrasiegos?\b/.test(q) || /\bcip\b/.test(q) || !ds)) { plan.intent = 'programado'; plan.conf = 0.85; plan.spec = { intent: 'programado', ds: 'trasiego', brands: X.brands, kind: X.kind }; return plan; }
-    if (F.quality && !F.cause) { plan.intent = 'calidad'; plan.conf = 0.9; plan.spec = { intent: 'calidad', ds: scoped, period }; return plan; }
+    const sinX = /\b(trasiegos?|aseos?|recuperaciones|cosechas|lotes|actividades)\b.{0,18}\b(sin|no tienen|no tiene|sin tener)\s+(causa|operario|marca|responsable)\b/.test(q);
+    if (F.quality && !F.cause && !sinX) { plan.intent = 'calidad'; plan.conf = 0.9; plan.spec = { intent: 'calidad', ds: scoped, period }; return plan; }
     if (F.summary && !(RXF.oldHint.test(q) && !newStrong) && !/\bresumen\b.*\b(planta|operacion)\b|\bresumen de la (planta|operacion)\b/.test(q)) {
       plan.intent = 'resumen'; plan.conf = 0.9;
       plan.spec = { intent: 'resumen', ds: scoped, period, turn: /\bturno\b/.test(q) && !period, brands: X.brands };
@@ -824,7 +851,7 @@
     const mm = detectMetric(ds, w);
     spec.metric = mm.k; spec.metricExplicit = mm.explicit;
     // hay que quitar de w las palabras del tema para que 'consumo' no pese como métrica en otro ds
-    const nounCount = /\bcuant[oa]s\b(?: \w+){0,3} (aseos?|lotes?|trasiegos?|actividades|fermentaciones?|cosechas?|recuperaciones|turnos|lecturas|registros|cips?|fv|sv)\b/.test(q);
+    const nounCount = /\bcuant[oa]s\b(?: \w+){0,3} (aseos?|lotes?|trasiegos?|actividades|fermentaciones?|cosechas?|recuperaciones|turnos|lecturas|registros|cips?|fv|sv)\b/.test(q) && !/\bcuant[oa]s\s+(horas|minutos|hl|m3|litros|dias)\b/.test(q);
     if (nounCount || (F.count && !mm.explicit && !F.sum && !/\b(hl|m3|litros)\b/.test(w))) { spec.metric = '__n'; spec.metricExplicit = true; }
     if (/\bturnos?\b/.test(q) && ds === 'agua' && F.count) spec.metric = '__n';
     if (/\b(mas|menos)\s+(aseos|trasiegos|fermentaciones|cosechas|recuperaciones|lotes|actividades|cips?)\b/.test(q)) { spec.metric = '__n'; spec.metricExplicit = true; }
@@ -832,12 +859,14 @@
     if (ds === 'agua' && comps.length >= 2) { spec.cmp = { kind: 'component', items: comps }; }
     // agregación
     const Fw = { max: RXF.max.test(w), min: RXF.min.test(w), rank: RXF.rank.test(w) };
-    const rankish = F.rank || Fw.rank || !!topN;
+    const rowQ = /\b(cual|que|quien)\b/.test(q) && /\b(lote|aseo|fermentacion|cosecha|trasiego|recuperacion|actividad)\b/.test(q) && /\b(mas|menos|mayor|menor|peor|mejor)\b/.test(w);
+    if (rowQ && !topN) topN = 1;
+    const rankish = Fw.rank || !!topN || (F.rank && !conds.length) || rowQ;
     if (F.median) spec.how = 'median'; else if (F.mean && !rankish) spec.how = 'mean'; else if (F.sum) spec.how = 'sum'; else if (Fw.max && !rankish) spec.how = 'max'; else if (Fw.min && !rankish) spec.how = 'min';
     // dimensiones
-    const noun = /\b(?:que|cual(?:es)?|cuales|quien(?:es)?)\s+(?:\w+\s+){0,2}?(turno|marca|tanque|unitanque|equipo|operario|utk|causa|generacion|familia|dia|semana|mes|actividad|etapa|fase)s?\b/.exec(q) || /\b(?:top\s*\d*|los\s+\d+|\d+)\s+(turno|marca|tanque|unitanque|equipo|operario|utk|causa|generacion|familia|dia|semana|mes|actividad)(?:s|es)?\b/.exec(w) || /\b(?:mejor|peor|mayor|menor|mas)\s+(turno|marca|tanque|equipo|operario|utk|causa|generacion|familia|dia|semana|mes)(?:s|es)?\b/.exec(w);
+    const noun = /\b(?:que|cual(?:es)?|cuales|quien(?:es)?)\s+(?:\w+\s+){0,2}?(turno|marca|tanque|unitanque|fermentador|madurador|equipo|operario|utk|causa|generacion|familia|dia|semana|mes|actividad|etapa|fase)s?\b/.exec(q) || /\b(?:top\s*\d*|los\s+\d+|\d+)\s+(turno|marca|tanque|unitanque|equipo|operario|utk|causa|generacion|familia|dia|semana|mes|actividad)(?:s|es)?\b/.exec(w) || /\b(?:mejor|peor|mayor|menor|mas)\s+(turno|marca|tanque|equipo|operario|utk|causa|generacion|familia|dia|semana|mes)(?:s|es)?\b/.exec(w) || /\b(turno|marca|tanque|equipo|operario|utk|causa|generacion|familia|dia|semana|mes|fermentador|lote)s?\s+(?:con|que|tiene|con el)\s+(?:el\s+)?(mas|menos|mayor|menor|mejor|peor)\b/.exec(w) || /\b(marcas|turnos|tanques|equipos|operarios|causas|generaciones|familias|fermentadores)\s+por\b/.exec(w);
     let by = detectBy(q);
-    if (!by && noun) { const n = noun[1]; by = { turno: 'shift', marca: 'brand', tanque: 'tq', unitanque: 'tq', equipo: 'eq', operario: 'operator', utk: 'utk', causa: 'cause', generacion: 'gen', familia: 'fam', dia: 'day', semana: 'week', mes: 'month', actividad: 'kind', etapa: 'phase', fase: 'phase' }[n]; }
+    if (!by && noun) { const n = noun[1]; by = { turno: 'shift', turnos: 'shift', marcas: 'brand', tanques: 'tq', equipos: 'eq', operarios: 'operator', causas: 'cause', generaciones: 'gen', familias: 'fam', fermentadores: 'tq', fermentador: 'tq', turno: 'shift', marca: 'brand', tanque: 'tq', unitanque: 'tq', equipo: 'eq', operario: 'operator', utk: 'utk', causa: 'cause', generacion: 'gen', familia: 'fam', dia: 'day', semana: 'week', mes: 'month', actividad: 'kind', etapa: 'phase', fase: 'phase' }[n]; }
     if (!by && /\b(diario|diaria|diarios|cada dia)\b/.test(q)) by = 'day'; else if (!by && /\b(semanal|semanales|cada semana)\b/.test(q)) by = 'week'; else if (!by && /\b(mensual|mensuales|mensualmente|cada mes)\b/.test(q)) by = 'month';
     if (!by && /\bcausas\b/.test(q) && ds === 'trasiego') by = 'cause';
     if (!by && /\bcomponentes?\b/.test(q) && ds === 'agua') spec.cmp = { kind: 'component', items: ['pisos', 'cip', 'gea'] };
@@ -858,21 +887,25 @@
       if (c.u === '%' && ds === 'aseos') k = 'ph';
       if (!k) { k = ({ agua: 'total', aseos: /\bph\b/.test(q) ? 'ph' : 'm3', merma: 'lossPct', recuperacion: /\bph\b/.test(q) ? 'ph' : 'hours', trasiego: 'delay', ferm: mm.k, lev: 'viab' })[ds]; }
       if (ds === 'aseos' && /\bph\b/.test(q)) k = 'ph';
+      if (k === 'durMin' && (c.u === 'h')) { o.v = c.v * 60; if (c.v2 != null) o.v2 = c.v2 * 60; }
       o.k = k; return o;
     });
+    if (ds === 'aseos' && /\bph\b/.test(q) && /\b(malo|mala|mal|incorrect\w+|fuera|anormal\w*|problem\w*)\b/.test(q) && !spec.conds.length) spec.conds = [{ op: 'out', k: 'ph', v: A.Metas.get('aseos.phMin', 6), v2: A.Metas.get('aseos.phMax', 8) }];
+    if (ds === 'aseos' && /\bpor aseo\b/.test(q) && !F.sum && !spec.how && spec.metric !== '__n') spec.how = 'mean';
     // fuera de rango
     if (/\bfuera de (rango|meta|limite\w*|especificacion)\b/.test(q) && ds === 'aseos' && /\bph\b/.test(q)) { spec.conds = [{ op: 'out', k: 'ph', v: A.Metas.get('aseos.phMin', 6), v2: A.Metas.get('aseos.phMax', 8) }]; }
     if (/\bfuera de (rango|meta|limite\w*)\b/.test(q) && ds === 'recuperacion' && !spec.conds.length) spec.conds = [{ op: '>', k: 'hours', v: A.Metas.get('recuperacion.maximoH', 96) }];
     if (/\bsaldos? negativos?\b/.test(q) && ds === 'merma') spec.conds = [{ op: '<', k: 'loss', v: 0 }];
     if (/\bfuera de (meta|rango|limite\w*)\b/.test(q) && ds === 'aseos' && !/\bph\b/.test(q) && !spec.conds.length) spec.conds = [{ op: '>', k: 'm3', v: A.Metas.get('agua.aseoM3', 10) }];
     spec.flt = [];
-    if (/\bsin operario\b|\bsin responsable\b/.test(q) && ds === 'aseos') spec.flt.push('sinOperario');
-    if (/\bsin causa\b/.test(q) && ds === 'trasiego') spec.flt.push('sinCausa');
-    if (/\bsin marca\b/.test(q) && (ds === 'trasiego' || ds === 'recuperacion')) spec.flt.push('sinMarca');
+    if (/\b(sin|no tienen|no tiene)\s+(operario|responsable)\b/.test(q) && ds === 'aseos') spec.flt.push('sinOperario');
+    if (/\b(sin|no tienen|no tiene)\s+causa\b/.test(q) && ds === 'trasiego') spec.flt.push('sinCausa');
+    if (/\b(sin|no tienen|no tiene)\s+marca\b/.test(q) && (ds === 'trasiego' || ds === 'recuperacion')) spec.flt.push('sinMarca');
     if (spec.flt.length && !F.count && !F.chart) spec.intentHint = 'list';
     // ¿comparación?
     if (F.compare) {
-      if (split && (split.a || split.b)) {
+      if (spec.cmp && spec.cmp.kind === 'component') { /* pisos vs CIP vs GEA: componentes, no periodos */ }
+      else if (split && (split.a || split.b)) {
         const a = split.a || period || defaultPeriod(ds, ref);
         const b = split.b || prevPeriod(a, ref);
         if (split.a && split.b) { spec.cmp = { kind: 'period', a, b }; spec.period = a; }
@@ -883,7 +916,6 @@
       else if (X.tanks.length >= 2) spec.cmp = { kind: 'tank', items: X.tanks };
       else if (X.ops.length >= 2) spec.cmp = { kind: 'op', items: X.ops };
       else if (X.phases.length >= 2 && ds === 'merma') spec.cmp = { kind: 'phase', items: ['FV', 'SV'] };
-      else if (spec.cmp && spec.cmp.kind === 'component') { /* ya definido */ }
       else if (period) spec.cmp = { kind: 'period', a: period, b: prevPeriod(period, ref) };
       else if (/\b(fv|sv)\b.*\b(vs|versus|contra|con|frente)\b.*\b(fv|sv)\b/.test(q) && (ds === 'merma' || ds === 'aseos')) spec.cmp = { kind: 'phase', items: ['FV', 'SV'] };
       else spec.cmp = { kind: 'period', a: defaultPeriod(ds, ref), b: null };
@@ -914,7 +946,7 @@
     else if ((rankish || (noun && /\b(mas|menos|mayor|menor|mejor|peor|lento|rapido|largo|corto)\b/.test(w))) && !F.cause) intent = 'rank';
     else if (F.count && spec.metric === '__n' && !by && (spec.conds.length || X.tanks.length || X.brands.length || X.ops.length || X.eqTerms.length || !F.chart)) intent = 'count';
     else if (spec.intentHint === 'list') intent = 'list';
-    else if (F.list || (rowNoun && !F.sum && !F.mean && !F.count && !F.chart && (spec.conds.length || X.tanks.length || X.eqTerms.length || X.ops.length || X.brands.length || spec.period && !spec.periodDefault) && (!spec.metricExplicit || (spec.conds.length && spec.conds.every((c) => c.k === spec.metric))) && !by && !F.compare)) intent = 'list';
+    else if (F.list || ((rowNoun || spec.conds.length) && !F.sum && !F.mean && !F.count && !F.chart && !F.median && !spec.how && (spec.conds.length || X.tanks.length || X.eqTerms.length || X.ops.length || X.brands.length || spec.period && !spec.periodDefault) && (!spec.metricExplicit || (spec.conds.length && spec.conds.every((c) => c.k === spec.metric))) && !by && !F.compare)) intent = 'list';
     else if (F.chart || (by && TIMEKEYS.includes(by))) intent = 'trend';
     else if (by) intent = 'stat';
     if (ds === 'recuperacion' && F.compare && /levadura|recolect/.test(q) && /recuperad|cerveza/.test(q)) { intent = 'corr'; spec.cmp = null; }
@@ -935,7 +967,7 @@
     // los temas ferm/lev sin cifras ni contexto de análisis los dejamos al motor anterior
     if ((ds === 'ferm' || ds === 'lev') && !followUp) {
       const analytic = period || F.mean || F.sum || F.count || F.rank || F.compare || F.chart || F.dist || F.corr || by || spec.conds.length || topN || F.cause || F.forecast || F.whatif || F.median || F.max || F.min || F.list;
-      const strong = /\b(fermentaciones|fermenta\w*|atenuacion|h ?75|h ?15|e ?72|cosechas|viabilidad|consistencia|generacion(es)?|familia|etanol)\b/.test(q);
+      const strong = /\b(fermentaciones|fermenta\w*|extractooriginal|extracto original|atenuacion|h ?75|h ?15|e ?72|cosechas|viabilidad|consistencia|generacion(es)?|familia|etanol)\b/.test(q);
       if (!analytic && !strong) { plan.intent = 'legacy'; plan.why = 'old-ferm'; return plan; }
     }
     return plan;
@@ -944,6 +976,7 @@
   /* ---------------------------------------------------------------- selección de filas */
   const capT = () => eod(refTime());
   const normS = (s) => strip(s);
+  const shiftOfHour = (h) => (h >= 6 && h < 14 ? 'Mañana' : h >= 14 && h < 22 ? 'Tarde' : 'Noche');
   function condPass(c, r, ds) {
     const k = c.k; if (!k) return true;
     const m = metOf(ds, k);
@@ -973,7 +1006,7 @@
         return true;
       }));
     }
-    if (spec.shifts && spec.shifts.length && ds === 'agua') rows = rows.filter((r) => spec.shifts.includes(r.shift));
+    if (spec.shifts && spec.shifts.length) rows = rows.filter((r) => (ds === 'agua' ? spec.shifts.includes(r.shift) : spec.shifts.includes(shiftOfHour(new Date(r.t).getHours()))));
     if (spec.ops && spec.ops.length && ds === 'aseos') rows = rows.filter((r) => (r.ops || []).some((x) => spec.ops.includes(x)));
     if (ds === 'aseos') {
       for (const t of spec.eqTerms || []) rows = rows.filter((r) => normS(r.eq).includes(t));
@@ -1152,7 +1185,8 @@
     if (spec.periodDefault) s += ' (no indicaste periodo: usé lo que va del año)';
     return esc(s);
   }
-  const noBrandNote = (spec) => (!HASBRAND[spec.ds] && (spec.brands || []).filter((b) => b !== '*').length ? 'Ojo: ' + dsLabel(spec.ds).toLowerCase() + ' no se registra por marca, así que ignoré el filtro de marca.' : '');
+  const shiftNote = (spec) => ((spec.shifts || []).length && spec.ds !== 'agua' ? 'El turno solo viene en las lecturas de agua; aquí lo deduzco de la hora de inicio (mañana 6–14 h, tarde 14–22 h, noche 22–6 h).' : '');
+  const noBrandNote = (spec) => shiftNote(spec) || (!HASBRAND[spec.ds] && (spec.brands || []).filter((b) => b !== '*').length ? 'Ojo: ' + dsLabel(spec.ds).toLowerCase() + ' no se registra por marca, así que ignoré el filtro de marca.' : '');
   // Cuántos valores imposibles se descartaron (p. ej. 36.800 h de duración en una celda mal digitada)
   function discardNote(rows, m) {
     if (!m || m.k === '__n' || !m.plaus) return '';
@@ -1162,9 +1196,10 @@
   }
   function emptyAnswer(spec, why) {
     const R = new Resp(spec, spec.intent);
-    const ds = spec.ds, e = DL().extent(ds);
+    const ds = spec.ds, e = extentOf(ds);
     R.h('No encontré datos para eso', esc(dsLabel(ds)) + ' · ' + esc(spec.period.label) + (filtTxt(spec) ? ' · ' + esc(filtTxt(spec)) : ''));
     R.p(why || 'No hay registros de ' + esc(dsLabel(ds).toLowerCase()) + ' que cumplan lo que pediste.');
+    if (spec.period.kind !== 'all') { try { const allN = select(Object.assign({}, spec, { period: P(0, capT(), 'todo', 'all') })).length; if (allN) { R.p('En <b>todo el histórico</b> sí hay <b>' + fmt(allN, 0) + '</b> ' + DSNOUN[ds][1] + ' con esas condiciones, pero ninguno en ' + esc(spec.period.label) + '.'); R.chip('Ver todo el histórico', 'y en todo el histórico'); } } catch (er) { /* informativo */ } }
     if (e && e.to < spec.period.from) R.p('Aún no hay registros en ese periodo.');
     if (e) R.p('Los datos de ' + esc(dsLabel(ds).toLowerCase()) + ' van del <b>' + fd(e.from) + '</b> al <b>' + fd(Math.min(e.to, capT())) + '</b> (' + fmt(e.n, 0) + ' registros).');
     R.chip('Todo el año', DSEXAMPLE[ds] + ' este año').chip('Mes pasado', DSEXAMPLE[ds] + ' el mes pasado').chip('Últimos 90 días', DSEXAMPLE[ds] + ' en los últimos 90 días');
@@ -1297,7 +1332,7 @@
         note = 'Todavía no hay dato válido para ' + esc(old) + '. Te muestro el último día con datos.';
       }
     }
-    if (a.v == null) return emptyAnswer(spec);
+    if (a.v == null) return rows.length ? emptyAnswer(spec, 'Hay ' + fmt(rows.length, 0) + ' ' + DSNOUN[ds][1] + ' en ' + esc(spec.period.label) + ', pero ninguno trae un valor válido de «' + esc(m.l) + '» (la columna está vacía o con valores imposibles).') : emptyAnswer(spec);
     const R = new Resp(spec, 'stat');
     let main = a.v, mainRow = null;
     const perU = spec.perUnit && (m.t === 'add' || m.k === '__n') ? spec.perUnit : null;
@@ -1326,8 +1361,8 @@
         const sa = series(spec, rows, m, how, 'day').map((x) => x.v), sb = series(spec, prevRows, m, how, 'day').map((x) => x.v);
         if (sa.length >= 5 && sb.length >= 5) { const sg = sigSentence(sa, sb); if (sg) R.p(esc(sg.replace('La diferencia', 'Comparando día a día, la diferencia'))); }
       }
-    } else if (incomparable) R.p('No comparo con ' + esc(prevP.label) + ' porque tiene muchos menos registros (' + fmt(prevRows.length, 0) + ') y la comparación no sería justa.');
-    else if (prevP && spec.period.kind !== 'all' && !spec.period.dflt) R.p('No hay datos en ' + esc(prevP.label) + ' para comparar.');
+    } else if (incomparable && !spec.periodDefault) R.p('No comparo con ' + esc(prevP.label) + ' porque tiene muchos menos registros (' + fmt(prevRows.length, 0) + ') y la comparación no sería justa.');
+    else if (prevP && spec.period.kind !== 'all' && !spec.period.dflt && !incomparable) R.p('No hay datos en ' + esc(prevP.label) + ' para comparar.');
     const ins = insights(spec, rows, m, how);
     if (ins.length) R.list(ins);
     if (ds === 'agua' && m.k !== '__n' && spec.period.to - spec.period.from < 40 * DAY && m.k === 'total') {
@@ -1512,7 +1547,7 @@
     const unit = m.t === 'add' || m.k === '__n' ? ' (comparando día a día)' : '';
     return cg.significant ? 'La diferencia es estadísticamente significativa' + unit + ' (p ' + ps + '): es poco probable que sea casualidad.' : 'La diferencia no es concluyente' + unit + ' (p ' + ps + '): con estos datos podría ser variación normal.';
   }
-  const deDe = (l) => (/^el /i.test(l) ? 'del <b>' + esc(l.slice(3)) + '</b>' : 'de <b>' + esc(l) + '</b>');
+  const deDe = (l) => (/^el /i.test(l) ? 'del <b>' + esc(l.slice(3)) + '</b>' : /^del /i.test(l) ? '<b>' + esc(l) + '</b>' : 'de <b>' + esc(l) + '</b>');
   const lenDiff = (groups) => { if (!groups[0].p || !groups[1].p) return false; const a = groups[0].p.to - groups[0].p.from + 1, b = groups[1].p.to - groups[1].p.from + 1; return Math.abs(a - b) / Math.max(a, b) > 0.15; };
   function compareGroups(spec) {
     const ds = spec.ds, m = metOf(ds, spec.metric), how = howOf(spec, m), c = spec.cmp, ref = refTime();
@@ -1644,7 +1679,7 @@
     const ds = spec.ds, ref = refTime(), m = metOf(ds, '__n');
     let rows = select(spec), fbNote = '';
     if (!rows.length) { const fb = dayFallback(spec); if (fb) { spec = Object.assign({}, spec, { period: fb.period }); rows = select(spec); fbNote = 'No hay registros para ' + esc(fb.old) + '. Te muestro el último día con datos.'; } }
-    { const e0 = DL().extent(ds); if (!rows.length && e0 && e0.to < spec.period.from) return emptyAnswer(spec, 'Todavía no hay registros de ' + esc(dsLabel(ds).toLowerCase()) + ' en ' + esc(spec.period.label) + ': los datos llegan hasta el <b>' + fd(e0.to) + '</b>.'); }
+    { const e0 = extentOf(ds); if (!rows.length && e0 && e0.to < spec.period.from) return emptyAnswer(spec, 'Todavía no hay registros de ' + esc(dsLabel(ds).toLowerCase()) + ' en ' + esc(spec.period.label) + ': los datos llegan hasta el <b>' + fd(e0.to) + '</b>.'); }
     const R = new Resp(spec, 'count');
     R.valor = rows.length;
     const base = (spec.conds.length || (spec.tanks || []).length || (spec.eqTerms || []).length || (spec.ops || []).length || (spec.brands || []).length) ? select(Object.assign({}, spec, { conds: [], tanks: [], eqTerms: [], eqTypes: [], ops: [], brands: [], cause: null, state: null, kind: null })) : null;
@@ -2052,7 +2087,7 @@
     rows.sort((a, b) => a.t - b.t);
     const R = new Resp(Object.assign({}, spec, { ds: 'trasiego', period: P(ref, ref + 14 * DAY, 'próximos días', 'rolling') }), 'programado');
     if (!rows.length) {
-      const e = DL().extent('trasiego');
+      const e = extentOf('trasiego');
       R.h('No hay trasiegos programados', 'después del ' + fdt(ref));
       R.p('En el programa no encuentro actividades pendientes con fecha posterior al último dato (' + fd(ref) + '). ' + (e ? 'El programa tiene registros hasta el ' + fd(e.to) + '.' : ''));
       R.chip('Trasiegos de este mes', 'cuántos trasiegos hicimos este mes').chip('Desvío promedio', 'desvío promedio por marca');
@@ -2294,26 +2329,26 @@
 
   /* ---------------------------------------------------------------- calidad de datos */
   const QUAL = {
-    agua: { rows: () => DL().get('agua'), probs: (r) => { const p = []; if (r.total == null || r.valid === false) p.push(r.issue ? 'lecturas faltantes o con error' : 'sin consumo válido'); else if (r.total < 0 || r.total > 1000) p.push('valores imposibles'); return p; }, tail: 'El consumo del periodo queda subestimado por las lecturas que faltan.', q: 'consumo de agua' },
-    aseos: { rows: () => DL().get('aseos'), probs: (r) => { const p = []; if (r.m3 == null) p.push('sin caudal o minutos válidos'); else if (r.m3 > 200) p.push('agua imposible'); if (r.ph != null && (r.ph < 0 || r.ph > 14)) p.push('pH imposible'); if (r.durMin != null && (r.durMin < 1 || r.durMin > 1440)) p.push('duración imposible'); if (!r.operator) p.push('sin operario'); if (r.t > refTime() + DAY) p.push('con fecha futura'); return p; }, tail: 'El agua por aseo solo se calcula cuando hay caudal y minutos de enjuague.', q: 'aseos' },
-    merma: { rows: () => DL().get('merma'), probs: (r) => { const p = []; if (r.flag === 'Saldo negativo') p.push('saldo negativo'); else if (r.flag === 'Merma > 30 %') p.push('merma > 30 %'); else if (r.flag) p.push('faltan volúmenes'); return p; }, tail: 'Los lotes con saldo negativo o merma extrema distorsionan los promedios.', q: 'merma' },
-    recuperacion: { rows: () => DL().get('recuperacion'), probs: (r) => { const p = []; if (r.hours == null) p.push('sin horas (faltan fechas)'); if (!r.brand) p.push('sin marca'); if (r.yieldPct != null && r.yieldPct > 110) p.push('rendimiento mayor a 110 %'); if (r.volume == null) p.push('sin Hl recuperados'); return p; }, tail: 'Sin fechas completas no se pueden calcular las horas de recuperación.', q: 'recuperación de cerveza' },
-    trasiego: { rows: () => DL().get('trasiego'), probs: (r) => { const p = []; if (r.duration != null && (r.duration < 0.25 || r.duration > 72)) p.push('duración imposible'); if (r.delay != null && r.delay > metaG('trasiego.desvioMaxH', 1) && r.delay < 240 && r.cause === 'Sin causa registrada') p.push('retraso sin causa'); if (r.delay != null && (r.delay < -72 || r.delay > 240)) p.push('desvío imposible'); return p; }, tail: 'Los retrasos sin causa impiden hacer el Pareto de causas.', q: 'trasiegos' },
-    ferm: { rows: () => DL().get('ferm'), probs: (r) => { const p = []; if ((r.nMuestras || 0) < 2) p.push('sin curva (menos de 2 muestras)'); if (r.h75 == null) p.push('sin h75'); if (r.viab == null) p.push('sin viabilidad de levadura'); return p; }, tail: 'Sin curva no se calculan h75, e72 ni ritmo de caída.', q: 'fermentaciones' },
-    lev: { rows: () => DL().get('lev'), probs: (r) => { const p = []; if (r.viab == null) p.push('sin viabilidad'); if (r.cons == null) p.push('sin consistencia'); return p; }, tail: 'Las cosechas sin viabilidad no entran en los promedios.', q: 'levadura' },
+    agua: { rows: () => rowsOf('agua'), probs: (r) => { const p = []; if (r.total == null || r.valid === false) p.push(r.issue ? 'lecturas faltantes o con error' : 'sin consumo válido'); else if (r.total < 0 || r.total > 1000) p.push('valores imposibles'); return p; }, tail: 'El consumo del periodo queda subestimado por las lecturas que faltan.', q: 'consumo de agua' },
+    aseos: { rows: () => rowsOf('aseos'), probs: (r) => { const p = []; if (r.m3 == null) p.push('sin caudal o minutos válidos'); else if (r.m3 > 200) p.push('agua imposible'); if (r.ph != null && (r.ph < 0 || r.ph > 14)) p.push('pH imposible'); if (r.durMin != null && (r.durMin < 1 || r.durMin > 1440)) p.push('duración imposible'); if (!r.operator) p.push('sin operario'); if (r.t > refTime() + DAY) p.push('con fecha futura'); return p; }, tail: 'El agua por aseo solo se calcula cuando hay caudal y minutos de enjuague.', q: 'aseos' },
+    merma: { rows: () => rowsOf('merma'), probs: (r) => { const p = []; if (r.flag === 'Saldo negativo') p.push('saldo negativo'); else if (r.flag === 'Merma > 30 %') p.push('merma > 30 %'); else if (r.flag) p.push('faltan volúmenes'); return p; }, tail: 'Los lotes con saldo negativo o merma extrema distorsionan los promedios.', q: 'merma' },
+    recuperacion: { rows: () => rowsOf('recuperacion'), probs: (r) => { const p = []; if (r.hours == null) p.push('sin horas (faltan fechas)'); if (!r.brand) p.push('sin marca'); if (r.yieldPct != null && r.yieldPct > 110) p.push('rendimiento mayor a 110 %'); if (r.volume == null) p.push('sin Hl recuperados'); return p; }, tail: 'Sin fechas completas no se pueden calcular las horas de recuperación.', q: 'recuperación de cerveza' },
+    trasiego: { rows: () => rowsOf('trasiego'), probs: (r) => { const p = []; if (r.duration != null && (r.duration < 0.25 || r.duration > 72)) p.push('duración imposible'); if (r.delay != null && r.delay > metaG('trasiego.desvioMaxH', 1) && r.delay < 240 && r.cause === 'Sin causa registrada') p.push('retraso sin causa'); if (r.delay != null && (r.delay < -72 || r.delay > 240)) p.push('desvío imposible'); return p; }, tail: 'Los retrasos sin causa impiden hacer el Pareto de causas.', q: 'trasiegos' },
+    ferm: { rows: () => rowsOf('ferm'), probs: (r) => { const p = []; if ((r.nMuestras || 0) < 2) p.push('sin curva (menos de 2 muestras)'); if (r.h75 == null) p.push('sin h75'); if (r.viab == null) p.push('sin viabilidad de levadura'); return p; }, tail: 'Sin curva no se calculan h75, e72 ni ritmo de caída.', q: 'fermentaciones' },
+    lev: { rows: () => rowsOf('lev'), probs: (r) => { const p = []; if (r.viab == null) p.push('sin viabilidad'); if (r.cons == null) p.push('sin consistencia'); return p; }, tail: 'Las cosechas sin viabilidad no entran en los promedios.', q: 'levadura' },
   };
   function qualityOf(ds) {
     const Q = QUAL[ds], rows = Q.rows(), cnt = {}; let bad = 0;
     for (const r of rows) { const p = Q.probs(r); if (p.length) bad++; for (const x of uniq(p)) cnt[x] = (cnt[x] || 0) + 1; }
     const problems = Object.entries(cnt).map(([t, n]) => ({ t, n })).sort((a, b) => b.n - a.n);
-    const e = DL().extent(ds);
+    const e = extentOf(ds);
     return { ds, n: rows.length, bad, ok: rows.length ? ((rows.length - bad) / rows.length) * 100 : null, problems, e };
   }
   H.calidad = function (spec) {
     const q = norm(spec.raw || '');
     const R = new Resp(spec, 'calidad');
     const ref = refTime();
-    const extents = /\bdesde cuando\b|\bhasta (que|cuando) fecha\b|\bhasta donde\b|\bcuantos registros\b|\bcobertura\b|\bque datos (hay|tengo|tenemos)\b/.test(q);
+    const extents = /\bultima fecha\b|\bfecha mas reciente\b|\bultimo dato\b|\bdesde cuando\b|\bhasta (que|cuando) fecha\b|\bhasta donde\b|\bcuantos registros\b|\bcobertura\b|\bque datos (hay|tengo|tenemos)\b/.test(q);
     const list = spec.ds ? [spec.ds] : DS_KEYS;
     const info = list.map(qualityOf);
     if (extents) {
@@ -2336,7 +2371,7 @@
         R.list(x.problems.slice(0, 6).map((p) => '<b>' + fmt(p.n, 0) + '</b> ' + esc(p.t) + ' (' + fmt((p.n / x.n) * 100, 1) + ' %)'));
         R.p(esc(QUAL[x.ds].tail));
       } else R.p('No encontré problemas en ' + esc(dsLabel(x.ds).toLowerCase()) + ': todos los registros están completos y dentro de rangos posibles.');
-      if (x.ds === 'agua') { const iss = {}; for (const r of DL().get('agua')) if (r.issue) iss[r.issue] = (iss[r.issue] || 0) + 1; const t = Object.entries(iss).sort((a, b) => b[1] - a[1])[0]; if (t) R.p('El aviso más frecuente en las lecturas es «' + esc(t[0]) + '» (' + t[1] + ' veces).'); }
+      if (x.ds === 'agua') { const iss = {}; for (const r of rowsOf('agua')) if (r.issue) iss[r.issue] = (iss[r.issue] || 0) + 1; const t = Object.entries(iss).sort((a, b) => b[1] - a[1])[0]; if (t) R.p('El aviso más frecuente en las lecturas es «' + esc(t[0]) + '» (' + t[1] + ' veces).'); }
       R.p(x.ok != null && x.ok >= 95 ? 'Mi lectura: los datos de ' + esc(dsLabel(x.ds).toLowerCase()) + ' son <b>confiables</b> (' + fmt(x.ok, 0) + ' % completos).' : x.ok != null && x.ok >= 80 ? 'Mi lectura: son <b>utilizables con cuidado</b> (' + fmt(x.ok, 0) + ' % completos): mis cifras descartan los valores imposibles y te aviso cuando lo hago.' : 'Mi lectura: la calidad es <b>baja</b> (' + fmt(x.ok, 0) + ' % completos); toma las cifras como orientativas y corrige primero los registros marcados.');
       R.src(esc('Fuente: ' + dsLabel(x.ds)));
       R.go_('Ver calidad de datos', 'analisis/calidad', {}); R.go_('Abrir ' + dsLabel(x.ds), DSROUTE[x.ds], {});
@@ -2456,6 +2491,22 @@
       R.p('Puedo calcular el ahorro, pero me falta el valor objetivo (por ejemplo «a 8 m³» o «un 10 %»). Prueba así:');
       ej.forEach((x) => R.chip(x, x)); R.conf = 0.5; return R;
     }
+    const AMB = [
+      [/\bph\b/, 'El pH se mide en varios procesos', ['pH promedio de los enjuagues de aseo', 'pH promedio de la levadura cosechada', 'pH de las recuperaciones']],
+      [/\b(horas|tiempo|duracion|tarda\w*|demora\w*)\b/, 'El tiempo se mide en varios procesos', ['Horas promedio de recuperación', 'Duración promedio de los trasiegos', 'Duración promedio de los aseos', '¿Cuánto tarda en llegar al 75 % de atenuación?']],
+      [/\b(eficiencia|rendimiento|productividad)\b/, 'La eficiencia se puede medir de varias formas', ['Rendimiento de la recuperación', '¿Cuánta agua gastamos por hectolitro procesado?', 'Atenuación promedio de Light']],
+      [/\b(volumen|hl|litros|hectolitros)\b/, 'Los hectolitros aparecen en varios temas', ['¿Cuántos Hl perdimos este año por merma?', '¿Cuántos Hl de cerveza recuperamos este año?', '¿Qué relación hay entre el consumo de agua y la producción?']],
+      [/\b(promedio|total|cuantos|cuantas|mayor|menor|maximo|minimo)\b/, 'Puedo calcularlo para varios temas', ['¿Cuánta agua gastamos este mes?', '¿Cuántos aseos hicimos este mes?', '¿Cuál es la merma de este mes?']],
+    ];
+    const amb = AMB.find(([re]) => re.test(q));
+    if (amb && !plan.hint) {
+      R.h('¿A cuál te refieres?', 'tu pregunta puede ir por varios caminos');
+      R.p(esc(amb[1]) + '. Elige la que quieres y la calculo con tus datos (si ninguna es, escríbeme el tema: agua, aseos, merma, recuperación, trasiegos, fermentación o levadura):');
+      amb[2].slice(0, 4).forEach((x) => R.chip(x.replace(/[¿?]/g, ''), x));
+      R.chip('¿Qué puedo preguntarte?', '¿Qué sabes hacer?');
+      R.conf = 0.3;
+      return R;
+    }
     R.h('Necesito un poco más de contexto', 'no estoy seguro de qué quieres consultar');
     const sim = suggestSimilar(plan.raw || q, 4);
     const last = S.mem.last;
@@ -2504,7 +2555,7 @@
         if (p.kind === 'all') st.preset = 'todo'; else if (p.dflt || (p.kind === 'year' && p.partial && p.y === new Date(ref).getFullYear())) st.preset = 'anio';
         else if (p.kind === 'month' && p.partial) st.preset = 'mes'; else { st.preset = 'custom'; st.from = p.from; st.to = p.to; }
       }
-      const b = (spec.brands || []).filter((x) => x !== '*'); st.brands = b.filter((x) => DL().brands().includes(x));
+      const b = (spec.brands || []).filter((x) => x !== '*'); st.brands = b.filter((x) => brandsList().includes(x));
     } catch (e) { /* el marco de Análisis es de otro módulo */ }
   }
   function goTo(ruta, spec) {
@@ -2553,9 +2604,9 @@
     const parts = String(texto).split(/\?\s+(?=¿?\w)|\s+y\s+(?=(?:cu[aá]nt|cu[aá]l|qu[eé]|c[oó]mo|compar|graf|dame|mu[eé]str|top|por\s?qu))/i).map((s) => s.trim()).filter((s) => s.split(/\s+/).length >= 3);
     return parts.length > 1 && parts.length <= 3 ? parts : null;
   }
-  function run(texto) {
+  function run(texto, ctxo) {
     const t0 = performance.now();
-    const plan = understand(texto);
+    const plan = understand(texto, ctxo);
     if (plan.spec && !plan.spec.raw) plan.spec.raw = plan.raw;
     if (plan.intent === 'vacio') return null;
     if (plan.intent === 'legacy' || plan.intent === 'aclarar') return { legacy: true, plan };
@@ -2578,7 +2629,7 @@
     if (!R) return null;
     if (plan.ambig && plan.spec && R.intent !== 'aclarar') { const alt = plan.ambig.find((d) => d !== plan.spec.ds); if (alt) R.chip('¿Querías decir ' + dsLabel(alt).toLowerCase() + '?', DSEXAMPLE[alt] + (plan.spec.periodDefault ? '' : ' ' + (plan.spec.period.label || ''))); }
     if (plan.fixed && plan.fixed.length && plan.fixed.length <= 3 && SPEC_INTENTS.has(R.intent)) R.src(esc('Entendí ' + plan.fixed.map((f) => '«' + f[0] + '» como «' + f[1] + '»').join(', ') + '.'));
-    if (plan.spec && plan.spec.ds && !['aclarar', 'error', 'calidad', 'revisar', 'anomalias', 'resumen', 'ahorro', 'programado'].includes(R.intent) && R.conf >= 0.6) remember(plan.spec);
+    if (plan.spec && plan.spec.ds && !['aclarar', 'error', 'calidad', 'revisar', 'anomalias', 'resumen', 'ahorro', 'programado'].includes(R.intent)) remember(plan.spec);
     const out = R.done();
     out.afterFn = R.after || null;
     if (plan.fixed && plan.fixed.length) out.corregido = plan.fixed;
@@ -2627,7 +2678,7 @@
       if (ctx && ctx.reset) { S.mem.last = null; S.lastExp = null; }
       const t0 = performance.now();
       let r = null;
-      try { r = run(texto); } catch (e) { r = null; if (window.console) console.error(e); }
+      try { r = run(texto, ctx); } catch (e) { r = null; if (window.console) console.error(e); }
       if (!r) { resolve({ texto: '', html: '', intent: 'vacio', confianza: 0, ms: 0 }); return; }
       if (r.legacy) {
         const inner = legacyAnswer(texto);
@@ -2761,7 +2812,7 @@
   const icoMore = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>';
   function enhance() {
     const el = panelEl(); if (!el) return;
-    if (el.dataset.cf === '1') { aplicarNombre(); updateEmpty(); return; }
+    if (el.dataset.cf === '1') { aplicarNombre(); updateEmpty(); warm(); return; }
     el.dataset.cf = '1';
     const head = $q('.bot-h', el), act = $q('.bot-head-actions', el), m = $q('#botM', el), form = $q('#botF', el);
     if (head) {
@@ -2774,7 +2825,7 @@
       const help = mk('cfHelpBtn', '', icoHelp, '¿Qué puedo preguntar?'), wide = mk('cfWideBtn', 'cf-wide-btn', icoWide, 'Ampliar el panel'), more = mk('cfMore', '', icoMore, 'Más opciones');
       wide.setAttribute('aria-pressed', 'false'); more.setAttribute('aria-haspopup', 'true'); more.setAttribute('aria-expanded', 'false');
       const menu = document.createElement('div'); menu.id = 'cfMenu'; menu.className = 'cf-menu'; menu.hidden = true; menu.setAttribute('role', 'menu');
-      ['#botNew', '#botProactive', '#botPwd'].forEach((s) => { const b = $q(s, act); if (b) { b.classList.add('cf-menu-i'); b.setAttribute('role', 'menuitem'); menu.appendChild(b); } });
+      ['#botNew', '#botProactive', '#botPwd'].forEach((s) => { const b = $q(s, act); if (b && s === '#botPwd') b.textContent = '🔒 Contraseña de autorización'; if (b) { b.classList.add('cf-menu-i'); b.setAttribute('role', 'menuitem'); menu.appendChild(b); } });
       act.insertBefore(help, x); act.insertBefore(wide, x); act.insertBefore(more, x);
       head.appendChild(menu);
       more.addEventListener('click', (e) => { e.stopPropagation(); menu.hidden = !menu.hidden; more.setAttribute('aria-expanded', String(!menu.hidden)); if (!menu.hidden) { const f = menu.querySelector('button'); if (f) f.focus(); } });
@@ -2827,7 +2878,17 @@
       const iv = setInterval(() => { if (!document.contains(ty)) { clearInterval(iv); return; } k = Math.min(steps.length - 1, k + 1); lab.textContent = steps[k]; }, 700);
     }).observe(m, { childList: true });
     try { if (LS.get('cifra.wide', false)) setWide(true); } catch (e) { /* ancho por defecto */ }
-    aplicarNombre(); updateEmpty();
+    aplicarNombre(); updateEmpty(); warm();
+  }
+  // Calienta la caché en ratos libres para que la primera pregunta no espere
+  let warmed = 0;
+  const idle = (fn) => (window.requestIdleCallback ? window.requestIdleCallback(fn, { timeout: 800 }) : setTimeout(fn, 40));
+  function warm() {
+    if (warmed && Date.now() - warmed < 50000) return;
+    warmed = Date.now();
+    const ids = ['agua', 'aseos', 'merma', 'recuperacion', 'trasiego', 'ferm', 'lev'];
+    const next = () => { const ds = ids.shift(); if (!ds) { try { refTime(); } catch (e) { /* sin datos */ } return; } try { rowsOf(ds); } catch (e) { /* tema sin datos */ } idle(next); };
+    idle(next);
   }
   function setWide(on) {
     const el = panelEl(); if (!el) return;
@@ -2885,6 +2946,11 @@
       return r;
     };
     if (panelEl()) { try { enhance(); } catch (e) { /* aún no construido */ } }
+    if (A.Metas && A.Metas.set && !A.Metas.set.__cifra) {
+      const ms = A.Metas.set;
+      A.Metas.set = async function () { const r = await ms.apply(this, arguments); try { aplicarNombre(); } catch (e) { /* sin DOM */ } return r; };
+      A.Metas.set.__cifra = true;
+    }
     setInterval(() => { try { aplicarNombre(); } catch (e) { /* sin DOM */ } }, 4000);
     setTimeout(aplicarNombre, 500);
   })();

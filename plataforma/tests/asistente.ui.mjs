@@ -47,6 +47,8 @@ async function session(name, viewport, theme) {
   check(await page.locator('#cfSug:not([hidden]) .cf-sug-i').count() > 0, 'autocompletado aparece al escribir ≥ 3 letras');
   await page.screenshot({ path: `${out}/${name}-2-autocompletar.png` });
   await page.keyboard.press('Enter');
+  const pasos = await page.waitForSelector('#levabot .cf-steps', { timeout: 600 }).then(() => true, () => false);
+  check(pasos, 'indicador «analizando…» con pasos mientras responde');
   await page.waitForSelector('#levabot .cf-ans', { timeout: 8000 });
   await page.waitForTimeout(600);
   check(await page.locator('#levabot .cf-ans svg.ch-svg').count() >= 1, 'la respuesta trae gráfico');

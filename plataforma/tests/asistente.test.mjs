@@ -43,7 +43,7 @@ for (const [cat, list] of [...Object.entries(bank.categorias), ...Object.entries
       if (!good) why = 'sin respuesta útil (' + r.intent + ')';
       if (good && it.ok && !it.ok.includes(r.intent)) { good = false; why = 'intención ' + r.intent + ' no esperada (' + it.ok.join('/') + ')'; }
       if (good && it.chart && !r.chart) { good = false; why = 'faltó el gráfico'; }
-      if (good && it.ds && r.ds && r.ds !== it.ds) { good = false; why = 'tema ' + r.ds + ' en vez de ' + it.ds; }
+      if (good && it.ds && r.ds && ![].concat(it.ds).includes(r.ds)) { good = false; why = 'tema ' + r.ds + ' en vez de ' + [].concat(it.ds).join('/'); }
       if (it.ruido) { good = it.ok.includes(r.intent); why = good ? '' : 'el ruido no debía responderse como ' + r.intent; }
     }
     results.push({ tipo: 'pregunta', cat, q: it.q, good, why, ...r });
@@ -94,6 +94,13 @@ for (const it of bank.numericas) {
   results.push({ tipo: 'numérica', cat: 'numérica', q: it.q, good, why: good ? '' : 'esperado ' + exp + ' y obtuve ' + r.valor, ...r });
 }
 
+// 4) Documentos (con un módulo simulado, porque lo escribe otro equipo)
+await page.evaluate(() => { window.App.Documentos = { listar: (s) => [{ id: 'd1', titulo: 'Instructivo de aseo ' + s, descripcion: 'Paso a paso' }], buscar: (t) => [{ id: 'd2', titulo: 'Procedimiento ' + t }], abrir: (id) => { window.__docAbierto = id; } }; });
+for (const q of ['¿qué documentos hay de aseos?', 'dame los procedimientos de merma', 'documentos de recuperación']) {
+  const r = await page.evaluate(async (q) => { const r = await App.Cifra.preguntar(q); return { intent: r.intent, ok: /data-cf-doc="d\d"/.test(r.html), texto: r.texto.slice(0, 120) }; }, q);
+  results.push({ tipo: 'documentos', cat: 'documentos', q, good: r.intent === 'docs' && r.ok, why: r.intent === 'docs' ? 'sin lista de documentos' : 'intención ' + r.intent, ms: 1, intent: r.intent, texto: r.texto, chart: false, table: false });
+}
+await page.evaluate(() => { delete window.App.Documentos; });
 await browser.close();
 
 // Informe

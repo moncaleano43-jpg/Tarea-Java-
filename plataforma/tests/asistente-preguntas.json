@@ -1701,7 +1701,10 @@
    },
    {
     "q": "cuantos cips se hicieron en agosto",
-    "ds": "trasiego"
+    "ds": [
+     "aseos",
+     "trasiego"
+    ]
    },
    {
     "q": "retraso por causa",
@@ -1737,7 +1740,10 @@
    },
    {
     "q": "duración de los cip",
-    "ds": "trasiego"
+    "ds": [
+     "aseos",
+     "trasiego"
+    ]
    }
   ],
   "libres: fermentación": [
