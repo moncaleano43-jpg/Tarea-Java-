@@ -470,3 +470,5 @@ body{font-feature-settings:"cv11","ss01";letter-spacing:-.005em}
 .cta h2{font-weight:650}
 .footer{background:var(--bg)}
 @media (max-width:640px){.hero{padding-top:120px}.hero__trust{gap:4px 14px}}
+.plan.spot{overflow:visible}
+.plan.spot::before{border-radius:inherit}
