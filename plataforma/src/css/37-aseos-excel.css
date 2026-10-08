@@ -1,0 +1,33 @@
+/* Aseos · tabla tipo Excel */
+.ax-on > h3,.ax-on > .fv-table-scroll,.ax-on > .studio-pager,.ax-on > .aseo-draft-list,.ax-on > #aseoDraftState{display:none!important}
+.ax-modo{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-left:auto}
+.ax-modo button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;padding:7px 12px;cursor:pointer}
+.ax-modo button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.ax{margin-top:12px}
+.ax-barra{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin-bottom:10px}
+.ax-f{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--muted)}
+.ax-f select,.ax-f input{font:inherit;font-size:13.5px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 9px;min-width:130px;max-width:200px}
+.ax-q input{min-width:180px}
+.ax-chk{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--ink);padding-bottom:8px}
+.ax-fill{flex:1}
+.ax-resumen{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:13px;color:var(--muted);margin-bottom:8px}
+.ax-resumen b{color:var(--ink)}
+.ax-mal b{color:var(--neg)}.ax-bien b{color:var(--pos)}
+.ax-pend{color:var(--warn)}
+.ax-ley{margin-left:auto;display:inline-flex;gap:6px;align-items:center;font-size:12px}
+.ax-sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-left:8px;font-style:normal;font-size:9px;text-align:center;line-height:12px}
+.ax-sw.s-ok{background:color-mix(in srgb,var(--pos) 30%,var(--surface))}.ax-sw.s-warn{background:color-mix(in srgb,var(--warn) 40%,var(--surface))}.ax-sw.s-bad{background:color-mix(in srgb,var(--neg) 35%,var(--surface))}.ax-sw.s-calc{background:var(--surface-2);color:var(--muted)}
+.ax-nota{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.ax .hoja-fix-ult{box-shadow:2px 0 0 var(--line)}
+.ax-full{position:fixed;inset:0;z-index:150;background:var(--bg);padding:14px 18px;overflow:auto;margin:0}
+.ax-full .ax-nota{display:none}
+@media(max-width:700px){.ax-ley{display:none}.ax-f select,.ax-f input{min-width:110px}.ax-modo{margin-left:0}}
+
+/* módulos más compactos para que la tabla quede a la vista */
+.ax-ws .aseo-modules{display:flex;gap:6px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:6px;margin-bottom:10px;scrollbar-width:thin}
+.ax-ws .aseo-modules button{flex:none;min-height:0;width:auto;padding:7px 14px;border-radius:999px}
+.ax-ws .aseo-modules button b{font-size:13px;white-space:nowrap}
+.ax-ws .studio-heading{margin-bottom:10px}
+.ax-on > p:not(.ax-nota){display:none}
+.ax-on .ax-barra .btn{border:1px solid var(--line);background:var(--surface);padding:7px 12px;font-size:13px}
+@media(max-width:700px){.ax-barra{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ax-f select,.ax-f input{min-width:0;max-width:none;width:100%;box-sizing:border-box}.ax-q{grid-column:1/-1}.ax-fill{display:none}.ax-chk{grid-column:1/-1;padding:0}.ax-barra .btn{width:100%}}

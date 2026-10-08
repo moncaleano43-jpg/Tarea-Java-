@@ -452,6 +452,10 @@
 
     /* ---------- Columnas visibles y geometría ---------- */
     let colX = [], colW = [], totalW = 0, stubs = new Map();
+    // columnas fijas a la izquierda (como «Inmovilizar paneles» de Excel)
+    const nFix = Math.max(1, Math.min(cols.length, opts.fijas || 1));
+    const fixLeft = (c) => { let x = GUT; for (let k = 0; k < c; k++) x += colW[k] || 0; return x; };
+    const fixW = () => { let w = 0; for (let k = 0; k < nFix; k++) w += colW[k] || cols[k].ancho; return w; };
     const grupoOf = (c) => cols[c].grupo || '';
     const oculta = (c) => { const g = grupoOf(c); return g && plegados.has(g); };
     function geometria() {
@@ -485,7 +489,7 @@
       cols.forEach((col, c) => {
         if (!colW[c]) return;
         if (stubs.has(c)) { g2 += `<div class="hoja-h hoja-h--c hoja-h--stub" role="columnheader" style="width:${colW[c]}px">…</div>`; return; }
-        g2 += `<div class="hoja-h hoja-h--c${c === 0 ? ' hoja-h--f1' : ''}${col.requerido ? ' hoja-h--req' : ''}" role="columnheader" aria-colindex="${c + 2}" data-c="${c}" style="width:${colW[c]}px" title="${esc(col.ayuda || col.titulo)}"><span class="hoja-h-t">${esc(col.titulo)}</span>${col.unidad ? `<small>${esc(col.unidad)}</small>` : ''}${col.tipo === 'calc' ? '<i class="hoja-h-fx" aria-label="calculado">ƒ</i>' : ''}</div>`;
+        g2 += `<div class="hoja-h hoja-h--c${c < nFix ? ' hoja-h--f1' : ''}${c === nFix - 1 && nFix > 1 ? ' hoja-fix-ult' : ''}${col.requerido ? ' hoja-h--req' : ''}" role="columnheader" aria-colindex="${c + 2}" data-c="${c}" style="width:${colW[c]}px${c < nFix ? ';left:' + fixLeft(c) + 'px' : ''}" title="${esc(col.ayuda || col.titulo)}"><span class="hoja-h-t">${esc(col.titulo)}</span>${col.unidad ? `<small>${esc(col.unidad)}</small>` : ''}${col.tipo === 'calc' ? '<i class="hoja-h-fx" aria-label="calculado">ƒ</i>' : ''}</div>`;
       });
       cab.style.width = totalW + 'px'; body.style.width = totalW + 'px';
       cab.innerHTML = (hayGrupos ? `<div class="hoja-hr hoja-hr--g" role="row">${g1}</div>` : '') + `<div class="hoja-hr" role="row">${g2}</div>`;
@@ -500,7 +504,7 @@
         const g = stubs.get(c), tiene = cols.some((k, j) => k.grupo === g && !blank(valorDe(row, k)));
         return `<div class="hoja-c hoja-c--stub" role="gridcell" aria-hidden="true" style="width:${colW[c]}px">${tiene ? '•' : ''}</div>`;
       }
-      let cls = 'hoja-c' + (col.base === 'numero' && (isNum(valorDe(row, col)) || blank(valorDe(row, col))) ? ' hoja-c--n' : '') + (c === 0 ? ' hoja-c--f1' : '');
+      let cls = 'hoja-c' + (col.base === 'numero' && (isNum(valorDe(row, col)) || blank(valorDe(row, col))) ? ' hoja-c--n' : '') + (c < nFix ? ' hoja-c--f1' + (c === nFix - 1 && nFix > 1 ? ' hoja-fix-ult' : '') : '');
       const calcRO = col.tipo === 'calc' && !col.anulable;
       if (calcRO) cls += ' hoja-c--calc';
       if (col.tipo === 'calc' && col.anulable && row.ov[col.key] != null) cls += ' hoja-c--ov';
@@ -511,7 +515,7 @@
       const s = semaforoDe(row, col);
       if (s && ['ok', 'warn', 'bad'].includes(s.n)) { cls += ' sem-' + s.n; if (!titulo && s.msg) titulo = s.msg; }
       const txt = texto(row, col);
-      return `<div class="${cls}" role="gridcell" id="${cellId(i, c)}" data-c="${c}" aria-colindex="${c + 2}"${calcRO || ro ? ' aria-readonly="true"' : ''}${e && e.t === 'err' ? ' aria-invalid="true"' : ''}${titulo ? ` title="${esc(titulo)}"` : ''} style="width:${colW[c]}px">${esc(txt)}</div>`;
+      return `<div class="${cls}" role="gridcell" id="${cellId(i, c)}" data-c="${c}" aria-colindex="${c + 2}"${calcRO || ro ? ' aria-readonly="true"' : ''}${e && e.t === 'err' ? ' aria-invalid="true"' : ''}${titulo ? ` title="${esc(titulo)}"` : ''} style="width:${colW[c]}px${c < nFix ? ';left:' + fixLeft(c) + 'px' : ''}">${esc(txt)}</div>`;
     }
     function filaHTML(i) {
       const row = rows[i];
@@ -531,7 +535,7 @@
     }
     function renderWin(force) {
       if (destroyed) return;
-      el.classList.toggle('hoja--nofix', cols[0].ancho > (vp.clientWidth || 1200) * 0.45);   // en pantallas estrechas la primera columna no se fija
+      el.classList.toggle('hoja--nofix', fixW() > (vp.clientWidth || 1200) * 0.45);   // en pantallas estrechas las columnas no se fijan
       const top = vp.scrollTop, hgt = vp.clientHeight || 600;
       const a = Math.max(0, Math.floor(top / RH) - 8), b = Math.min(rows.length - 1, Math.ceil((top + hgt) / RH) + 8);
       for (const [i, d] of rowEls) {
@@ -594,8 +598,8 @@
       const y = r * RH;
       if (y < vp.scrollTop) vp.scrollTop = y;
       else if (y + RH + cabH > vp.scrollTop + vh) vp.scrollTop = y + RH + cabH - vh;
-      const x = colX[c], w = colW[c], fix = c === 0 ? 0 : GUT + (el.classList.contains('hoja--nofix') ? 0 : cols[0].ancho);
-      if (c > 0 && x - fix < vp.scrollLeft) vp.scrollLeft = x - fix;
+      const x = colX[c], w = colW[c], fix = c < nFix ? 0 : GUT + (el.classList.contains('hoja--nofix') ? 0 : fixW());
+      if (c >= nFix && x - fix < vp.scrollLeft) vp.scrollLeft = x - fix;
       else if (x + w > vp.scrollLeft + vw) vp.scrollLeft = x + w - vw;
     }
     function ir(r, c, extend, sinScroll) {

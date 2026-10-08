@@ -730,5 +730,5 @@
   }
 
   window.addEventListener('hashchange', () => { if (panel) cerrar(); });
-  A.Captura = { abrir, cerrar, hoja: () => (panel ? panel.h : null), defs: DEFS, guardarFilas, util: { frecuentes, isoWeek, serialDe, fh } };
+  A.Captura = { abrir, cerrar, hoja: () => (panel ? panel.h : null), defs: DEFS, guardarFilas, resolverDef, hojasDe, util: { frecuentes, isoWeek, serialDe, fh } };
 })();
